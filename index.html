@@ -24,8 +24,8 @@
             <div class="glass p-6 rounded-2xl">
                 <h2 class="text-sm text-slate-400 mb-2">添加新账单</h2>
                 <div class="grid grid-cols-2 gap-2 mb-4">
-                    <button @click="form.payer='player1'" :class="form.payer==='player1'?'bg-indigo-600':'bg-slate-700'" class="p-2 rounded-xl text-sm">小星</button>
-                    <button @click="form.payer='player2'" :class="form.payer==='player2'?'bg-pink-600':'bg-slate-700'" class="p-2 rounded-xl text-sm">小辰</button>
+                    <button @click="form.payer='小星'" :class="form.payer==='小星'?'bg-indigo-600':'bg-slate-700'" class="p-2 rounded-xl text-sm">小星</button>
+                    <button @click="form.payer='小辰'" :class="form.payer==='小辰'?'bg-pink-600':'bg-slate-700'" class="p-2 rounded-xl text-sm">小辰</button>
                 </div>
                 <div class="flex gap-2 mb-4">
                     <select v-model="form.currency" class="bg-slate-800 rounded-xl px-2 text-sm"><option value="SGD">SGD</option><option value="MYR">MYR</option></select>
@@ -54,7 +54,7 @@
                 return {
                     expenses: [],
                     exchangeRate: 3.15,
-                    form: { payer: 'player1', currency: 'SGD', amount: '' }
+                    form: { payer: '小星', currency: 'SGD', amount: '' }
                 }
             },
             methods: {
@@ -71,7 +71,12 @@
                 },
                 async save() {
                     if(!this.form.amount) return;
-                    await supabase.from('expenses').insert({payer: this.form.payer, amount: this.form.amount, currency: this.form.currency, ledger_id: '3a5518b8-4d79-a34f-a5cb8900decb'});
+                    await supabase.from('expenses').insert({
+                        payer: this.form.payer, 
+                        amount: this.form.amount, 
+                        currency: this.form.currency, 
+                        ledger_id: '3a5518b8-4d79-a34f-a5cb8900decb'
+                    });
                     this.form.amount = '';
                     this.load();
                 },

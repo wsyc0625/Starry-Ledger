@@ -7,11 +7,17 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <style>
+    /* 防止 Vue 模板在加载未完成时闪烁/露出源码 */
+    [v-cloak] {
+      display: none !important;
+    }
+    
     body {
       font-family: 'Poppins', 'Noto Sans SC', sans-serif;
       background: radial-gradient(circle at bottom, #0f172a 0%, #020617 100%);
@@ -79,19 +85,19 @@
       </div>
     </header>
 
-    <section class="glass-card rounded-2xl p-3 md:p-4 mb-4 md:mb-6 flex flex-wrap gap-3 items-center">
+    <section class="glass-card rounded-2xl p-4 mb-4 md:mb-6 flex flex-wrap gap-3 items-center">
       <div class="flex items-center gap-1.5 text-xs md:text-sm font-semibold text-slate-300">
         <i class="fa-solid fa-user-friends text-indigo-400"></i>
         <span>{{ t('members') }}:</span>
       </div>
-      <div class="flex gap-3">
-        <div class="flex items-center gap-2 bg-indigo-950/20 border border-indigo-900/40 px-2.5 py-1 rounded-lg">
-          <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
-          <input type="text" v-model="member1" class="bg-transparent text-xs font-semibold text-indigo-200 w-20 text-center focus:outline-none">
+      <div class="flex flex-wrap gap-3">
+        <div class="flex items-center gap-2 bg-indigo-950/40 border border-indigo-900/60 px-3 py-1.5 rounded-xl">
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-400 shrink-0"></span>
+          <input type="text" v-model="member1" class="bg-transparent text-xs font-semibold text-indigo-200 w-24 text-center focus:outline-none placeholder-slate-500" placeholder="Member 1">
         </div>
-        <div class="flex items-center gap-2 bg-amber-950/20 border border-amber-900/40 px-2.5 py-1 rounded-lg">
-          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <input type="text" v-model="member2" class="bg-transparent text-xs font-semibold text-amber-200 w-20 text-center focus:outline-none">
+        <div class="flex items-center gap-2 bg-amber-950/40 border border-amber-900/60 px-3 py-1.5 rounded-xl">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
+          <input type="text" v-model="member2" class="bg-transparent text-xs font-semibold text-amber-200 w-24 text-center focus:outline-none placeholder-slate-500" placeholder="Member 2">
         </div>
       </div>
     </section>
@@ -109,10 +115,10 @@
             <div>
               <label class="block text-[11px] text-slate-400 mb-1">{{ t('payer') }}</label>
               <div class="grid grid-cols-2 gap-2">
-                <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2 rounded-xl border text-xs md:text-sm transition font-medium">
+                <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2.5 rounded-xl border text-xs md:text-sm transition font-medium">
                   {{ member1 }}
                 </button>
-                <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-amber-600/30 border-amber-500 text-amber-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2 rounded-xl border text-xs md:text-sm transition font-medium">
+                <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-amber-600/30 border-amber-500 text-amber-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2.5 rounded-xl border text-xs md:text-sm transition font-medium">
                   {{ member2 }}
                 </button>
               </div>
@@ -122,8 +128,8 @@
               <label class="block text-[11px] text-slate-400 mb-1">{{ t('amount') }}</label>
               <div class="flex gap-2">
                 <div class="relative flex-1">
-                  <span class="absolute left-3 top-2 text-slate-500 font-semibold text-sm">{{ form.currency }}</span>
-                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-1.5 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 text-base font-mono">
+                  <span class="absolute left-3 top-2.5 text-slate-500 font-semibold text-sm">{{ form.currency }}</span>
+                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 text-base font-mono">
                 </div>
                 <select v-model="form.currency" class="bg-slate-800 border border-slate-700 rounded-xl px-3 text-xs md:text-sm text-slate-300 focus:outline-none">
                   <option value="SGD">SGD</option>
@@ -150,11 +156,11 @@
             <div class="grid grid-cols-12 gap-2">
               <div class="col-span-5">
                 <label class="block text-[11px] text-slate-400 mb-1">{{ t('date') }}</label>
-                <input type="date" v-model="form.date" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-1.5 px-2 text-xs text-slate-300 focus:outline-none">
+                <input type="date" v-model="form.date" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 px-2 text-xs text-slate-300 focus:outline-none">
               </div>
               <div class="col-span-7">
                 <label class="block text-[11px] text-slate-400 mb-1">{{ t('remark') }}</label>
-                <input type="text" v-model="form.remark" placeholder="..." class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-1.5 px-3 text-xs text-slate-300 focus:outline-none">
+                <input type="text" v-model="form.remark" placeholder="..." class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 px-3 text-xs text-slate-300 focus:outline-none">
               </div>
             </div>
 
@@ -189,143 +195,4 @@
               </div>
             </div>
 
-            <div class="bg-amber-950/15 p-2.5 rounded-xl border border-amber-900/20">
-              <div class="flex justify-between items-center mb-1">
-                <span class="text-xs font-semibold text-amber-300 flex items-center gap-1.5">
-                  <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>{{ member2 }}
-                </span>
-              </div>
-              <div class="grid grid-cols-2 gap-3 mt-1">
-                <div>
-                  <p class="text-[9px] text-slate-500">{{ t('today') }}</p>
-                  <p class="text-sm font-bold text-slate-200 font-mono">S$ {{ totalTodayM2 }}</p>
-                </div>
-                <div>
-                  <p class="text-[9px] text-slate-500">{{ t('thisWeek') }}</p>
-                  <p class="text-sm font-bold text-slate-200 font-mono">S$ {{ totalThisWeekM2 }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="pt-3 border-t border-slate-800/60 flex justify-between items-center">
-            <div class="flex flex-col">
-              <span class="text-[9px] text-slate-500">{{ t('monthSelector') }}</span>
-              <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-[10px] rounded px-1.5 py-0.5 mt-0.5 text-slate-300 focus:outline-none">
-            </div>
-            <div class="text-right">
-              <span class="text-[10px] text-indigo-300">{{ t('thisMonthTotal') }}</span>
-              <p class="text-base font-bold text-indigo-200 font-mono">S$ {{ totalMonth }}</p>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <section class="lg:col-span-7 space-y-4 md:space-y-6">
-        <div class="glass-card rounded-2xl p-6 hidden lg:block">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-chart-simple text-amber-400"></i> {{ t('doubleComparison') }}
-            </h2>
-            <div class="flex gap-1.5 bg-slate-800/80 p-0.5 rounded-lg border border-slate-700">
-              <button @click="compareRange = 'daily'" :class="compareRange === 'daily' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition">
-                {{ t('compareDaily') }}
-              </button>
-              <button @click="compareRange = 'weekly'" :class="compareRange === 'weekly' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition">
-                {{ t('compareWeekly') }}
-              </button>
-              <button @click="compareRange = 'monthly'" :class="compareRange === 'monthly' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition">
-                {{ t('compareMonthly') }}
-              </button>
-            </div>
-          </div>
-          <div class="relative w-full h-48 md:h-64">
-            <canvas id="comparisonChart"></canvas>
-          </div>
-        </div>
-
-        <div class="glass-card rounded-2xl p-4 md:p-6">
-          <div class="flex flex-col gap-3 mb-4">
-            <div class="flex justify-between items-center flex-wrap gap-2">
-              <h2 class="text-base md:text-lg font-semibold text-slate-200 flex items-center gap-2">
-                <i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}
-              </h2>
-              <div class="flex items-center gap-2">
-                <button @click="exportToCSV" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs px-3.5 py-1.5 rounded-lg transition items-center gap-1.5 shadow-md flex">
-                  <i class="fa-solid fa-file-csv text-sm"></i> {{ t('export') }}
-                </button>
-                <div class="text-[10px] md:text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700">
-                  {{ filteredRecords.length }} {{ t('items') }}
-                </div>
-              </div>
-            </div>
-
-            <div class="flex gap-1.5 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80 self-start">
-              <button @click="filterRange = 'today'" :class="filterRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300 font-semibold' : 'text-slate-400 border-transparent'" class="text-xs px-3.5 py-1.5 rounded-lg border transition">
-                {{ t('rangeToday') }}
-              </button>
-              <button @click="filterRange = 'week'" :class="filterRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300 font-semibold' : 'text-slate-400 border-transparent'" class="text-xs px-3.5 py-1.5 rounded-lg border transition">
-                {{ t('rangeWeek') }}
-              </button>
-              <button @click="filterRange = 'month'" :class="filterRange === 'month' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300 font-semibold' : 'text-slate-400 border-transparent'" class="text-xs px-3.5 py-1.5 rounded-lg border transition">
-                {{ t('rangeMonth') }}
-              </button>
-            </div>
-          </div>
-
-          <div class="space-y-2 max-h-[350px] md:max-h-[400px] overflow-y-auto pr-0.5">
-            <div v-if="loading" class="text-center py-8 text-slate-500">
-              <i class="fa-solid fa-circle-notch animate-spin text-lg mb-2"></i>
-              <p class="text-xs">{{ t('loading') }}...</p>
-            </div>
-            
-            <div v-else-if="filteredRecords.length === 0" class="text-center py-10 text-slate-600 text-xs">
-              <i class="fa-regular fa-folder-open text-xl mb-1.5 block"></i>
-              {{ t('noRecords') }}
-            </div>
-
-            <div v-else v-for="item in filteredRecords" :key="item.id" class="group flex items-center justify-between p-3 rounded-xl bg-slate-900/35 hover:bg-slate-800/40 border border-slate-850 hover:border-slate-700 transition duration-150">
-              <div class="flex items-center gap-2.5">
-                <span :class="item.payer === member1 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'" class="text-[9px] px-1.5 py-0.5 rounded-full border font-semibold">
-                  {{ item.payer }}
-                </span>
-                <div>
-                  <div class="flex items-center gap-1.5">
-                    <i :class="getCategoryIconOnly(item.category)" class="text-xs"></i>
-                    <span class="text-xs md:text-sm font-medium text-slate-200">{{ getCategoryDisplayName(item.category) }}</span>
-                    <span v-if="item.remark" class="text-[10px] text-slate-500 font-normal">({{ item.remark }})</span>
-                  </div>
-                  <p class="text-[9px] text-slate-500 mt-0.5 font-mono">{{ item.date }}</p>
-                </div>
-              </div>
-
-              <div class="flex items-center gap-3">
-                <div class="text-right">
-                  <p class="text-xs md:text-sm font-bold text-slate-200 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
-                  <p v-if="item.currency === 'MYR'" class="text-[9px] text-amber-400/80 font-mono">
-                    RM {{ Number(item.original_amount).toFixed(2) }}
-                  </p>
-                </div>
-                <button @click="deleteRecord(item.id)" class="text-rose-500/75 hover:text-rose-400 lg:opacity-0 lg:group-hover:opacity-100 transition duration-150 p-1">
-                  <i class="fa-regular fa-trash-can text-xs md:text-sm"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-    </div>
-  </div>
-
-  <script>
-    const { createApp, ref, reactive, computed, onMounted, watch, nextTick } = Vue;
-
-    const SUPABASE_URL = 'https://vxbaikkfjyayfxygysfc.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'sb_publishable_GudLGDJg2D69FEJbdy7ksA_4Z8L9DvA';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // 获取精准本地当天日期字符串 (避免时区差导致差一天)
-    const getLocalDateString = () => {
-      const timezoneOffset = new Date().getTimezoneOffset() * 60000;
-      return new Date(
+            <div class="bg-amber-950/15

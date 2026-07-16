@@ -2,855 +2,145 @@
 <html lang="zh-Hans">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>星辰小帐 - Starry Ledger</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Vue 3 CDN -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- Supabase JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* 浪漫渐变星空背景 */
-        body {
-            background: linear-gradient(135deg, #090d16 0%, #111029 50%, #1a0822 100%);
-            min-height: 100vh;
-            color: #f8fafc;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-        /* 隐藏滚动条 */
-        ::-webkit-scrollbar {
-            width: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.02);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-        [v-cloak] {
-            display: none !important;
-        }
-        /* Toast 飞入动画 */
-        .toast-enter-active, .toast-leave-active {
-            transition: all 0.3s ease;
-        }
-        .toast-enter-from {
-            transform: translateY(-20px);
-            opacity: 0;
-        }
-        .toast-leave-to {
-            transform: translateY(-20px);
-            opacity: 0;
-        }
+        body { background: radial-gradient(circle at top right, #1a1a2e, #0f0f1a); min-height: 100vh; color: #e2e8f0; }
+        [v-cloak] { display: none !important; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
-<body class="px-4 py-6 md:py-10">
-
-    <div id="app" v-cloak class="max-w-md mx-auto lg:max-w-6xl lg:px-6">
-        
-        <!-- 🌌 星空飘浮 Toast 通知系统 -->
-        <div class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col space-y-2 pointer-events-none">
-            <div 
-                v-for="toast in toasts" 
-                :key="toast.id" 
-                class="bg-slate-900/90 backdrop-blur-md border border-amber-500/30 text-slate-100 text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl flex items-center space-x-2 animate-bounce"
-            >
-                <span>✨</span>
-                <span>{{ toast.text }}</span>
+<body class="p-2 md:p-6">
+    <div id="app" v-cloak class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- 左侧：记账与看板 (手机适配) -->
+        <div class="lg:col-span-5 space-y-6">
+            <div class="glass p-4 rounded-2xl flex justify-between items-center">
+                <div class="flex gap-2 font-bold text-sm">
+                    <span :class="{'text-indigo-400': player === 'player1'}">小星 ✨</span>
+                    <span>|</span>
+                    <span :class="{'text-pink-400': player === 'player2'}">小辰</span>
+                </div>
+                <button @click="fetchLiveRate" class="text-xs bg-slate-700 px-3 py-1 rounded-full">SGD: 1 ≈ {{ exchangeRate }} MYR</button>
             </div>
-        </div>
 
-        <!-- 💡 场景 1：如果检测到没有配置 Supabase 密钥，展示极其优雅的“配置指引页面” -->
-        <div v-if="isConfigMissing" class="max-w-md mx-auto mt-12 bg-slate-900/80 backdrop-blur-md border border-amber-500/30 rounded-2xl p-6 text-center shadow-2xl">
-            <div class="text-5xl mb-4">✨</div>
-            <h2 class="text-xl font-bold text-amber-300 mb-2">星辰小帐配置指引</h2>
-            <p class="text-xs text-slate-300 mb-6 leading-relaxed">
-                欢迎来到星辰小帐！为了使账单能够永久保存并在情侣手机间同步，你需要填入你专属的 Supabase 数据库信息。
-            </p>
-            
-            <div class="space-y-4 text-left mb-6">
-                <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
-                    <p class="text-xs font-semibold text-indigo-300 mb-1">当前检测到的值：</p>
-                    <p class="text-[11px] text-red-400 font-mono overflow-x-auto">URL: {{ supabaseUrl }}</p>
-                    <p class="text-[11px] text-red-400 font-mono overflow-x-auto mt-1">KEY: {{ supabaseKey }}</p>
+            <div class="glass p-6 rounded-2xl">
+                <h2 class="text-sm text-slate-400 mb-4">星辰消费 PK 榜</h2>
+                <div class="flex h-2 rounded-full overflow-hidden mb-2">
+                    <div class="bg-indigo-500" :style="{width: pkProgress + '%'}"></div>
+                    <div class="bg-pink-500" :style="{width: (100 - pkProgress) + '%'}"></div>
+                </div>
+                <div class="flex justify-between text-sm font-bold">
+                    <span>小星: {{ stats.player1 }}</span>
+                    <span>小辰: {{ stats.player2 }}</span>
                 </div>
             </div>
-            
-            <div class="text-xs text-slate-400 italic">
-                “每一笔微小的消费，都是星河中闪烁的记忆。”
-            </div>
-        </div>
 
-        <!-- 💡 场景 2：配置完好，正常加载星辰小帐应用 -->
-        <div v-else class="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
-            
-            <!-- 📱 左栏：手机版完整功能（PC上自动变成左侧面板） -->
-            <div class="lg:col-span-5 space-y-4">
-                
-                <!-- 顶部栏：名字自定义与中英切换 -->
-                <div class="flex justify-between items-center bg-slate-900/60 backdrop-blur-md p-3 rounded-2xl border border-white/5 shadow-lg">
-                    <div class="flex items-center space-x-2 bg-slate-950/40 px-3 py-1 rounded-full border border-white/5">
-                        <input 
-                            class="w-16 bg-transparent text-center text-xs font-bold text-indigo-300 outline-none focus:border-b focus:border-indigo-500" 
-                            v-model="player1Name" 
-                            @input="saveLocalSettings" 
-                            placeholder="小星" 
-                        />
-                        <span class="text-[10px] text-amber-400/60 font-bold">✨</span>
-                        <input 
-                            class="w-16 bg-transparent text-center text-xs font-bold text-fuchsia-300 outline-none focus:border-b focus:border-fuchsia-500" 
-                            v-model="player2Name" 
-                            @input="saveLocalSettings" 
-                            placeholder="小辰" 
-                        />
-                    </div>
-                    
-                    <button 
-                        @click="toggleLanguage" 
-                        class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full border border-white/5 transition active:scale-95"
-                    >
-                        {{ currentLocale === 'zh-Hans' ? 'English' : '中文' }}
+            <div class="glass p-6 rounded-2xl">
+                <h2 class="text-sm mb-4">添加新账单</h2>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button @click="player='player1'" :class="player==='player1'?'bg-indigo-600':'bg-slate-700'" class="p-2 rounded-xl text-sm">小星</button>
+                    <button @click="player='player2'" :class="player==='player2'?'bg-pink-600':'bg-slate-700'" class="p-2 rounded-xl text-sm">小辰</button>
+                </div>
+                <div class="grid grid-cols-5 gap-2 mb-4">
+                    <button v-for="c in categories" :key="c.id" @click="category=c.id" :class="category===c.id?'border-indigo-400':'border-transparent'" class="border p-2 rounded-xl bg-slate-800 text-center text-xs">
+                        {{c.icon}}<br>{{c.name}}
                     </button>
                 </div>
-
-                <!-- 汇率浮动提示条 -->
-                <div class="bg-gradient-to-r from-indigo-950/60 to-purple-950/60 border border-indigo-500/20 rounded-xl p-3 shadow-md">
-                    <div class="flex justify-between items-center">
-                        <div class="text-xs text-indigo-200 flex items-center">
-                            <span class="mr-1.5">💡</span>
-                            <span>{{ t('exchangeRateTip') }} 1 SGD = {{ exchangeRate }} MYR</span>
-                        </div>
-                        <button 
-                            @click="toggleDisplayCurrency" 
-                            class="bg-indigo-600/80 hover:bg-indigo-600 active:bg-indigo-700 text-white text-[10px] font-bold px-2.5 py-1 rounded-md transition"
-                        >
-                            {{ displayCurrency }} {{ t('displaySuffix') }} 🔄
-                        </button>
-                    </div>
+                <div class="flex gap-2">
+                    <select v-model="currency" class="bg-slate-800 rounded-xl px-2 text-sm">
+                        <option value="SGD">SGD</option>
+                        <option value="MYR">MYR</option>
+                    </select>
+                    <input v-model="amount" type="number" placeholder="金额" class="flex-1 bg-slate-800 rounded-xl px-4 py-2 text-sm">
+                    <button @click="saveExpense" class="bg-blue-600 px-6 rounded-xl text-sm font-bold">保存</button>
                 </div>
-
-                <!-- PK 核心进度卡片 -->
-                <div class="bg-slate-900/80 backdrop-blur-md rounded-2xl p-4 border border-white/5 shadow-xl">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-sm font-bold text-slate-200 flex items-center">
-                            <span class="text-amber-400 mr-1.5">🪐</span> {{ t('pkTitle') }}
-                        </h3>
-                        <!-- 统计维度筛选 -->
-                        <div class="flex bg-slate-950 p-0.5 rounded-lg border border-white/5">
-                            <button 
-                                v-for="p in ['day', 'week', 'month']" 
-                                :key="p"
-                                @click="setPeriod(p)"
-                                class="text-[10px] font-bold px-3 py-1 rounded-md transition"
-                                :class="period === p ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'"
-                            >
-                                {{ t(p) }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 炫彩双向对比条 -->
-                    <div class="h-6 bg-slate-950 rounded-full flex overflow-hidden border border-white/5 my-4 p-0.5">
-                        <div 
-                            class="bg-gradient-to-r from-blue-600 to-indigo-500 flex items-center justify-center transition-all duration-500 rounded-l-full"
-                            :style="{ width: player1Percentage + '%' }"
-                        >
-                            <span class="text-[9px] font-extrabold text-white truncate px-1" v-if="player1Percentage > 15">
-                                {{ player1Name }}: {{ player1Percentage }}%
-                            </span>
-                        </div>
-                        <div 
-                            class="bg-gradient-to-r from-fuchsia-500 to-pink-600 flex items-center justify-center transition-all duration-500 rounded-r-full"
-                            :style="{ width: player2Percentage + '%' }"
-                        >
-                            <span class="text-[9px] font-extrabold text-white truncate px-1" v-if="player2Percentage > 15">
-                                {{ player2Name }}: {{ player2Percentage }}%
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- 消费合计信息 -->
-                    <div class="grid grid-cols-2 gap-4 pt-3 border-t border-white/5">
-                        <div class="text-center">
-                            <p class="text-[10px] text-slate-400 mb-0.5">{{ player1Name }} ({{ periodText }})</p>
-                            <p class="text-lg font-bold text-indigo-400">{{ currencySymbol }}{{ player1TotalConverted.toFixed(2) }}</p>
-                        </div>
-                        <div class="text-center border-l border-white/5">
-                            <p class="text-[10px] text-slate-400 mb-0.5">{{ player2Name }} ({{ periodText }})</p>
-                            <p class="text-lg font-bold text-fuchsia-400">{{ currencySymbol }}{{ player2TotalConverted.toFixed(2) }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 记账表单卡片 -->
-                <div class="bg-slate-900/80 backdrop-blur-md rounded-2xl p-4 border border-white/5 shadow-xl">
-                    <h3 class="text-xs font-bold text-slate-300 mb-3">{{ t('addRecord') }}</h3>
-                    
-                    <!-- 选择记账人 -->
-                    <div class="grid grid-cols-2 gap-2 p-1 bg-slate-950 rounded-xl border border-white/5 mb-4">
-                        <button 
-                            @click="form.payer = 'player1'"
-                            class="text-xs font-bold py-2 rounded-lg transition-all"
-                            :class="form.payer === 'player1' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'"
-                        >
-                            👤 {{ player1Name }}
-                        </button>
-                        <button 
-                            @click="form.payer = 'player2'"
-                            class="text-xs font-bold py-2 rounded-lg transition-all"
-                            :class="form.payer === 'player2' ? 'bg-fuchsia-600 text-white shadow-md' : 'text-slate-400'"
-                        >
-                            👤 {{ player2Name }}
-                        </button>
-                    </div>
-
-                    <!-- 分类网格选择 -->
-                    <div class="grid grid-cols-5 gap-2 mb-4">
-                        <button 
-                            v-for="cat in presetCategories" 
-                            :key="cat.value"
-                            @click="form.category = cat.value"
-                            class="flex flex-col items-center justify-center p-2 rounded-xl transition border"
-                            :class="form.category === cat.value ? 'bg-indigo-950/40 border-indigo-500/40 text-indigo-200' : 'bg-slate-950/40 border-transparent text-slate-400'"
-                        >
-                            <span class="text-xl mb-1">{{ cat.icon }}</span>
-                            <span class="text-[9px]">{{ t(cat.labelKey) }}</span>
-                        </button>
-                    </div>
-
-                    <!-- 金额和提交栏 -->
-                    <div class="flex items-center space-x-2">
-                        <!-- 原始货币选择 -->
-                        <button 
-                            @click="toggleFormCurrency"
-                            class="bg-slate-950 hover:bg-slate-800 border border-white/10 px-3 py-2.5 rounded-xl font-bold text-xs text-slate-200 flex items-center transition"
-                        >
-                            {{ form.currency }} <span class="text-[8px] text-slate-500 ml-1">▼</span>
-                        </button>
-                        
-                        <div class="flex-1 bg-slate-950 border border-white/5 rounded-xl px-3 py-2 flex items-center">
-                            <input 
-                                type="number" 
-                                pattern="[0-9]*"
-                                inputmode="decimal"
-                                class="bg-transparent text-slate-200 font-bold text-sm w-full outline-none"
-                                v-model="form.amount"
-                                :placeholder="t('enterAmount')"
-                                @keyup.enter="submitExpense"
-                            />
-                        </div>
-
-                        <button 
-                            @click="submitExpense"
-                            class="bg-gradient-to-r from-indigo-600 to-fuchsia-600 active:opacity-90 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg flex items-center justify-center"
-                        >
-                            {{ t('submit') }}
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 📱 手机端：流水明细面板（PC端会隐藏，采用更大更强的右侧版） -->
-                <div class="block lg:hidden bg-slate-900/80 backdrop-blur-md rounded-2xl p-4 border border-white/5 shadow-xl">
-                    <h3 class="text-xs font-bold text-slate-300 mb-3">{{ t('historyTitle') }}</h3>
-
-                    <div v-if="loading" class="text-center py-6 text-xs text-slate-500">
-                        🌌 星移斗转，正在拉取账单...
-                    </div>
-
-                    <div v-else-if="filteredExpenses.length === 0" class="text-center py-8 text-xs text-slate-500">
-                        ☕ {{ t('noRecords') }}
-                    </div>
-
-                    <div v-else class="space-y-4 max-h-[300px] overflow-y-auto pr-1">
-                        <div v-for="(group, dateKey) in computedGroupData" :key="dateKey" class="space-y-2">
-                            <div class="sticky top-0 bg-slate-900/90 py-0.5 z-10">
-                                <span class="text-[9px] font-extrabold bg-indigo-950/80 text-indigo-300 border border-indigo-500/15 px-2 py-0.5 rounded-full">
-                                    {{ dateKey }}
-                                </span>
-                            </div>
-                            
-                            <div 
-                                v-for="item in group" 
-                                :key="item.id" 
-                                class="flex justify-between items-center p-2 rounded-xl bg-slate-950/30 border border-white/5"
-                            >
-                                <div class="flex items-center space-x-2.5">
-                                    <span class="text-xl">{{ getCategoryIcon(item.category) }}</span>
-                                    <div class="flex flex-col">
-                                        <span class="text-xs font-semibold text-slate-200">{{ t(getCategoryLabelKey(item.category)) }}</span>
-                                        <span class="text-[9px] text-slate-500">{{ formatTime(item.created_at) }}</span>
-                                    </div>
-                                </div>
-                                <div class="text-right flex flex-col items-end">
-                                    <span 
-                                        class="text-[9px] font-bold px-1.5 py-0.5 rounded-md mb-0.5"
-                                        :class="item.payer === 'player1' ? 'bg-indigo-950/60 text-indigo-300' : 'bg-fuchsia-950/60 text-fuchsia-300'"
-                                    >
-                                        {{ item.payer === 'player1' ? player1Name : player2Name }}
-                                    </span>
-                                    <span class="text-xs font-bold text-slate-200">
-                                        {{ item.amount.toFixed(2) }} {{ item.currency }}
-                                    </span>
-                                    <span class="text-[9px] text-slate-400" v-if="item.currency !== displayCurrency">
-                                        ≈ {{ currencySymbol }}{{ getConvertedValue(item.amount, item.currency).toFixed(2) }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
             </div>
+        </div>
 
-            <!-- 💻 右栏：PC端超级大细节控制台 (手机端隐藏) -->
-            <div class="hidden lg:block lg:col-span-7 space-y-4">
-                
-                <!-- 预算追踪进度条 & 数据分析 -->
-                <div class="grid grid-cols-2 gap-4">
-                    <!-- 预算控制 -->
-                    <div class="bg-slate-900/80 backdrop-blur-md rounded-2xl p-4 border border-white/5 shadow-xl flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <h4 class="text-xs font-bold text-slate-400">📊 {{ t('monthBudget') }}</h4>
-                                <span class="text-xs font-bold text-amber-300">{{ currencySymbol }}{{ monthlyBudget }}</span>
-                            </div>
-                            <div class="text-2xl font-black text-slate-100">
-                                {{ ((player1TotalConverted + player2TotalConverted) / monthlyBudget * 100).toFixed(1) }}%
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden p-0.5 border border-white/5">
-                                <div 
-                                    class="bg-gradient-to-r from-amber-500 to-indigo-500 h-full rounded-full transition-all duration-500"
-                                    :style="{ width: Math.min(((player1TotalConverted + player2TotalConverted) / monthlyBudget * 100), 100) + '%' }"
-                                ></div>
-                            </div>
-                            <div class="flex justify-between items-center text-[10px] text-slate-500 mt-1.5">
-                                <span>已用: {{ currencySymbol }}{{ (player1TotalConverted + player2TotalConverted).toFixed(2) }}</span>
-                                <button @click="setBudgetPrompt" class="hover:text-amber-300 transition">⚙️ 调整预算</button>
-                            </div>
-                        </div>
+        <!-- 右侧：PC 模式高级面板 -->
+        <div class="lg:col-span-7 glass p-6 rounded-2xl">
+            <h2 class="text-lg font-bold mb-6">账单明细列表</h2>
+            <div class="overflow-y-auto max-h-[600px] space-y-2">
+                <div v-for="ex in expenses" :key="ex.id" class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg hover:bg-slate-700 transition">
+                    <div>
+                        <span class="text-xs text-slate-400">{{ new Date(ex.created_at).toLocaleDateString() }}</span>
+                        <p class="text-sm font-bold">{{ ex.payer === 'player1' ? '小星' : '小辰' }} - {{ ex.category }}</p>
                     </div>
-
-                    <!-- 分类饼状图/雷达图替代栏 (原生比例条) -->
-                    <div class="bg-slate-900/80 backdrop-blur-md rounded-2xl p-4 border border-white/5 shadow-xl">
-                        <h4 class="text-xs font-bold text-slate-400 mb-2">🍰 {{ t('categoryShare') }}</h4>
-                        <div class="space-y-1.5 max-h-[110px] overflow-y-auto pr-1">
-                            <div v-for="stat in categoryStats" :key="stat.value" class="text-[11px]">
-                                <div class="flex justify-between text-slate-300 mb-0.5">
-                                    <span>{{ stat.icon }} {{ t(stat.labelKey) }}</span>
-                                    <span class="font-bold">{{ currencySymbol }}{{ stat.total.toFixed(2) }} ({{ stat.percent }}%)</span>
-                                </div>
-                                <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
-                                    <div class="bg-indigo-500 h-full" :style="{ width: stat.percent + '%' }"></div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="flex items-center gap-4">
+                        <span class="font-mono text-sm">{{ ex.amount }} {{ ex.currency }}</span>
+                        <button @click="deleteExpense(ex.id)" class="text-red-400 hover:text-red-300 text-xs px-2">删除</button>
                     </div>
                 </div>
-
-                <!-- PC 高级账单流水控制中心 -->
-                <div class="bg-slate-900/80 backdrop-blur-md rounded-2xl p-5 border border-white/5 shadow-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-sm font-bold text-slate-200 flex items-center">
-                            <span>📋</span> <span class="ml-1.5">{{ t('historyTitle') }} (PC版)</span>
-                        </h3>
-                        <div class="flex items-center space-x-2">
-                            <!-- 导出按钮 -->
-                            <button 
-                                @click="exportToCSV"
-                                class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/20 text-xs px-3 py-1.5 rounded-lg font-semibold transition active:scale-95 flex items-center space-x-1"
-                            >
-                                <span>📥</span> <span>{{ t('exportCSV') }}</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 搜索与筛选工具栏 -->
-                    <div class="grid grid-cols-3 gap-3 mb-4">
-                        <div class="bg-slate-950 border border-white/5 rounded-xl px-3 py-2 flex items-center">
-                            <span class="text-slate-500 text-xs mr-2">🔍</span>
-                            <input 
-                                type="text" 
-                                class="bg-transparent text-slate-200 text-xs w-full outline-none" 
-                                v-model="pcSearchQuery" 
-                                :placeholder="t('searchPlaceholder')"
-                            />
-                        </div>
-                        <select 
-                            v-model="pcCategoryFilter"
-                            class="bg-slate-950 border border-white/5 text-slate-300 text-xs rounded-xl px-3 py-2 outline-none cursor-pointer"
-                        >
-                            <option value="all">📁 所有分类</option>
-                            <option v-for="cat in presetCategories" :value="cat.value" :key="cat.value">
-                                {{ cat.icon }} {{ t(cat.labelKey) }}
-                            </option>
-                        </select>
-                        <select 
-                            v-model="pcPayerFilter"
-                            class="bg-slate-950 border border-white/5 text-slate-300 text-xs rounded-xl px-3 py-2 outline-none cursor-pointer"
-                        >
-                            <option value="all">👤 所有记账人</option>
-                            <option value="player1">{{ player1Name }}</option>
-                            <option value="player2">{{ player2Name }}</option>
-                        </select>
-                    </div>
-
-                    <!-- 数据加载中 -->
-                    <div v-if="loading" class="text-center py-12 text-xs text-slate-500">
-                        🌌 星移斗转，正在拉取账单...
-                    </div>
-
-                    <!-- 暂无数据 -->
-                    <div v-else-if="pcFilteredExpenses.length === 0" class="text-center py-16 text-xs text-slate-500">
-                        ☕ {{ t('noRecords') }}
-                    </div>
-
-                    <!-- 宽屏大表格 -->
-                    <div v-else class="overflow-y-auto max-h-[350px] pr-1">
-                        <table class="w-full text-left text-xs">
-                            <thead>
-                                <tr class="text-slate-500 border-b border-white/5 pb-2">
-                                    <th class="pb-2">日期</th>
-                                    <th class="pb-2">记账人</th>
-                                    <th class="pb-2">分类</th>
-                                    <th class="pb-2 text-right">原始金额</th>
-                                    <th class="pb-2 text-right">折算 ({{ displayCurrency }})</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-white/5">
-                                <tr v-for="item in pcFilteredExpenses" :key="item.id" class="hover:bg-white/[0.02] transition">
-                                    <td class="py-2.5 text-slate-400">{{ formatFullDate(item.created_at) }}</td>
-                                    <td class="py-2.5">
-                                        <span 
-                                            class="px-2 py-0.5 rounded font-bold text-[10px]"
-                                            :class="item.payer === 'player1' ? 'bg-indigo-950/60 text-indigo-300' : 'bg-fuchsia-950/60 text-fuchsia-300'"
-                                        >
-                                            {{ item.payer === 'player1' ? player1Name : player2Name }}
-                                        </span>
-                                    </td>
-                                    <td class="py-2.5 text-slate-200">
-                                        {{ getCategoryIcon(item.category) }} {{ t(getCategoryLabelKey(item.category)) }}
-                                    </td>
-                                    <td class="py-2.5 text-right font-mono text-slate-300">
-                                        {{ item.amount.toFixed(2) }} {{ item.currency }}
-                                    </td>
-                                    <td class="py-2.5 text-right font-bold text-slate-100 font-mono">
-                                        {{ currencySymbol }}{{ getConvertedValue(item.amount, item.currency).toFixed(2) }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
+                <p v-if="expenses.length === 0" class="text-center text-slate-500 py-10 text-sm">暂无明细记录</p>
             </div>
-
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // ⚡ 已自动填入你专属的 SUPABASE API 密钥
-        // ==========================================
-        const SUPABASE_URL = 'https://vxbaikkfjyayfxygysfc.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'sb_publishable_GudLGDJg2D69FEJbdy7ksA_4Z8L9DvA'; 
-        const MY_LEDGER_ID = '3a5518b8-4d79-a34f-a5cb8900decb';
-
-        // 初始化 Supabase 实例
-        let supabaseClient = null;
-        const isConfigMissing = !SUPABASE_URL || SUPABASE_URL.includes('YOUR_SUPABASE_URL') || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY');
-
-        if (!isConfigMissing) {
-            try {
-                if (window.supabase) {
-                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                }
-            } catch (e) {
-                console.error("Supabase 初始化发生异常：", e);
-            }
-        }
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const { createApp } = Vue;
-
         createApp({
             data() {
                 return {
-                    // 配置缺失状态检测
-                    isConfigMissing: isConfigMissing,
-                    supabaseUrl: SUPABASE_URL,
-                    supabaseKey: SUPABASE_ANON_KEY,
-
-                    // 用户设置与语言
-                    player1Name: localStorage.getItem('p1_name') || '小星',
-                    player2Name: localStorage.getItem('p2_name') || '小辰',
-                    currentLocale: localStorage.getItem('locale') || 'zh-Hans',
-                    
-                    // 汇率与显示币种
-                    exchangeRate: 3.15, 
-                    displayCurrency: localStorage.getItem('display_currency') || 'SGD', 
-                    monthlyBudget: parseFloat(localStorage.getItem('monthly_budget')) || 1000.00,
-                    
-                    // 报表周期状态：day, week, month
-                    period: 'day', 
-                    expenses: [], 
-                    loading: false,
-
-                    // 记账表单
-                    form: {
-                        payer: 'player1',
-                        category: 'food',
-                        currency: 'SGD',
-                        amount: ''
-                    },
-
-                    // PC专属搜索与过滤
-                    pcSearchQuery: '',
-                    pcCategoryFilter: 'all',
-                    pcPayerFilter: 'all',
-
-                    // 动态 Toast 通知数组
-                    toasts: [],
-                    toastId: 0,
-
-                    presetCategories: [
-                        { value: 'food', icon: '🍔', labelKey: 'catFood' },
-                        { value: 'shopping', icon: '🛒', labelKey: 'catShopping' },
-                        { value: 'transport', icon: '🚗', labelKey: 'catTransport' },
-                        { value: 'entertainment', icon: '🎬', labelKey: 'catEntertainment' },
-                        { value: 'other', icon: '📝', labelKey: 'catOther' }
-                    ],
-
-                    locales: {
-                        'zh-Hans': {
-                            exchangeRateTip: '今日参考汇率:',
-                            displaySuffix: '展示',
-                            pkTitle: '星辰消费 PK 榜',
-                            day: '天份',
-                            week: '一周',
-                            month: '月份',
-                            todayText: '今日',
-                            weekText: '本周',
-                            monthText: '本月',
-                            addRecord: '✍️ 添加新帐单',
-                            enterAmount: '填入金额',
-                            submit: '保存',
-                            historyTitle: '📋 账单明细列表',
-                            noRecords: '当前区间暂无星辰明细',
-                            saving: '努力保存中...',
-                            saveSuccess: '成功保存一笔星辰记录! 🎉',
-                            saveFail: '保存失败，请检查数据库配置',
-                            invalidAmount: '请先填入有效金额哦',
-                            catFood: '餐饮',
-                            catShopping: '购物',
-                            catTransport: '交通',
-                            catEntertainment: '娱乐',
-                            catOther: '其他',
-                            monthBudget: '月度预警预算',
-                            categoryShare: '分类支出雷达',
-                            exportCSV: '导出 Excel (CSV)',
-                            searchPlaceholder: '输入关键词搜索...'
-                        },
-                        'en': {
-                            exchangeRateTip: 'Ref Rate:',
-                            displaySuffix: 'View',
-                            pkTitle: 'Starry Expense PK',
-                            day: 'Day',
-                            week: 'Week',
-                            month: 'Month',
-                            todayText: 'Today',
-                            weekText: 'This Week',
-                            monthText: 'This Month',
-                            addRecord: '✍️ Add New Record',
-                            enterAmount: 'Amount',
-                            submit: 'Save',
-                            historyTitle: '📋 Transaction Logs',
-                            noRecords: 'No records in this period',
-                            saving: 'Saving...',
-                            saveSuccess: 'Record Saved Successfully! 🎉',
-                            saveFail: 'Save failed, please check DB keys',
-                            invalidAmount: 'Please enter a valid amount',
-                            catFood: 'Food',
-                            catShopping: 'Shop',
-                            catTransport: 'Ride',
-                            catEntertainment: 'Ent.',
-                            catOther: 'Other',
-                            monthBudget: 'Monthly Budget',
-                            categoryShare: 'Categories Share',
-                            exportCSV: 'Export Excel (CSV)',
-                            searchPlaceholder: 'Search transactions...'
-                        }
-                    }
+                    player: 'player1', category: 'food', amount: '', currency: 'SGD',
+                    exchangeRate: 3.15, expenses: [],
+                    categories: [
+                        {id: 'food', name: '餐饮', icon: '🍔'},
+                        {id: 'shopping', name: '购物', icon: '🛒'},
+                        {id: 'transport', name: '交通', icon: '🚗'},
+                        {id: 'fun', name: '娱乐', icon: '🎬'},
+                        {id: 'other', name: '其他', icon: '📝'}
+                    ]
                 }
             },
             computed: {
-                currencySymbol() {
-                    return this.displayCurrency === 'SGD' ? 'S$' : 'RM';
-                },
-                periodText() {
-                    if (this.period === 'day') return this.t('todayText');
-                    if (this.period === 'week') return this.t('weekText');
-                    return this.t('monthText');
-                },
-                filteredExpenses() {
-                    const now = new Date();
-                    return this.expenses.filter(item => {
-                        const itemDate = new Date(item.created_at);
-                        if (this.period === 'day') {
-                            return itemDate.toDateString() === now.toDateString();
-                        } else if (this.period === 'week') {
-                            const past7Days = new Date();
-                            past7Days.setDate(now.getDate() - 7);
-                            return itemDate >= past7Days;
-                        } else if (this.period === 'month') {
-                            return itemDate.getFullYear() === now.getFullYear() && 
-                                   itemDate.getMonth() === now.getMonth();
-                        }
-                        return true;
+                stats() {
+                    let s1 = 0, s2 = 0;
+                    this.expenses.forEach(e => {
+                        const val = e.currency === 'SGD' ? e.amount : e.amount / this.exchangeRate;
+                        if (e.payer === 'player1') s1 += val; else s2 += val;
                     });
+                    return { player1: s1.toFixed(2), player2: s2.toFixed(2) };
                 },
-                pcFilteredExpenses() {
-                    return this.filteredExpenses.filter(item => {
-                        // 1. 搜索词匹配
-                        const noteMatch = item.category.toLowerCase().includes(this.pcSearchQuery.toLowerCase()) || 
-                                          item.amount.toString().includes(this.pcSearchQuery);
-                        // 2. 分类匹配
-                        const catMatch = this.pcCategoryFilter === 'all' || item.category === this.pcCategoryFilter;
-                        // 3. 记账人匹配
-                        const payerMatch = this.pcPayerFilter === 'all' || item.payer === this.pcPayerFilter;
-
-                        return noteMatch && catMatch && payerMatch;
-                    });
-                },
-                player1TotalConverted() {
-                    return this.filteredExpenses
-                        .filter(item => item.payer === 'player1')
-                        .reduce((sum, item) => sum + this.getConvertedValue(item.amount, item.currency), 0);
-                },
-                player2TotalConverted() {
-                    return this.filteredExpenses
-                        .filter(item => item.payer === 'player2')
-                        .reduce((sum, item) => sum + this.getConvertedValue(item.amount, item.currency), 0);
-                },
-                player1Percentage() {
-                    const total = this.player1TotalConverted + this.player2TotalConverted;
-                    if (total === 0) return 50;
-                    return Math.round((this.player1TotalConverted / total) * 100);
-                },
-                player2Percentage() {
-                    const total = this.player1TotalConverted + this.player2TotalConverted;
-                    if (total === 0) return 50;
-                    return 100 - this.player1Percentage;
-                },
-                computedGroupData() {
-                    const groups = {};
-                    this.filteredExpenses.forEach(item => {
-                        const date = new Date(item.created_at);
-                        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                        const day = date.getDate().toString().padStart(2, '0');
-                        
-                        let weekDay = '';
-                        if (this.currentLocale === 'zh-Hans') {
-                            const weekDaysZh = ['日', '一', '二', '三', '四', '五', '六'];
-                            weekDay = `周${weekDaysZh[date.getDay()]}`;
-                        } else {
-                            const weekDaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                            weekDay = weekDaysEn[date.getDay()];
-                        }
-                        
-                        const key = `${month}-${day} (${weekDay})`;
-                        if (!groups[key]) {
-                            groups[key] = [];
-                        }
-                        groups[key].push(item);
-                    });
-                    return groups;
-                },
-                categoryStats() {
-                    const stats = {};
-                    this.presetCategories.forEach(cat => {
-                        stats[cat.value] = { value: cat.value, icon: cat.icon, labelKey: cat.labelKey, total: 0 };
-                    });
-
-                    let grandTotal = 0;
-                    this.filteredExpenses.forEach(item => {
-                        const val = this.getConvertedValue(item.amount, item.currency);
-                        const cat = item.category || 'other';
-                        if (stats[cat]) {
-                            stats[cat].total += val;
-                            grandTotal += val;
-                        }
-                    });
-
-                    return Object.values(stats).map(item => {
-                        return {
-                            ...item,
-                            percent: grandTotal > 0 ? Math.round((item.total / grandTotal) * 100) : 0
-                        };
-                    }).sort((a, b) => b.total - a.total);
-                }
-            },
-            mounted() {
-                if (!this.isConfigMissing && supabaseClient) {
-                    this.fetchExpenses();
-                    // 每15秒轮询一次，保证极致的实时同步性
-                    setInterval(() => {
-                        this.fetchExpenses();
-                    }, 15000);
+                pkProgress() {
+                    const total = parseFloat(this.stats.player1) + parseFloat(this.stats.player2);
+                    return total === 0 ? 50 : (parseFloat(this.stats.player1) / total) * 100;
                 }
             },
             methods: {
-                t(key) {
-                    return this.locales[this.currentLocale][key] || key;
-                },
-                showToast(text) {
-                    const id = this.toastId++;
-                    this.toasts.push({ id, text });
-                    setTimeout(() => {
-                        this.toasts = this.toasts.filter(t => t.id !== id);
-                    }, 3000);
-                },
-                toggleLanguage() {
-                    this.currentLocale = this.currentLocale === 'zh-Hans' ? 'en' : 'zh-Hans';
-                    localStorage.setItem('locale', this.currentLocale);
-                    this.showToast(this.currentLocale === 'zh-Hans' ? '已切换至中文' : 'Switched to English');
-                },
-                saveLocalSettings() {
-                    localStorage.setItem('p1_name', this.player1Name);
-                    localStorage.setItem('p2_name', this.player2Name);
-                },
-                setPeriod(p) {
-                    this.period = p;
-                },
-                setBudgetPrompt() {
-                    const currentBudget = this.monthlyBudget;
-                    const res = prompt("请输入您和另一半的每月合并记账预算 (" + this.displayCurrency + "):", currentBudget);
-                    if (res && !isNaN(parseFloat(res))) {
-                        this.monthlyBudget = parseFloat(res);
-                        localStorage.setItem('monthly_budget', this.monthlyBudget);
-                        this.showToast('预算更新成功！🎉');
-                    }
-                },
-                toggleDisplayCurrency() {
-                    this.displayCurrency = this.displayCurrency === 'SGD' ? 'MYR' : 'SGD';
-                    localStorage.setItem('display_currency', this.displayCurrency);
-                    this.showToast('视图币种已切换为: ' + this.displayCurrency);
-                },
-                toggleFormCurrency() {
-                    this.form.currency = this.form.currency === 'SGD' ? 'MYR' : 'SGD';
-                },
-                getConvertedValue(amount, fromCurrency) {
-                    const value = parseFloat(amount || 0);
-                    if (fromCurrency === this.displayCurrency) {
-                        return value;
-                    }
-                    if (fromCurrency === 'SGD' && this.displayCurrency === 'MYR') {
-                        return value * this.exchangeRate;
-                    } else {
-                        return value / this.exchangeRate;
-                    }
-                },
-                getCategoryIcon(catValue) {
-                    const cat = this.presetCategories.find(c => c.value === catValue);
-                    return cat ? cat.icon : '📝';
-                },
-                getCategoryLabelKey(catValue) {
-                    const cat = this.presetCategories.find(c => c.value === catValue);
-                    return cat ? cat.labelKey : 'catOther';
-                },
-                formatTime(isoString) {
-                    const date = new Date(isoString);
-                    const hours = date.getHours().toString().padStart(2, '0');
-                    const minutes = date.getMinutes().toString().padStart(2, '0');
-                    return `${hours}:${minutes}`;
-                },
-                formatFullDate(isoString) {
-                    const date = new Date(isoString);
-                    const y = date.getFullYear();
-                    const m = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const d = date.getDate().toString().padStart(2, '0');
-                    return `${y}-${m}-${d} ${this.formatTime(isoString)}`;
-                },
-                async fetchExpenses() {
-                    if (!supabaseClient) return;
+                async fetchLiveRate() {
                     try {
-                        const { data, error } = await supabaseClient
-                            .from('expenses')
-                            .select('*')
-                            .eq('ledger_id', MY_LEDGER_ID)
-                            .order('created_at', { ascending: false });
-                        
-                        if (error) throw error;
-                        this.expenses = data || [];
-                    } catch (err) {
-                        console.error('获取账单失败:', err.message);
-                    }
+                        const res = await fetch('https://api.exchangerate-api.com/v4/latest/SGD');
+                        const data = await res.json();
+                        this.exchangeRate = data.rates.MYR;
+                    } catch(e) { console.error(e); }
                 },
-                async submitExpense() {
-                    if (!supabaseClient) {
-                        this.showToast(this.t('saveFail'));
-                        return;
-                    }
-                    const amountNum = parseFloat(this.form.amount);
-                    if (isNaN(amountNum) || amountNum <= 0) {
-                        this.showToast(this.t('invalidAmount'));
-                        return;
-                    }
-
-                    try {
-                        const { error } = await supabaseClient
-                            .from('expenses')
-                            .insert([
-                                {
-                                    ledger_id: MY_LEDGER_ID,
-                                    payer: this.form.payer,
-                                    category: this.form.category,
-                                    amount: amountNum,
-                                    currency: this.form.currency
-                                }
-                            ]);
-
-                        if (error) throw error;
-
-                        this.showToast(this.t('saveSuccess'));
-                        this.form.amount = '';
-                        this.fetchExpenses();
-                    } catch (err) {
-                        this.showToast(this.t('saveFail') + ": " + err.message);
-                    }
+                async loadData() {
+                    const { data } = await supabase.from('expenses').select('*').order('created_at', {ascending: false});
+                    this.expenses = data || [];
                 },
-                exportToCSV() {
-                    if (this.filteredExpenses.length === 0) {
-                        this.showToast('暂无星辰明细可供导出');
-                        return;
-                    }
-                    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-                    csvContent += "时间,记账人,分类,原始金额,原始币种,折算金额,折算币种\n";
-
-                    this.filteredExpenses.forEach(item => {
-                        const time = this.formatFullDate(item.created_at);
-                        const payer = item.payer === 'player1' ? this.player1Name : this.player2Name;
-                        const category = this.t(this.getCategoryLabelKey(item.category));
-                        const rawAmount = item.amount.toFixed(2);
-                        const rawCurrency = item.currency;
-                        const converted = this.getConvertedValue(item.amount, item.currency).toFixed(2);
-                        const convCurrency = this.displayCurrency;
-
-                        csvContent += `${time},${payer},${category},${rawAmount},${rawCurrency},${converted},${convCurrency}\n`;
+                async saveExpense() {
+                    if(!this.amount) return;
+                    const { error } = await supabase.from('expenses').insert({
+                        payer: this.player, category: this.category, amount: this.amount, currency: this.currency
                     });
-
-                    const encodedUri = encodeURI(csvContent);
-                    const link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
-                    link.setAttribute("download", `星辰小帐_支出明细_${new Date().toISOString().slice(0, 10)}.csv`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    this.showToast('CSV 账单表格导出成功！📥');
+                    if(error) alert('保存失败: ' + error.message);
+                    else { this.amount = ''; this.loadData(); }
+                },
+                async deleteExpense(id) {
+                    await supabase.from('expenses').delete().eq('id', id);
+                    this.loadData();
                 }
+            },
+            mounted() {
+                this.fetchLiveRate();
+                this.loadData();
             }
         }).mount('#app');
     </script>

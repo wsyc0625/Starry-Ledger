@@ -104,12 +104,12 @@
         
         <div class="flex items-center gap-1.5 bg-slate-900/50 px-3 py-1 rounded-xl border border-slate-800">
           <span class="text-xs text-slate-400">SGD:</span>
-          <input type="number" v-model.number="budgetSGD" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400' : 'text-slate-200 focus:border-emerald-500 bg-slate-800/60 border border-slate-700'" class="text-xs px-2 py-0.5 rounded w-16 text-center font-mono focus:outline-none">
+          <input type="number" v-model.number="budgetSGD" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-emerald-500 bg-slate-800/60 border border-slate-700'" class="text-xs px-2 py-0.5 rounded w-16 text-center font-mono focus:outline-none">
         </div>
 
         <div class="flex items-center gap-1.5 bg-slate-900/50 px-3 py-1 rounded-xl border border-slate-800">
           <span class="text-xs text-slate-400">MYR:</span>
-          <input type="number" v-model.number="budgetMYR" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400' : 'text-slate-200 focus:border-emerald-500 bg-slate-800/60 border border-slate-700'" class="text-xs px-2 py-0.5 rounded w-16 text-center font-mono focus:outline-none">
+          <input type="number" v-model.number="budgetMYR" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-emerald-500 bg-slate-800/60 border border-slate-700'" class="text-xs px-2 py-0.5 rounded w-16 text-center font-mono focus:outline-none">
         </div>
 
         <div class="text-xs text-emerald-400 font-semibold bg-emerald-950/30 border border-emerald-900/50 px-3 py-1.5 rounded-xl">
@@ -225,7 +225,7 @@
 
       <section class="lg:col-span-7 space-y-6">
         
-        <div class="glass-card rounded-2xl p-6 hidden md:block">
+        <div class="glass-card rounded-2xl p-6 hidden lg:block">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
               <i class="fa-solid fa-chart-simple text-amber-400"></i> {{ t('doubleComparison') }}
@@ -236,6 +236,9 @@
               </button>
               <button @click="compareRange = 'weekly'" :class="compareRange === 'weekly' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition duration-150">
                 {{ t('compareWeekly') }}
+              </button>
+              <button @click="compareRange = 'monthly'" :class="compareRange === 'monthly' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition duration-150">
+                {{ t('compareMonthly') }}
               </button>
             </div>
           </div>
@@ -251,7 +254,7 @@
               <i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}
             </h2>
             <div class="flex items-center gap-2">
-              <button @click="exportToCSV" class="hidden md:flex bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs px-3.5 py-1.5 rounded-lg transition items-center gap-1.5 shadow-md shadow-amber-500/10">
+              <button @click="exportToCSV" class="hidden lg:flex bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs px-3.5 py-1.5 rounded-lg transition items-center gap-1.5 shadow-md shadow-amber-500/10">
                 <i class="fa-solid fa-file-csv text-sm"></i> {{ t('export') }}
               </button>
               <div class="text-xs text-slate-400 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
@@ -293,7 +296,7 @@
                     RM {{ Number(item.original_amount).toFixed(2) }}
                   </p>
                 </div>
-                <button @click="deleteRecord(item.id)" class="text-slate-600 hover:text-red-400 opacity-0 md:group-hover:opacity-100 transition duration-150 p-1">
+                <button @click="deleteRecord(item.id)" class="text-slate-600 hover:text-red-400 lg:opacity-0 lg:group-hover:opacity-100 transition duration-150 p-1">
                   <i class="fa-regular fa-trash-can"></i>
                 </button>
               </div>
@@ -344,6 +347,7 @@
             doubleComparison: '双人同步消费对比',
             compareDaily: '每日对比',
             compareWeekly: '一周对比',
+            compareMonthly: '每月对比',
             export: '导出 CSV'
           },
           en: {
@@ -372,6 +376,7 @@
             doubleComparison: 'Double Ledger Comparison',
             compareDaily: 'Daily',
             compareWeekly: 'Weekly',
+            compareMonthly: 'Monthly',
             export: 'Export CSV'
           }
         };
@@ -385,17 +390,49 @@
         watch(member1, (val) => { localStorage.setItem('member1', val); updateChart(); });
         watch(member2, (val) => { localStorage.setItem('member2', val); updateChart(); });
 
-        // 分开独立设置的每月双币预算
-        const budgetSGD = ref(parseFloat(localStorage.getItem('budgetSGD')) || 1000);
-        const budgetMYR = ref(parseFloat(localStorage.getItem('budgetMYR')) || 3000);
-        watch(budgetSGD, (val) => localStorage.setItem('budgetSGD', val));
-        watch(budgetMYR, (val) => localStorage.setItem('budgetMYR', val));
+        // 双币预算 (Vue 驱动的值)
+        const budgetSGD = ref(1000);
+        const budgetMYR = ref(3000);
+
+        // 从云端 Supabase 加载预算
+        const fetchCloudBudget = async () => {
+          try {
+            const { data, error } = await supabaseClient
+              .from('starry_config')
+              .select('*')
+              .eq('id', 'global_budget')
+              .single();
+            if (data) {
+              budgetSGD.value = Number(data.budget_sgd);
+              budgetMYR.value = Number(data.budget_myr);
+            }
+          } catch (e) {
+            console.error('Failed to load cloud budget:', e);
+          }
+        };
+
+        // PC端修改后自动同步写入云端数据库
+        const updateCloudBudget = async () => {
+          if (isMobile.value) return; // 手机端无法修改
+          try {
+            await supabaseClient
+              .from('starry_config')
+              .upsert({
+                id: 'global_budget',
+                budget_sgd: budgetSGD.value,
+                budget_myr: budgetMYR.value,
+                updated_at: new Date().toISOString()
+              });
+          } catch (e) {
+            console.error('Failed to sync budget to cloud:', e);
+          }
+        };
 
         // 汇率
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
         watch(exchangeRate, (val) => localStorage.setItem('exchangeRate', val));
 
-        // 分类清单
+        // 分类清单，新增“房租 Rent”
         const categories = [
           '日常伙食 Daily Meal', 
           '餐厅 Restaurant', 
@@ -403,6 +440,7 @@
           '购物 Shopping', 
           '娱乐 Fun', 
           '旅行 Travel', 
+          '房租 Rent',
           '其他 Others'
         ];
 
@@ -413,6 +451,7 @@
           if (cat.includes('购物')) return 'fa-solid fa-bag-shopping text-purple-300';
           if (cat.includes('娱乐')) return 'fa-solid fa-gamepad text-emerald-300';
           if (cat.includes('旅行')) return 'fa-solid fa-plane text-pink-300';
+          if (cat.includes('房租')) return 'fa-solid fa-house-chimney text-amber-400';
           return 'fa-solid fa-circle-notch text-slate-400';
         };
 
@@ -446,6 +485,7 @@
           return Math.round((parseFloat(totalMonth.value) / totalBudgetInSGD.value) * 100);
         });
 
+        // 获取该月的所有账目
         const fetchRecords = async () => {
           loading.value = true;
           try {
@@ -556,10 +596,31 @@
           document.body.removeChild(link);
         };
 
-        // 图表渲染引擎 (支持百分比提示)
-        const updateChart = () => {
+        // 获取全年 12 个月的累积对比数据
+        const fetchYearlyMonthlySummary = async () => {
+          const currentYear = new Date().getFullYear();
+          const startOfYear = `${currentYear}-01-01`;
+          const endOfYear = `${currentYear}-12-31`;
+
+          try {
+            const { data, error } = await supabaseClient
+              .from('starry_ledger')
+              .select('date, amount, payer')
+              .gte('date', startOfYear)
+              .lte('date', endOfYear);
+
+            if (error) throw error;
+            return data || [];
+          } catch (e) {
+            console.error('Failed to load yearly records for comparison:', e);
+            return [];
+          }
+        };
+
+        // 图表渲染引擎 (支持每日、周、月对比 + 自动计算各自百分比)
+        const updateChart = async () => {
           const ctx = document.getElementById('comparisonChart');
-          if (!ctx) return;
+          if (!ctx || isMobile.value) return; // 手机端由于隐藏不渲染
 
           if (chartInstance) {
             chartInstance.destroy();
@@ -580,7 +641,7 @@
               m1Data.push(m1Sum);
               m2Data.push(m2Sum);
             });
-          } else {
+          } else if (compareRange.value === 'weekly') {
             const getWeekNumber = (d) => {
               const date = new Date(d);
               date.setHours(0, 0, 0, 0);
@@ -596,6 +657,18 @@
               const weekRecords = records.value.filter(r => `W${getWeekNumber(r.date)}` === w);
               const m1Sum = weekRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
               const m2Sum = weekRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
+              m1Data.push(m1Sum);
+              m2Data.push(m2Sum);
+            });
+          } else if (compareRange.value === 'monthly') {
+            // 月度汇总对比
+            const yearlyData = await fetchYearlyMonthlySummary();
+            labels = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map(m => `${new Date().getFullYear()}-${m}`);
+
+            labels.forEach(m => {
+              const monthRecords = yearlyData.filter(r => r.date.startsWith(m));
+              const m1Sum = monthRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
+              const m2Sum = monthRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
               m1Data.push(m1Sum);
               m2Data.push(m2Sum);
             });
@@ -686,11 +759,24 @@
           isMobile.value = window.innerWidth < 1024; // Tailwind lg 阈值
         };
 
+        // 实时订阅：监听数据与预算变化
         const setupRealtimeSubscription = () => {
+          // 监听账单表
           supabaseClient
-            .channel('schema-db-changes')
+            .channel('ledger-db-changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'starry_ledger' }, () => {
               fetchRecords();
+            })
+            .subscribe();
+
+          // 监听配置表 (预算变动实时多端刷新)
+          supabaseClient
+            .channel('config-db-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'starry_config' }, (payload) => {
+              if (payload.new && payload.new.id === 'global_budget') {
+                budgetSGD.value = Number(payload.new.budget_sgd);
+                budgetMYR.value = Number(payload.new.budget_myr);
+              }
             })
             .subscribe();
         };
@@ -728,6 +814,7 @@
           checkDeviceWidth();
           window.addEventListener('resize', checkDeviceWidth);
           fetchLiveExchangeRate();
+          fetchCloudBudget(); // 获取云端预算数据
           fetchRecords();
           setupRealtimeSubscription();
         });
@@ -739,7 +826,7 @@
           exchangeRate, categories, getCategoryIcon,
           records, loading, selectedMonth, form, compareRange,
           addRecord, deleteRecord, fetchRecords, exportToCSV,
-          totalToday, totalThisWeek, totalMonth
+          totalToday, totalThisWeek, totalMonth, updateCloudBudget
         };
       }
     }).mount('#app');

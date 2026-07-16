@@ -8,16 +8,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <script src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/vue/3.2.31/vue.global.prod.min.js"></script>
+  <script src="https://cdn.staticfile.org/vue/3.2.31/vue.global.prod.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <style>
-    /* 核心防御：Vue 未加载完成前，完美隐藏所有大括号乱码模板 */
-    [v-cloak] {
-      display: none !important;
-    }
-    
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: radial-gradient(circle at bottom, #0f172a 0%, #020617 100%);
@@ -44,7 +39,7 @@
 <body>
   <div class="star-bg"></div>
   
-  <div id="app" class="container mx-auto p-3 md:p-4 max-w-7xl" v-cloak>
+  <div id="app" class="container mx-auto p-3 md:p-4 max-w-7xl">
     <header class="flex justify-between items-center mb-4 md:mb-6 py-3 border-b border-slate-800">
       <div class="flex items-center gap-2">
         <div class="text-amber-300 text-xl md:text-2xl animate-pulse"><i class="fa-solid fa-star-and-crescent"></i></div>
@@ -285,7 +280,6 @@
     createApp({
       setup() {
         const lang = ref('zh');
-        const isMobile = ref(false);
 
         const translations = {
           zh: {
@@ -408,24 +402,29 @@
 
         const updateChart = () => {
           const ctx = document.getElementById('comparisonChart');
-          if (!ctx || isMobile.value) return;
+          // 安全检测：如果手机端该元素被隐藏不存在，则优雅退出，避免 JS 报错导致程序挂起
+          if (!ctx) return;
           if (chartInstance) chartInstance.destroy();
 
-          const labels = [...new Set(records.value.map(r => r.date))].sort().slice(-7);
-          const m1Data = labels.map(d => records.value.filter(r => r.date === d && r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0));
-          const m2Data = labels.map(d => records.value.filter(r => r.date === d && r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0));
+          try {
+            const labels = [...new Set(records.value.map(r => r.date))].sort().slice(-7);
+            const m1Data = labels.map(d => records.value.filter(r => r.date === d && r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0));
+            const m2Data = labels.map(d => records.value.filter(r => r.date === d && r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0));
 
-          chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels,
-              datasets: [
-                { label: member1.value, data: m1Data, backgroundColor: 'rgba(99, 102, 241, 0.7)' },
-                { label: member2.value, data: m2Data, backgroundColor: 'rgba(245, 158, 11, 0.7)' }
-              ]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-          });
+            chartInstance = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels,
+                datasets: [
+                  { label: member1.value, data: m1Data, backgroundColor: 'rgba(99, 102, 241, 0.7)' },
+                  { label: member2.value, data: m2Data, backgroundColor: 'rgba(245, 158, 11, 0.7)' }
+                ]
+              },
+              options: { responsive: true, maintainAspectRatio: false }
+            });
+          } catch (e) {
+            console.warn("Chart render skipped on mobile:", e);
+          }
         };
 
         const totalTodayM1 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
@@ -435,12 +434,11 @@
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
         onMounted(() => {
-          isMobile.value = window.innerWidth < 1024;
           fetchRecords();
         });
 
         return {
-          lang, t, toggleLang, isMobile, member1, member2, exchangeRate, categories, getCategoryIconOnly, getCategoryDisplayName,
+          lang, t, toggleLang, member1, member2, exchangeRate, categories, getCategoryIconOnly, getCategoryDisplayName,
           records, filteredRecords, loading, selectedMonth, form, compareRange, filterRange,
           addRecord, deleteRecord, fetchRecords, exportToCSV, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth
         };

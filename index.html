@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>星辰小账 | Starry Ledger</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -17,6 +17,7 @@
       background: radial-gradient(circle at bottom, #0f172a 0%, #020617 100%);
       color: #e2e8f0;
       min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
     }
     /* 星空微光背景效果 */
     .star-bg {
@@ -36,194 +37,202 @@
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
+    /* 隐藏滚动条但保留滚动功能 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
     /* 自定义滚动条 */
     ::-webkit-scrollbar {
-      width: 6px;
+      width: 5px;
     }
     ::-webkit-scrollbar-track {
       background: rgba(15, 23, 42, 0.3);
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(251, 191, 36, 0.3);
+      background: rgba(251, 191, 36, 0.25);
       border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(251, 191, 36, 0.6);
     }
   </style>
 </head>
 <body>
   <div class="star-bg"></div>
   
-  <div id="app" class="container mx-auto p-4 max-w-7xl" v-cloak>
-    <header class="flex justify-between items-center mb-6 py-4 border-b border-slate-800">
-      <div class="flex items-center gap-3">
-        <div class="text-amber-300 text-2xl animate-pulse"><i class="fa-solid fa-star-and-crescent"></i></div>
-        <div>
-          <h1 class="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-amber-200">
-            {{ lang === 'zh' ? '星辰小账' : 'Starry Ledger' }}
-          </h1>
-        </div>
+  <div id="app" class="container mx-auto p-3 md:p-4 max-w-7xl" v-cloak>
+    <header class="flex justify-between items-center mb-4 md:mb-6 py-3 border-b border-slate-800">
+      <div class="flex items-center gap-2">
+        <div class="text-amber-300 text-xl md:text-2xl animate-pulse"><i class="fa-solid fa-star-and-crescent"></i></div>
+        <h1 class="text-lg md:text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-amber-200">
+          {{ lang === 'zh' ? '星辰小账' : 'Starry Ledger' }}
+        </h1>
       </div>
       
-      <div class="flex items-center gap-4">
-        <button @click="toggleLang" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-full border border-slate-700 transition">
+      <div class="flex items-center gap-2 md:gap-4">
+        <button @click="toggleLang" class="text-[10px] md:text-xs bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-full border border-slate-700 transition">
           {{ lang === 'zh' ? 'English' : '中文' }}
         </button>
-        <div class="text-xs text-amber-200 bg-amber-950/40 border border-amber-900/50 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+        <div class="text-[10px] md:text-xs text-amber-200 bg-amber-950/40 border border-amber-900/50 px-2.5 py-1 rounded-full flex items-center gap-1 font-mono">
           <i class="fa-solid fa-calculator"></i>
           <span>1 SGD = </span>
-          <input type="number" step="0.0001" v-model.number="exchangeRate" class="w-16 bg-transparent text-center border-b border-amber-400/50 focus:outline-none focus:border-amber-400 font-mono">
+          <input type="number" step="0.0001" v-model.number="exchangeRate" class="w-12 md:w-16 bg-transparent text-center border-b border-amber-400/50 focus:outline-none focus:border-amber-400 font-bold">
           <span>MYR</span>
         </div>
       </div>
     </header>
 
-    <section class="glass-card rounded-2xl p-4 mb-6 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-      <div class="flex flex-wrap gap-4 items-center lg:col-span-5">
-        <div class="flex items-center gap-2">
+    <section class="glass-card rounded-2xl p-3 md:p-4 mb-4 md:mb-6 grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
+      <div class="flex flex-wrap gap-3 items-center lg:col-span-5">
+        <div class="flex items-center gap-1.5 text-xs md:text-sm font-semibold text-slate-300">
           <i class="fa-solid fa-user-friends text-indigo-400"></i>
-          <span class="text-sm font-semibold text-slate-300">{{ t('members') }}:</span>
+          <span>{{ t('members') }}:</span>
         </div>
-        <div class="flex gap-4">
-          <div class="flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
-            <input type="text" v-model="member1" class="bg-slate-800/60 border border-slate-700 text-xs px-2.5 py-1 rounded w-24 text-center text-slate-200 focus:outline-none focus:border-indigo-500">
+        <div class="flex gap-2">
+          <div class="flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+            <input type="text" v-model="member1" class="bg-slate-800/60 border border-slate-700 text-[11px] px-2 py-0.5 rounded w-20 text-center text-slate-200 focus:outline-none">
           </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-            <input type="text" v-model="member2" class="bg-slate-800/60 border border-slate-700 text-xs px-2.5 py-1 rounded w-24 text-center text-slate-200 focus:outline-none focus:border-amber-500">
+          <div class="flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <input type="text" v-model="member2" class="bg-slate-800/60 border border-slate-700 text-[11px] px-2 py-0.5 rounded w-20 text-center text-slate-200 focus:outline-none">
           </div>
         </div>
       </div>
 
-      <div class="flex flex-wrap gap-4 items-center lg:col-span-7 justify-start lg:justify-end">
-        <div class="flex items-center gap-1 text-sm font-semibold text-slate-300">
-          <i class="fa-solid fa-piggy-bank text-emerald-400 mr-1"></i>{{ t('monthlyBudget') }}:
+      <div class="flex flex-wrap gap-2 items-center lg:col-span-7 justify-start lg:justify-end">
+        <div class="flex items-center gap-1 text-xs md:text-sm font-semibold text-slate-300">
+          <i class="fa-solid fa-piggy-bank text-emerald-400"></i>{{ t('monthlyBudget') }}:
         </div>
         
-        <div class="flex items-center gap-1.5 bg-slate-900/50 px-3 py-1 rounded-xl border border-slate-800">
-          <span class="text-xs text-slate-400">SGD:</span>
-          <input type="number" v-model.number="budgetSGD" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-emerald-500 bg-slate-800/60 border border-slate-700'" class="text-xs px-2 py-0.5 rounded w-16 text-center font-mono focus:outline-none">
+        <div class="flex items-center gap-1 bg-slate-900/50 px-2 py-0.5 rounded-lg border border-slate-800">
+          <span class="text-[10px] text-slate-400">SGD:</span>
+          <input type="number" v-model.number="budgetSGD" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-emerald-500 bg-slate-800/60 border border-slate-700'" class="text-[11px] px-1 py-0.5 rounded w-14 text-center font-mono focus:outline-none">
         </div>
 
-        <div class="flex items-center gap-1.5 bg-slate-900/50 px-3 py-1 rounded-xl border border-slate-800">
-          <span class="text-xs text-slate-400">MYR:</span>
-          <input type="number" v-model.number="budgetMYR" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-emerald-500 bg-slate-800/60 border border-slate-700'" class="text-xs px-2 py-0.5 rounded w-16 text-center font-mono focus:outline-none">
+        <div class="flex items-center gap-1 bg-slate-900/50 px-2 py-0.5 rounded-lg border border-slate-800">
+          <span class="text-[10px] text-slate-400">MYR:</span>
+          <input type="number" v-model.number="budgetMYR" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-emerald-500 bg-slate-800/60 border border-slate-700'" class="text-[11px] px-1 py-0.5 rounded w-14 text-center font-mono focus:outline-none">
         </div>
 
-        <div class="text-xs text-emerald-400 font-semibold bg-emerald-950/30 border border-emerald-900/50 px-3 py-1.5 rounded-xl">
+        <div class="text-[10px] md:text-xs text-emerald-400 font-semibold bg-emerald-950/30 border border-emerald-900/50 px-2.5 py-1 rounded-lg">
           {{ t('totalBudget') }} (SGD): S$ {{ totalBudgetInSGD.toFixed(2) }}
         </div>
       </div>
     </section>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
       
-      <main class="lg:col-span-5 space-y-6">
-        <div class="glass-card rounded-2xl p-6 relative overflow-hidden">
+      <main class="lg:col-span-5 space-y-4 md:space-y-6">
+        <div class="glass-card rounded-2xl p-4 md:p-6 relative overflow-hidden">
           <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
-          <h2 class="text-lg font-semibold mb-4 text-slate-200 flex items-center gap-2">
+          <h2 class="text-base md:text-lg font-semibold mb-3 md:mb-4 text-slate-200 flex items-center gap-2">
             <i class="fa-solid fa-pen-fancy text-indigo-400"></i> {{ t('addRecord') }}
           </h2>
           
-          <form @submit.prevent="addRecord" class="space-y-4">
+          <form @submit.prevent="addRecord" class="space-y-3.5">
             <div>
-              <label class="block text-xs text-slate-400 mb-1.5">{{ t('payer') }}</label>
+              <label class="block text-[11px] text-slate-400 mb-1">{{ t('payer') }}</label>
               <div class="grid grid-cols-2 gap-2">
-                <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2 rounded-xl border text-sm transition font-medium">
+                <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2 rounded-xl border text-xs md:text-sm transition font-medium">
                   {{ member1 }}
                 </button>
-                <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-amber-600/30 border-amber-500 text-amber-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2 rounded-xl border text-sm transition font-medium">
+                <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-amber-600/30 border-amber-500 text-amber-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2 rounded-xl border text-xs md:text-sm transition font-medium">
                   {{ member2 }}
                 </button>
               </div>
             </div>
 
             <div>
-              <label class="block text-xs text-slate-400 mb-1.5">{{ t('amount') }}</label>
+              <label class="block text-[11px] text-slate-400 mb-1">{{ t('amount') }}</label>
               <div class="flex gap-2">
                 <div class="relative flex-1">
-                  <span class="absolute left-3 top-2.5 text-slate-500 font-semibold text-sm">{{ form.currency }}</span>
-                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 text-lg font-mono">
+                  <span class="absolute left-3 top-2 text-slate-500 font-semibold text-sm">{{ form.currency }}</span>
+                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-1.5 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 text-base font-mono">
                 </div>
-                <select v-model="form.currency" class="bg-slate-800 border border-slate-700 rounded-xl px-3 text-sm text-slate-300 focus:outline-none">
+                <select v-model="form.currency" class="bg-slate-800 border border-slate-700 rounded-xl px-3 text-xs md:text-sm text-slate-300 focus:outline-none">
                   <option value="SGD">SGD</option>
                   <option value="MYR">MYR</option>
                 </select>
               </div>
-              <p v-if="form.currency === 'MYR' && form.amount" class="text-xs text-amber-300/80 mt-1.5">
+              <p v-if="form.currency === 'MYR' && form.amount" class="text-[10px] text-amber-300/80 mt-1">
                 ≈ SGD {{ (form.amount / exchangeRate).toFixed(2) }} ({{ t('converted') }})
               </p>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs text-slate-400 mb-1.5">{{ t('category') }}</label>
-                <select v-model="form.category" class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 px-3 text-sm text-slate-300 focus:outline-none focus:border-indigo-500">
-                  <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs text-slate-400 mb-1.5">{{ t('date') }}</label>
-                <input type="date" v-model="form.date" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-1.5 px-3 text-sm text-slate-300 focus:outline-none focus:border-indigo-500">
-              </div>
-            </div>
-
             <div>
-              <label class="block text-xs text-slate-400 mb-1.5">{{ t('remark') }}</label>
-              <input type="text" v-model="form.remark" placeholder="..." class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 px-3 text-sm text-slate-300 focus:outline-none focus:border-indigo-500">
+              <label class="block text-[11px] text-slate-400 mb-1.5">{{ t('category') }}</label>
+              <div class="grid grid-cols-4 gap-1.5">
+                <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
+                  :class="form.category === cat ? 'bg-slate-800 border-indigo-500/80 text-white shadow-md shadow-indigo-500/5' : 'bg-slate-900/40 border-slate-800 text-slate-400'"
+                  class="flex flex-col items-center justify-center py-2 rounded-xl border transition duration-150 active:scale-95">
+                  <i :class="getCategoryIconOnly(cat)" class="text-base mb-1"></i>
+                  <span class="text-[9px] font-normal tracking-tight truncate w-full text-center px-0.5">{{ getCategoryDisplayName(cat) }}</span>
+                </button>
+              </div>
             </div>
 
-            <button type="submit" class="w-full bg-gradient-to-r from-indigo-500 to-amber-500 hover:from-indigo-600 hover:to-amber-600 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-500/10">
+            <div class="grid grid-cols-12 gap-2">
+              <div class="col-span-5">
+                <label class="block text-[11px] text-slate-400 mb-1">{{ t('date') }}</label>
+                <input type="date" v-model="form.date" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-1.5 px-2 text-xs text-slate-300 focus:outline-none">
+              </div>
+              <div class="col-span-7">
+                <label class="block text-[11px] text-slate-400 mb-1">{{ t('remark') }}</label>
+                <input type="text" v-model="form.remark" placeholder="..." class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-1.5 px-3 text-xs text-slate-300 focus:outline-none">
+              </div>
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-indigo-500 to-amber-500 hover:from-indigo-600 hover:to-amber-600 text-slate-950 font-bold py-2.5 rounded-xl transition text-sm shadow-md shadow-indigo-500/5">
               {{ t('save') }}
             </button>
           </form>
         </div>
 
-        <div class="glass-card rounded-2xl p-5 space-y-4">
-          <h3 class="text-sm font-semibold text-slate-300 flex items-center justify-between">
+        <div class="glass-card rounded-2xl p-4 space-y-3.5">
+          <h3 class="text-xs md:text-sm font-semibold text-slate-300 flex items-center justify-between">
             <span><i class="fa-solid fa-chart-pie text-indigo-400 mr-1.5"></i>{{ t('analysis') }}</span>
-            <span class="text-xs text-slate-500">{{ t('mainCurrencySGD') }}</span>
+            <span class="text-[10px] text-slate-500 font-normal">{{ t('mainCurrencySGD') }}</span>
           </h3>
           
-          <div class="grid grid-cols-2 gap-4">
-            <div class="bg-slate-900/40 p-3 rounded-xl border border-slate-800/80">
-              <p class="text-xs text-slate-500">{{ t('today') }}</p>
-              <p class="text-lg font-bold text-slate-200 mt-1 font-mono">S$ {{ totalToday }}</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-900/40 p-2.5 rounded-xl border border-slate-800/85">
+              <p class="text-[10px] text-slate-500">{{ t('today') }}</p>
+              <p class="text-base font-bold text-slate-200 mt-0.5 font-mono">S$ {{ totalToday }}</p>
             </div>
-            <div class="bg-slate-900/40 p-3 rounded-xl border border-slate-800/80">
-              <p class="text-xs text-slate-500">{{ t('thisWeek') }}</p>
-              <p class="text-lg font-bold text-slate-200 mt-1 font-mono">S$ {{ totalThisWeek }}</p>
+            <div class="bg-slate-900/40 p-2.5 rounded-xl border border-slate-800/85">
+              <p class="text-[10px] text-slate-500">{{ t('thisWeek') }}</p>
+              <p class="text-base font-bold text-slate-200 mt-0.5 font-mono">S$ {{ totalThisWeek }}</p>
             </div>
           </div>
 
-          <div class="pt-2" v-if="totalBudgetInSGD > 0">
-            <div class="flex justify-between text-xs text-slate-400 mb-1">
+          <div class="pt-1" v-if="totalBudgetInSGD > 0">
+            <div class="flex justify-between text-[10px] text-slate-400 mb-1">
               <span>{{ t('budgetProgress') }}</span>
-              <span class="font-mono">S$ {{ totalMonth }} / S$ {{ totalBudgetInSGD.toFixed(2) }} ({{ budgetPercent }}%)</span>
+              <span class="font-mono">S$ {{ totalMonth }} / S$ {{ totalBudgetInSGD.toFixed(0) }} ({{ budgetPercent }}%)</span>
             </div>
-            <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
               <div class="h-full rounded-full transition-all duration-500" 
                    :class="budgetPercent > 100 ? 'bg-rose-500' : 'bg-emerald-500'" 
                    :style="{ width: Math.min(budgetPercent, 100) + '%' }"></div>
             </div>
           </div>
 
-          <div class="pt-4 border-t border-slate-800 flex justify-between items-center">
+          <div class="pt-3 border-t border-slate-800/60 flex justify-between items-center">
             <div class="flex flex-col">
-              <span class="text-[10px] text-slate-500">{{ t('monthSelector') }}</span>
-              <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-xs rounded px-2 py-0.5 mt-1 text-slate-300">
+              <span class="text-[9px] text-slate-500">{{ t('monthSelector') }}</span>
+              <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-[10px] rounded px-1.5 py-0.5 mt-0.5 text-slate-300 focus:outline-none">
             </div>
             <div class="text-right">
-              <span class="text-xs text-indigo-300">{{ t('thisMonthTotal') }}</span>
-              <p class="text-lg font-bold text-indigo-200 font-mono">S$ {{ totalMonth }}</p>
+              <span class="text-[10px] text-indigo-300">{{ t('thisMonthTotal') }}</span>
+              <p class="text-base font-bold text-indigo-200 font-mono">S$ {{ totalMonth }}</p>
             </div>
           </div>
         </div>
       </main>
 
-      <section class="lg:col-span-7 space-y-6">
+      <section class="lg:col-span-7 space-y-4 md:space-y-6">
         
         <div class="glass-card rounded-2xl p-6 hidden lg:block">
           <div class="flex justify-between items-center mb-4">
@@ -248,56 +257,56 @@
           </div>
         </div>
 
-        <div class="glass-card rounded-2xl p-6">
-          <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
-            <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+        <div class="glass-card rounded-2xl p-4 md:p-6">
+          <div class="flex justify-between items-center mb-3 md:mb-4 flex-wrap gap-2">
+            <h2 class="text-base md:text-lg font-semibold text-slate-200 flex items-center gap-2">
               <i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}
             </h2>
             <div class="flex items-center gap-2">
               <button @click="exportToCSV" class="hidden lg:flex bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs px-3.5 py-1.5 rounded-lg transition items-center gap-1.5 shadow-md shadow-amber-500/10">
                 <i class="fa-solid fa-file-csv text-sm"></i> {{ t('export') }}
               </button>
-              <div class="text-xs text-slate-400 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+              <div class="text-[10px] md:text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700">
                 {{ records.length }} {{ t('items') }}
               </div>
             </div>
           </div>
 
-          <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+          <div class="space-y-2 max-h-[350px] md:max-h-[400px] overflow-y-auto pr-0.5">
             <div v-if="loading" class="text-center py-8 text-slate-500">
-              <i class="fa-solid fa-circle-notch animate-spin text-xl mb-2"></i>
+              <i class="fa-solid fa-circle-notch animate-spin text-lg mb-2"></i>
               <p class="text-xs">{{ t('loading') }}...</p>
             </div>
             
-            <div v-else-if="records.length === 0" class="text-center py-12 text-slate-600 text-xs">
-              <i class="fa-regular fa-folder-open text-2xl mb-2 block"></i>
+            <div v-else-if="records.length === 0" class="text-center py-10 text-slate-600 text-xs">
+              <i class="fa-regular fa-folder-open text-xl mb-1.5 block"></i>
               {{ t('noRecords') }}
             </div>
 
-            <div v-else v-for="item in records" :key="item.id" class="group flex items-center justify-between p-3.5 rounded-xl bg-slate-900/30 hover:bg-slate-800/40 border border-slate-800/80 hover:border-slate-700 transition">
-              <div class="flex items-center gap-3">
-                <span :class="item.payer === member1 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'" class="text-[10px] px-2 py-0.5 rounded-full border font-medium">
+            <div v-else v-for="item in records" :key="item.id" class="group flex items-center justify-between p-3 rounded-xl bg-slate-900/35 hover:bg-slate-800/40 border border-slate-850 hover:border-slate-700 transition duration-150">
+              <div class="flex items-center gap-2.5">
+                <span :class="item.payer === member1 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'" class="text-[9px] px-1.5 py-0.5 rounded-full border font-semibold">
                   {{ item.payer }}
                 </span>
                 <div>
-                  <div class="flex items-center gap-2">
-                    <i :class="getCategoryIcon(item.category)" class="text-slate-400 text-xs"></i>
-                    <span class="text-sm font-medium text-slate-200">{{ item.category }}</span>
-                    <span v-if="item.remark" class="text-xs text-slate-500 font-normal">({{ item.remark }})</span>
+                  <div class="flex items-center gap-1.5">
+                    <i :class="getCategoryIconOnly(item.category)" class="text-xs"></i>
+                    <span class="text-xs md:text-sm font-medium text-slate-200">{{ getCategoryDisplayName(item.category) }}</span>
+                    <span v-if="item.remark" class="text-[10px] text-slate-500 font-normal">({{ item.remark }})</span>
                   </div>
-                  <p class="text-[10px] text-slate-500 mt-0.5 font-mono">{{ item.date }}</p>
+                  <p class="text-[9px] text-slate-500 mt-0.5 font-mono">{{ item.date }}</p>
                 </div>
               </div>
 
-              <div class="flex items-center gap-4">
+              <div class="flex items-center gap-3">
                 <div class="text-right">
-                  <p class="text-sm font-bold text-slate-200 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
-                  <p v-if="item.currency === 'MYR'" class="text-[10px] text-amber-400/80 font-mono">
+                  <p class="text-xs md:text-sm font-bold text-slate-200 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
+                  <p v-if="item.currency === 'MYR'" class="text-[9px] text-amber-400/80 font-mono">
                     RM {{ Number(item.original_amount).toFixed(2) }}
                   </p>
                 </div>
-                <button @click="deleteRecord(item.id)" class="text-slate-600 hover:text-red-400 lg:opacity-0 lg:group-hover:opacity-100 transition duration-150 p-1">
-                  <i class="fa-regular fa-trash-can"></i>
+                <button @click="deleteRecord(item.id)" class="text-rose-500/75 hover:text-rose-400 lg:opacity-0 lg:group-hover:opacity-100 transition duration-150 p-1">
+                  <i class="fa-regular fa-trash-can text-xs md:text-sm"></i>
                 </button>
               </div>
             </div>
@@ -322,52 +331,52 @@
 
         const translations = {
           zh: {
-            members: '记账成员',
-            addRecord: '新增星辰记录',
-            payer: '谁付的款',
-            amount: '金额',
-            category: '分类',
+            members: '成员',
+            addRecord: '快速记账',
+            payer: '支付人',
+            amount: '消费金额',
+            category: '选择分类',
             date: '日期',
             remark: '备注',
-            save: '记入星辰',
-            analysis: '数据星轨 (今日/本周)',
-            mainCurrencySGD: '以新币(SGD)为主结算',
+            save: '存入星宿',
+            analysis: '今日/本周星轨',
+            mainCurrencySGD: '新币(SGD)主结算',
             today: '今日消费',
             thisWeek: '本周累计',
-            thisMonthTotal: '本月累计支出',
-            monthSelector: '月份查询',
-            details: '星轨迹账明细',
-            items: '笔记录',
-            loading: '正在从星轨读取数据',
-            noRecords: '暂无账目，开始第一笔吧！',
+            thisMonthTotal: '当月累计',
+            monthSelector: '月份筛选',
+            details: '账单轨迹明细',
+            items: '笔',
+            loading: '调阅星轨中',
+            noRecords: '晴空万里，暂无账目！',
             converted: '已折算',
-            monthlyBudget: '每月预算',
+            monthlyBudget: '预算',
             totalBudget: '总预算',
-            budgetProgress: '当月预算使用进度',
+            budgetProgress: '预算使用进度',
             doubleComparison: '双人同步消费对比',
-            compareDaily: '每日对比',
-            compareWeekly: '一周对比',
-            compareMonthly: '每月对比',
+            compareDaily: '每日',
+            compareWeekly: '周度',
+            compareMonthly: '月度',
             export: '导出 CSV'
           },
           en: {
             members: 'Members',
-            addRecord: 'New Starry Record',
+            addRecord: 'Quick Record',
             payer: 'Payer',
             amount: 'Amount',
             category: 'Category',
             date: 'Date',
             remark: 'Remark',
-            save: 'Record to Starry',
-            analysis: 'Analytics (Today/Week)',
+            save: 'Save Record',
+            analysis: 'Stats (Today/Week)',
             mainCurrencySGD: 'Settled in SGD',
-            today: 'Today Spent',
+            today: 'Today',
             thisWeek: 'This Week',
-            thisMonthTotal: 'Monthly Total',
-            monthSelector: 'Query Month',
+            thisMonthTotal: 'Month Total',
+            monthSelector: 'Select Month',
             details: 'Transaction Ledger',
-            items: 'records',
-            loading: 'Fetching from galaxy',
+            items: 'items',
+            loading: 'Loading galaxy data',
             noRecords: 'Empty skies here. Add a record!',
             converted: 'Converted',
             monthlyBudget: 'Budget',
@@ -432,7 +441,7 @@
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
         watch(exchangeRate, (val) => localStorage.setItem('exchangeRate', val));
 
-        // 分类清单，新增“房租 Rent”
+        // 分类清单（全新移动端图标化）
         const categories = [
           '日常伙食 Daily Meal', 
           '餐厅 Restaurant', 
@@ -444,7 +453,17 @@
           '其他 Others'
         ];
 
-        const getCategoryIcon = (cat) => {
+        // 提取中文展示名称，更适合手机端超窄屏幕
+        const getCategoryDisplayName = (cat) => {
+          if (lang.value === 'zh') {
+            return cat.split(' ')[0]; // 只返回中文比如 “日常伙食”, “房租”
+          } else {
+            return cat.split(' ').slice(1).join(' '); // 仅返回英文部分
+          }
+        };
+
+        // 返回不带尾部文本的分类炫彩图标类
+        const getCategoryIconOnly = (cat) => {
           if (cat.includes('日常伙食')) return 'fa-solid fa-bowl-rice text-amber-300';
           if (cat.includes('餐厅')) return 'fa-solid fa-utensils text-rose-300';
           if (cat.includes('交通')) return 'fa-solid fa-car text-sky-300';
@@ -620,7 +639,7 @@
         // 图表渲染引擎 (支持每日、周、月对比 + 自动计算各自百分比)
         const updateChart = async () => {
           const ctx = document.getElementById('comparisonChart');
-          if (!ctx || isMobile.value) return; // 手机端由于隐藏不渲染
+          if (!ctx || isMobile.value) return; // 手机端隐藏后不渲染
 
           if (chartInstance) {
             chartInstance.destroy();
@@ -710,7 +729,6 @@
                       const value = context.parsed.y;
                       const index = context.dataIndex;
                       
-                      // 取得同期的总额以算百分比
                       const m1Val = m1Data[index] || 0;
                       const m2Val = m2Data[index] || 0;
                       const total = m1Val + m2Val;
@@ -754,7 +772,6 @@
           }
         };
 
-        // 简易环境宽带检测（是否处于手机模式）
         const checkDeviceWidth = () => {
           isMobile.value = window.innerWidth < 1024; // Tailwind lg 阈值
         };
@@ -823,7 +840,7 @@
           lang, t, toggleLang, isMobile,
           member1, member2,
           budgetSGD, budgetMYR, totalBudgetInSGD, budgetPercent,
-          exchangeRate, categories, getCategoryIcon,
+          exchangeRate, categories, getCategoryIconOnly, getCategoryDisplayName,
           records, loading, selectedMonth, form, compareRange,
           addRecord, deleteRecord, fetchRecords, exportToCSV,
           totalToday, totalThisWeek, totalMonth, updateCloudBudget

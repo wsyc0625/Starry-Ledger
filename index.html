@@ -4,11 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>星辰小账 | Starry Ledger</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts & FontAwesome Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Vue 3 -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <style>
@@ -19,7 +24,6 @@
       min-height: 100vh;
       -webkit-tap-highlight-color: transparent;
     }
-    /* 星空微光背景效果 */
     .star-bg {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -31,13 +35,11 @@
       opacity: 0.15;
       z-index: -1;
     }
-    /* 玻璃拟态卡片 */
     .glass-card {
       background: rgba(30, 41, 59, 0.45);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
-    /* 隐藏滚动条但保留滚动功能 */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -45,7 +47,6 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-    /* 自定义滚动条 */
     ::-webkit-scrollbar {
       width: 5px;
     }
@@ -62,6 +63,7 @@
   <div class="star-bg"></div>
   
   <div id="app" class="container mx-auto p-3 md:p-4 max-w-7xl" v-cloak>
+    <!-- 顶部导航栏 -->
     <header class="flex justify-between items-center mb-4 md:mb-6 py-3 border-b border-slate-800">
       <div class="flex items-center gap-2">
         <div class="text-amber-300 text-xl md:text-2xl animate-pulse"><i class="fa-solid fa-star-and-crescent"></i></div>
@@ -83,48 +85,67 @@
       </div>
     </header>
 
-    <section class="glass-card rounded-2xl p-3 md:p-4 mb-4 md:mb-6 grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
-      <div class="flex flex-wrap gap-3 items-center lg:col-span-5">
-        <div class="flex items-center gap-1.5 text-xs md:text-sm font-semibold text-slate-300">
-          <i class="fa-solid fa-user-friends text-indigo-400"></i>
-          <span>{{ t('members') }}:</span>
-        </div>
-        <div class="flex gap-2">
-          <div class="flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
-            <input type="text" v-model="member1" class="bg-slate-800/60 border border-slate-700 text-[11px] px-2 py-0.5 rounded w-20 text-center text-slate-200 focus:outline-none">
-          </div>
-          <div class="flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-            <input type="text" v-model="member2" class="bg-slate-800/60 border border-slate-700 text-[11px] px-2 py-0.5 rounded w-20 text-center text-slate-200 focus:outline-none">
-          </div>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap gap-2 items-center lg:col-span-7 justify-start lg:justify-end">
-        <div class="flex items-center gap-1 text-xs md:text-sm font-semibold text-slate-300">
-          <i class="fa-solid fa-piggy-bank text-emerald-400"></i>{{ t('monthlyBudget') }}:
-        </div>
+    <!-- 成员与独立双币预算看板 (核心重构：分开设置、分别展示各自与Total) -->
+    <section class="glass-card rounded-2xl p-4 mb-4 md:mb-6 space-y-4">
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-center">
         
-        <div class="flex items-center gap-1 bg-slate-900/50 px-2 py-0.5 rounded-lg border border-slate-800">
-          <span class="text-[10px] text-slate-400">SGD:</span>
-          <input type="number" v-model.number="budgetSGD" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-emerald-500 bg-slate-800/60 border border-slate-700'" class="text-[11px] px-1 py-0.5 rounded w-14 text-center font-mono focus:outline-none">
+        <!-- 左侧：成员 1 专属双币预算 -->
+        <div class="xl:col-span-5 p-3 rounded-xl bg-indigo-950/20 border border-indigo-900/40 flex flex-wrap gap-2.5 items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+            <input type="text" v-model="member1" class="bg-slate-800/80 border border-slate-700 text-xs px-2 py-0.5 rounded w-20 font-semibold text-indigo-200 focus:outline-none">
+          </div>
+          <div class="flex gap-2">
+            <div class="flex items-center gap-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800">
+              <span class="text-[9px] text-slate-400">SGD:</span>
+              <input type="number" v-model.number="budgetM1_SGD" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-indigo-500 bg-slate-800/40'" class="text-[11px] w-12 text-center font-mono focus:outline-none rounded">
+            </div>
+            <div class="flex items-center gap-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800">
+              <span class="text-[9px] text-slate-400">MYR:</span>
+              <input type="number" v-model.number="budgetM1_MYR" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-indigo-500 bg-slate-800/40'" class="text-[11px] w-12 text-center font-mono focus:outline-none rounded">
+            </div>
+          </div>
+          <div class="text-[11px] text-indigo-300 font-mono font-medium">
+            S$ {{ totalM1BudgetInSGD.toFixed(2) }}
+          </div>
         </div>
 
-        <div class="flex items-center gap-1 bg-slate-900/50 px-2 py-0.5 rounded-lg border border-slate-800">
-          <span class="text-[10px] text-slate-400">MYR:</span>
-          <input type="number" v-model.number="budgetMYR" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-emerald-500 bg-slate-800/60 border border-slate-700'" class="text-[11px] px-1 py-0.5 rounded w-14 text-center font-mono focus:outline-none">
+        <!-- 中间：成员 2 专属双币预算 -->
+        <div class="xl:col-span-5 p-3 rounded-xl bg-amber-950/20 border border-amber-900/40 flex flex-wrap gap-2.5 items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+            <input type="text" v-model="member2" class="bg-slate-800/80 border border-slate-700 text-xs px-2 py-0.5 rounded w-20 font-semibold text-amber-200 focus:outline-none">
+          </div>
+          <div class="flex gap-2">
+            <div class="flex items-center gap-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800">
+              <span class="text-[9px] text-slate-400">SGD:</span>
+              <input type="number" v-model.number="budgetM2_SGD" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-amber-500 bg-slate-800/40'" class="text-[11px] w-12 text-center font-mono focus:outline-none rounded">
+            </div>
+            <div class="flex items-center gap-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800">
+              <span class="text-[9px] text-slate-400">MYR:</span>
+              <input type="number" v-model.number="budgetM2_MYR" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-amber-500 bg-slate-800/40'" class="text-[11px] w-12 text-center font-mono focus:outline-none rounded">
+            </div>
+          </div>
+          <div class="text-[11px] text-amber-300 font-mono font-medium">
+            S$ {{ totalM2BudgetInSGD.toFixed(2) }}
+          </div>
         </div>
 
-        <div class="text-[10px] md:text-xs text-emerald-400 font-semibold bg-emerald-950/30 border border-emerald-900/50 px-2.5 py-1 rounded-lg">
-          {{ t('totalBudget') }} (SGD): S$ {{ totalBudgetInSGD.toFixed(2) }}
+        <!-- 右侧：全局合并 Total 预算大看板 -->
+        <div class="xl:col-span-2 text-center bg-emerald-950/30 border border-emerald-900/50 p-3 rounded-xl flex xl:flex-col justify-between items-center">
+          <span class="text-[10px] md:text-xs text-emerald-400 font-bold tracking-wider uppercase"><i class="fa-solid fa-piggy-bank mr-1"></i>{{ t('totalBudget') }}</span>
+          <p class="text-xs md:text-sm font-bold text-emerald-200 font-mono mt-0.5">S$ {{ aggregateBudgetInSGD.toFixed(2) }}</p>
         </div>
+
       </div>
     </section>
 
+    <!-- 核心布局 -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
       
+      <!-- ================= 手机与PC公共输入左面板 ================= -->
       <main class="lg:col-span-5 space-y-4 md:space-y-6">
+        <!-- 快捷记账卡片 -->
         <div class="glass-card rounded-2xl p-4 md:p-6 relative overflow-hidden">
           <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
           <h2 class="text-base md:text-lg font-semibold mb-3 md:mb-4 text-slate-200 flex items-center gap-2">
@@ -132,6 +153,7 @@
           </h2>
           
           <form @submit.prevent="addRecord" class="space-y-3.5">
+            <!-- 记账人选择 -->
             <div>
               <label class="block text-[11px] text-slate-400 mb-1">{{ t('payer') }}</label>
               <div class="grid grid-cols-2 gap-2">
@@ -144,6 +166,7 @@
               </div>
             </div>
 
+            <!-- 金额 & 币种 -->
             <div>
               <label class="block text-[11px] text-slate-400 mb-1">{{ t('amount') }}</label>
               <div class="flex gap-2">
@@ -161,18 +184,20 @@
               </p>
             </div>
 
+            <!-- 记账选项分类小图标网格 -->
             <div>
               <label class="block text-[11px] text-slate-400 mb-1.5">{{ t('category') }}</label>
               <div class="grid grid-cols-4 gap-1.5">
                 <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
-                  :class="form.category === cat ? 'bg-slate-800 border-indigo-500/80 text-white shadow-md shadow-indigo-500/5' : 'bg-slate-900/40 border-slate-800 text-slate-400'"
+                  :class="form.category === cat ? 'bg-slate-800 border-indigo-500/80 text-white shadow-md' : 'bg-slate-900/40 border-slate-800 text-slate-400'"
                   class="flex flex-col items-center justify-center py-2 rounded-xl border transition duration-150 active:scale-95">
                   <i :class="getCategoryIconOnly(cat)" class="text-base mb-1"></i>
-                  <span class="text-[9px] font-normal tracking-tight truncate w-full text-center px-0.5">{{ getCategoryDisplayName(cat) }}</span>
+                  <span class="text-[9px] truncate w-full text-center px-0.5">{{ getCategoryDisplayName(cat) }}</span>
                 </button>
               </div>
             </div>
 
+            <!-- 日期与备注 -->
             <div class="grid grid-cols-12 gap-2">
               <div class="col-span-5">
                 <label class="block text-[11px] text-slate-400 mb-1">{{ t('date') }}</label>
@@ -184,12 +209,13 @@
               </div>
             </div>
 
-            <button type="submit" class="w-full bg-gradient-to-r from-indigo-500 to-amber-500 hover:from-indigo-600 hover:to-amber-600 text-slate-950 font-bold py-2.5 rounded-xl transition text-sm shadow-md shadow-indigo-500/5">
+            <button type="submit" class="w-full bg-gradient-to-r from-indigo-500 to-amber-500 hover:from-indigo-600 hover:to-amber-600 text-slate-950 font-bold py-2.5 rounded-xl transition text-sm shadow-md">
               {{ t('save') }}
             </button>
           </form>
         </div>
 
+        <!-- 基础查询与总合并预算使用进度 -->
         <div class="glass-card rounded-2xl p-4 space-y-3.5">
           <h3 class="text-xs md:text-sm font-semibold text-slate-300 flex items-center justify-between">
             <span><i class="fa-solid fa-chart-pie text-indigo-400 mr-1.5"></i>{{ t('analysis') }}</span>
@@ -207,10 +233,11 @@
             </div>
           </div>
 
-          <div class="pt-1" v-if="totalBudgetInSGD > 0">
+          <!-- 合并总预算进度条 -->
+          <div class="pt-1" v-if="aggregateBudgetInSGD > 0">
             <div class="flex justify-between text-[10px] text-slate-400 mb-1">
               <span>{{ t('budgetProgress') }}</span>
-              <span class="font-mono">S$ {{ totalMonth }} / S$ {{ totalBudgetInSGD.toFixed(0) }} ({{ budgetPercent }}%)</span>
+              <span class="font-mono">S$ {{ totalMonth }} / S$ {{ aggregateBudgetInSGD.toFixed(0) }} ({{ budgetPercent }}%)</span>
             </div>
             <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
               <div class="h-full rounded-full transition-all duration-500" 
@@ -219,6 +246,7 @@
             </div>
           </div>
 
+          <!-- 月份切换及汇总展示 -->
           <div class="pt-3 border-t border-slate-800/60 flex justify-between items-center">
             <div class="flex flex-col">
               <span class="text-[9px] text-slate-500">{{ t('monthSelector') }}</span>
@@ -232,38 +260,39 @@
         </div>
       </main>
 
+      <!-- ================= PC 模式明细及双人对比 (Right Side) ================= -->
       <section class="lg:col-span-7 space-y-4 md:space-y-6">
-        
+        <!-- 消费对比图表 -->
         <div class="glass-card rounded-2xl p-6 hidden lg:block">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
               <i class="fa-solid fa-chart-simple text-amber-400"></i> {{ t('doubleComparison') }}
             </h2>
             <div class="flex gap-1.5 bg-slate-800/80 p-0.5 rounded-lg border border-slate-700">
-              <button @click="compareRange = 'daily'" :class="compareRange === 'daily' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition duration-150">
+              <button @click="compareRange = 'daily'" :class="compareRange === 'daily' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition">
                 {{ t('compareDaily') }}
               </button>
-              <button @click="compareRange = 'weekly'" :class="compareRange === 'weekly' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition duration-150">
+              <button @click="compareRange = 'weekly'" :class="compareRange === 'weekly' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition">
                 {{ t('compareWeekly') }}
               </button>
-              <button @click="compareRange = 'monthly'" :class="compareRange === 'monthly' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition duration-150">
+              <button @click="compareRange = 'monthly'" :class="compareRange === 'monthly' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition">
                 {{ t('compareMonthly') }}
               </button>
             </div>
           </div>
-          
           <div class="relative w-full h-48 md:h-64">
             <canvas id="comparisonChart"></canvas>
           </div>
         </div>
 
+        <!-- 账目记录轨迹明细 -->
         <div class="glass-card rounded-2xl p-4 md:p-6">
           <div class="flex justify-between items-center mb-3 md:mb-4 flex-wrap gap-2">
             <h2 class="text-base md:text-lg font-semibold text-slate-200 flex items-center gap-2">
               <i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}
             </h2>
             <div class="flex items-center gap-2">
-              <button @click="exportToCSV" class="hidden lg:flex bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs px-3.5 py-1.5 rounded-lg transition items-center gap-1.5 shadow-md shadow-amber-500/10">
+              <button @click="exportToCSV" class="hidden lg:flex bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs px-3.5 py-1.5 rounded-lg transition items-center gap-1.5 shadow-md">
                 <i class="fa-solid fa-file-csv text-sm"></i> {{ t('export') }}
               </button>
               <div class="text-[10px] md:text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700">
@@ -272,6 +301,7 @@
             </div>
           </div>
 
+          <!-- 轨迹滚动条容器 -->
           <div class="space-y-2 max-h-[350px] md:max-h-[400px] overflow-y-auto pr-0.5">
             <div v-if="loading" class="text-center py-8 text-slate-500">
               <i class="fa-solid fa-circle-notch animate-spin text-lg mb-2"></i>
@@ -283,6 +313,7 @@
               {{ t('noRecords') }}
             </div>
 
+            <!-- 条目卡片 -->
             <div v-else v-for="item in records" :key="item.id" class="group flex items-center justify-between p-3 rounded-xl bg-slate-900/35 hover:bg-slate-800/40 border border-slate-850 hover:border-slate-700 transition duration-150">
               <div class="flex items-center gap-2.5">
                 <span :class="item.payer === member1 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'" class="text-[9px] px-1.5 py-0.5 rounded-full border font-semibold">
@@ -291,7 +322,7 @@
                 <div>
                   <div class="flex items-center gap-1.5">
                     <i :class="getCategoryIconOnly(item.category)" class="text-xs"></i>
-                    <span class="text-xs md:text-sm font-medium text-slate-200">{{ getCategoryDisplayName(item.category) }}</span>
+                    <span class="text-xs md:text-sm font-medium text-slate-200">{{ getCategoryDisplayName(cat = item.category) }}</span>
                     <span v-if="item.remark" class="text-[10px] text-slate-500 font-normal">({{ item.remark }})</span>
                   </div>
                   <p class="text-[9px] text-slate-500 mt-0.5 font-mono">{{ item.date }}</p>
@@ -327,113 +358,75 @@
     createApp({
       setup() {
         const lang = ref('zh');
-        const isMobile = ref(false); // 检测当前是否为手机模式
+        const isMobile = ref(false);
 
         const translations = {
           zh: {
-            members: '成员',
-            addRecord: '快速记账',
-            payer: '支付人',
-            amount: '消费金额',
-            category: '选择分类',
-            date: '日期',
-            remark: '备注',
-            save: '存入星宿',
-            analysis: '今日/本周星轨',
-            mainCurrencySGD: '新币(SGD)主结算',
-            today: '今日消费',
-            thisWeek: '本周累计',
-            thisMonthTotal: '当月累计',
-            monthSelector: '月份筛选',
-            details: '账单轨迹明细',
-            items: '笔',
-            loading: '调阅星轨中',
-            noRecords: '晴空万里，暂无账目！',
-            converted: '已折算',
-            monthlyBudget: '预算',
-            totalBudget: '总预算',
-            budgetProgress: '预算使用进度',
-            doubleComparison: '双人同步消费对比',
-            compareDaily: '每日',
-            compareWeekly: '周度',
-            compareMonthly: '月度',
-            export: '导出 CSV'
+            addRecord: '快速记账', payer: '支付人', amount: '消费金额', category: '选择分类', date: '日期', remark: '备注', save: '存入星宿',
+            analysis: '今日/本周星轨', mainCurrencySGD: '新币(SGD)主结算', today: '今日消费', thisWeek: '本周累计', thisMonthTotal: '当月累计',
+            monthSelector: '月份筛选', details: '账单轨迹明细', items: '笔', loading: '调阅星轨中', noRecords: '晴空万里，暂无账目！',
+            converted: '已折算', totalBudget: '合并总预算', budgetProgress: '总预算使用进度', doubleComparison: '双人同步消费对比',
+            compareDaily: '每日', compareWeekly: '周度', compareMonthly: '月度', export: '导出 CSV'
           },
           en: {
-            members: 'Members',
-            addRecord: 'Quick Record',
-            payer: 'Payer',
-            amount: 'Amount',
-            category: 'Category',
-            date: 'Date',
-            remark: 'Remark',
-            save: 'Save Record',
-            analysis: 'Stats (Today/Week)',
-            mainCurrencySGD: 'Settled in SGD',
-            today: 'Today',
-            thisWeek: 'This Week',
-            thisMonthTotal: 'Month Total',
-            monthSelector: 'Select Month',
-            details: 'Transaction Ledger',
-            items: 'items',
-            loading: 'Loading galaxy data',
-            noRecords: 'Empty skies here. Add a record!',
-            converted: 'Converted',
-            monthlyBudget: 'Budget',
-            totalBudget: 'Total Budget',
-            budgetProgress: 'Budget Progress',
-            doubleComparison: 'Double Ledger Comparison',
-            compareDaily: 'Daily',
-            compareWeekly: 'Weekly',
-            compareMonthly: 'Monthly',
-            export: 'Export CSV'
+            addRecord: 'Quick Record', payer: 'Payer', amount: 'Amount', category: 'Category', date: 'Date', remark: 'Remark', save: 'Save Record',
+            analysis: 'Stats (Today/Week)', mainCurrencySGD: 'Settled in SGD', today: 'Today', thisWeek: 'This Week', thisMonthTotal: 'Month Total',
+            monthSelector: 'Select Month', details: 'Transaction Ledger', items: 'items', loading: 'Loading galaxy data', noRecords: 'Empty skies here. Add a record!',
+            converted: 'Converted', totalBudget: 'Combined Budget', budgetProgress: 'Total Budget Progress', doubleComparison: 'Double Ledger Comparison',
+            compareDaily: 'Daily', compareWeekly: 'Weekly', compareMonthly: 'Monthly', export: 'Export CSV'
           }
         };
 
         const t = (key) => translations[lang.value][key] || key;
         const toggleLang = () => lang.value = lang.value === 'zh' ? 'en' : 'zh';
 
-        // 默认成员名
+        // 默认双人名字
         const member1 = ref(localStorage.getItem('member1') || '小星');
         const member2 = ref(localStorage.getItem('member2') || '小辰');
         watch(member1, (val) => { localStorage.setItem('member1', val); updateChart(); });
         watch(member2, (val) => { localStorage.setItem('member2', val); updateChart(); });
 
-        // 双币预算 (Vue 驱动的值)
-        const budgetSGD = ref(1000);
-        const budgetMYR = ref(3000);
+        // 分开管理的独立预算模型
+        const budgetM1_SGD = ref(500);
+        const budgetM1_MYR = ref(1500);
+        const budgetM2_SGD = ref(500);
+        const budgetM2_MYR = ref(1500);
 
-        // 从云端 Supabase 加载预算
+        // 从云端配置表载入多重预算结构
         const fetchCloudBudget = async () => {
           try {
             const { data, error } = await supabaseClient
               .from('starry_config')
               .select('*')
-              .eq('id', 'global_budget')
+              .eq('id', 'split_member_budget')
               .single();
             if (data) {
-              budgetSGD.value = Number(data.budget_sgd);
-              budgetMYR.value = Number(data.budget_myr);
+              budgetM1_SGD.value = Number(data.m1_sgd || 500);
+              budgetM1_MYR.value = Number(data.m1_myr || 1500);
+              budgetM2_SGD.value = Number(data.m2_sgd || 500);
+              budgetM2_MYR.value = Number(data.m2_myr || 1500);
             }
           } catch (e) {
-            console.error('Failed to load cloud budget:', e);
+            console.error('Failed to load cloud split budget:', e);
           }
         };
 
-        // PC端修改后自动同步写入云端数据库
+        // PC模式变动时，回写云端
         const updateCloudBudget = async () => {
-          if (isMobile.value) return; // 手机端无法修改
+          if (isMobile.value) return;
           try {
             await supabaseClient
               .from('starry_config')
               .upsert({
-                id: 'global_budget',
-                budget_sgd: budgetSGD.value,
-                budget_myr: budgetMYR.value,
+                id: 'split_member_budget',
+                m1_sgd: budgetM1_SGD.value,
+                m1_myr: budgetM1_MYR.value,
+                m2_sgd: budgetM2_SGD.value,
+                m2_myr: budgetM2_MYR.value,
                 updated_at: new Date().toISOString()
               });
           } catch (e) {
-            console.error('Failed to sync budget to cloud:', e);
+            console.error('Failed to sync split budget to cloud:', e);
           }
         };
 
@@ -441,28 +434,32 @@
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
         watch(exchangeRate, (val) => localStorage.setItem('exchangeRate', val));
 
-        // 分类清单（全新移动端图标化）
+        // 独立换算计算器
+        const totalM1BudgetInSGD = computed(() => {
+          const myrConv = budgetM1_MYR.value ? (budgetM1_MYR.value / exchangeRate.value) : 0;
+          return (budgetM1_SGD.value || 0) + myrConv;
+        });
+
+        const totalM2BudgetInSGD = computed(() => {
+          const myrConv = budgetM2_MYR.value ? (budgetM2_MYR.value / exchangeRate.value) : 0;
+          return (budgetM2_SGD.value || 0) + myrConv;
+        });
+
+        // 大合并总计
+        const aggregateBudgetInSGD = computed(() => {
+          return totalM1BudgetInSGD.value + totalM2BudgetInSGD.value;
+        });
+
+        // 记账选项列表与图标提取
         const categories = [
-          '日常伙食 Daily Meal', 
-          '餐厅 Restaurant', 
-          '交通 Transport', 
-          '购物 Shopping', 
-          '娱乐 Fun', 
-          '旅行 Travel', 
-          '房租 Rent',
-          '其他 Others'
+          '日常伙食 Daily Meal', '餐厅 Restaurant', '交通 Transport', '购物 Shopping', 
+          '娱乐 Fun', '旅行 Travel', '房租 Rent', '其他 Others'
         ];
 
-        // 提取中文展示名称，更适合手机端超窄屏幕
         const getCategoryDisplayName = (cat) => {
-          if (lang.value === 'zh') {
-            return cat.split(' ')[0]; // 只返回中文比如 “日常伙食”, “房租”
-          } else {
-            return cat.split(' ').slice(1).join(' '); // 仅返回英文部分
-          }
+          return lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
         };
 
-        // 返回不带尾部文本的分类炫彩图标类
         const getCategoryIconOnly = (cat) => {
           if (cat.includes('日常伙食')) return 'fa-solid fa-bowl-rice text-amber-300';
           if (cat.includes('餐厅')) return 'fa-solid fa-utensils text-rose-300';
@@ -489,22 +486,16 @@
           remark: ''
         });
 
-        watch(compareRange, () => {
-          updateChart();
-        });
-
-        // 合并为新币视角下的总预算
-        const totalBudgetInSGD = computed(() => {
-          const myrConverted = budgetMYR.value ? (budgetMYR.value / exchangeRate.value) : 0;
-          return (budgetSGD.value || 0) + myrConverted;
-        });
+        // 纠正记账表单内双人改名后的动态同步
+        watch(member1, (newVal) => { if(form.payer !== member2.value) form.payer = newVal; });
+        watch(member2, (newVal) => { if(form.payer === member2.value) form.payer = newVal; });
+        watch(compareRange, () => { updateChart(); });
 
         const budgetPercent = computed(() => {
-          if (!totalBudgetInSGD.value) return 0;
-          return Math.round((parseFloat(totalMonth.value) / totalBudgetInSGD.value) * 100);
+          if (!aggregateBudgetInSGD.value) return 0;
+          return Math.round((parseFloat(totalMonth.value) / aggregateBudgetInSGD.value) * 100);
         });
 
-        // 获取该月的所有账目
         const fetchRecords = async () => {
           loading.value = true;
           try {
@@ -524,26 +515,21 @@
             if (error) throw error;
             records.value = data || [];
             
-            nextTick(() => {
-              updateChart();
-            });
+            nextTick(() => { updateChart(); });
           } catch (err) {
             console.error('Error fetching data:', err);
-          } finally {
+          } finaly {
             loading.value = false;
           }
         };
 
         const addRecord = async () => {
           if (!form.amount) return;
-
           let finalAmountSGD = form.amount;
           let originalAmount = form.amount;
-          
           if (form.currency === 'MYR') {
             finalAmountSGD = parseFloat((form.amount / exchangeRate.value).toFixed(2));
           }
-
           try {
             const { error } = await supabaseClient
               .from('starry_ledger')
@@ -557,9 +543,7 @@
                 remark: form.remark,
                 exchange_rate: exchangeRate.value
               }]);
-
             if (error) throw error;
-
             form.amount = null;
             form.remark = '';
             await fetchRecords();
@@ -571,125 +555,76 @@
         const deleteRecord = async (id) => {
           if (!confirm(lang.value === 'zh' ? '确定要删除这条账目吗？' : 'Are you sure to delete this record?')) return;
           try {
-            const { error } = await supabaseClient
-              .from('starry_ledger')
-              .delete()
-              .eq('id', id);
-
+            const { error } = await supabaseClient.from('starry_ledger').delete().eq('id', id);
             if (error) throw error;
             await fetchRecords();
           } catch (err) {
-            console.error('Delete error:', err);
+            console.error(err);
           }
         };
 
         const exportToCSV = () => {
-          if (records.value.length === 0) {
-            alert(lang.value === 'zh' ? '暂无数据可以导出' : 'No data to export');
-            return;
-          }
-
-          let csvContent = '\uFEFF';
-          csvContent += 'Date,Payer,Category,Amount(SGD),Original Amount,Currency,Remark\n';
-
+          if (records.value.length === 0) return;
+          let csv = '\uFEFFDate,Payer,Category,Amount(SGD),Original Amount,Currency,Remark\n';
           records.value.forEach(r => {
-            const row = [
-              r.date,
-              `"${r.payer}"`,
-              `"${r.category}"`,
-              r.amount,
-              r.original_amount || r.amount,
-              r.currency,
-              `"${r.remark || ''}"`
-            ];
-            csvContent += row.join(',') + '\n';
+            csv += `${r.date},"${r.payer}","${r.category}",${r.amount},${r.original_amount || r.amount},${r.currency},"${r.remark || ''}"\n`;
           });
-
-          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
           const link = document.createElement('a');
-          link.setAttribute('href', url);
-          link.setAttribute('download', `Starry_Ledger_${selectedMonth.value}.csv`);
-          document.body.appendChild(link);
+          link.href = URL.createObjectURL(blob);
+          link.download = `Starry_Ledger_${selectedMonth.value}.csv`;
           link.click();
-          document.body.removeChild(link);
         };
 
-        // 获取全年 12 个月的累积对比数据
         const fetchYearlyMonthlySummary = async () => {
           const currentYear = new Date().getFullYear();
-          const startOfYear = `${currentYear}-01-01`;
-          const endOfYear = `${currentYear}-12-31`;
-
           try {
-            const { data, error } = await supabaseClient
+            const { data } = await supabaseClient
               .from('starry_ledger')
               .select('date, amount, payer')
-              .gte('date', startOfYear)
-              .lte('date', endOfYear);
-
-            if (error) throw error;
+              .gte('date', `${currentYear}-01-01`)
+              .lte('date', `${currentYear}-12-31`);
             return data || [];
-          } catch (e) {
-            console.error('Failed to load yearly records for comparison:', e);
-            return [];
-          }
+          } catch (e) { return []; }
         };
 
-        // 图表渲染引擎 (支持每日、周、月对比 + 自动计算各自百分比)
         const updateChart = async () => {
           const ctx = document.getElementById('comparisonChart');
-          if (!ctx || isMobile.value) return; // 手机端隐藏后不渲染
+          if (!ctx || isMobile.value) return;
 
-          if (chartInstance) {
-            chartInstance.destroy();
-          }
+          if (chartInstance) chartInstance.destroy();
 
           let labels = [];
           let m1Data = [];
           let m2Data = [];
 
           if (compareRange.value === 'daily') {
-            const dates = [...new Set(records.value.map(r => r.date))].sort();
-            labels = dates.slice(-10); 
-            
+            labels = [...new Set(records.value.map(r => r.date))].sort().slice(-10); 
             labels.forEach(d => {
               const dayRecords = records.value.filter(r => r.date === d);
-              const m1Sum = dayRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
-              const m2Sum = dayRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
-              m1Data.push(m1Sum);
-              m2Data.push(m2Sum);
+              m1Data.push(dayRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0));
+              m2Data.push(dayRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0));
             });
           } else if (compareRange.value === 'weekly') {
             const getWeekNumber = (d) => {
               const date = new Date(d);
-              date.setHours(0, 0, 0, 0);
+              date.setHours(0,0,0,0);
               date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-              const week1 = new Date(date.getFullYear(), 0, 4);
-              return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+              return 1 + Math.round(((date.getTime() - new Date(date.getFullYear(), 0, 4).getTime()) / 86400000 - 3 + (new Date(date.getFullYear(), 0, 4).getDay() + 6) % 7) / 7);
             };
-
-            const weeks = [...new Set(records.value.map(r => `W${getWeekNumber(r.date)}`))].sort();
-            labels = weeks;
-            
+            labels = [...new Set(records.value.map(r => `W${getWeekNumber(r.date)}`))].sort();
             labels.forEach(w => {
               const weekRecords = records.value.filter(r => `W${getWeekNumber(r.date)}` === w);
-              const m1Sum = weekRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
-              const m2Sum = weekRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
-              m1Data.push(m1Sum);
-              m2Data.push(m2Sum);
+              m1Data.push(weekRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0));
+              m2Data.push(weekRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0));
             });
           } else if (compareRange.value === 'monthly') {
-            // 月度汇总对比
             const yearlyData = await fetchYearlyMonthlySummary();
             labels = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map(m => `${new Date().getFullYear()}-${m}`);
-
             labels.forEach(m => {
               const monthRecords = yearlyData.filter(r => r.date.startsWith(m));
-              const m1Sum = monthRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
-              const m2Sum = monthRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
-              m1Data.push(m1Sum);
-              m2Data.push(m2Sum);
+              m1Data.push(monthRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0));
+              m2Data.push(monthRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0));
             });
           }
 
@@ -698,148 +633,66 @@
             data: {
               labels: labels,
               datasets: [
-                {
-                  label: member1.value,
-                  data: m1Data,
-                  backgroundColor: 'rgba(99, 102, 241, 0.75)',
-                  borderColor: 'rgb(99, 102, 241)',
-                  borderWidth: 1,
-                  borderRadius: 6
-                },
-                {
-                  label: member2.value,
-                  data: m2Data,
-                  backgroundColor: 'rgba(245, 158, 11, 0.75)',
-                  borderColor: 'rgb(245, 158, 11)',
-                  borderWidth: 1,
-                  borderRadius: 6
-                }
+                { label: member1.value, data: m1Data, backgroundColor: 'rgba(99, 102, 241, 0.75)', borderColor: 'rgb(99, 102, 241)', borderWidth: 1, borderRadius: 6 },
+                { label: member2.value, data: m2Data, backgroundColor: 'rgba(245, 158, 11, 0.75)', borderColor: 'rgb(245, 158, 11)', borderWidth: 1, borderRadius: 6 }
               ]
             },
             options: {
-              responsive: true,
-              maintainAspectRatio: false,
+              responsive: true, maintainAspectRatio: false,
               plugins: {
-                legend: {
-                  labels: { color: '#94a3b8', font: { family: 'Poppins' } }
-                },
+                legend: { labels: { color: '#94a3b8' } },
                 tooltip: {
                   callbacks: {
-                    label: function(context) {
+                    label: (context) => {
                       const value = context.parsed.y;
-                      const index = context.dataIndex;
-                      
-                      const m1Val = m1Data[index] || 0;
-                      const m2Val = m2Data[index] || 0;
-                      const total = m1Val + m2Val;
-                      
-                      let percentStr = '';
-                      if (total > 0) {
-                        const pct = ((value / total) * 100).toFixed(1);
-                        percentStr = ` (${pct}%)`;
-                      }
-                      return `${context.dataset.label}: S$ ${value.toFixed(2)}${percentStr}`;
+                      const total = (m1Data[context.dataIndex] || 0) + (m2Data[context.dataIndex] || 0);
+                      return `${context.dataset.label}: S$ ${value.toFixed(2)} (${total > 0 ? ((value/total)*100).toFixed(1) : 0}%)`;
                     }
                   }
                 }
               },
               scales: {
-                x: {
-                  grid: { display: false },
-                  ticks: { color: '#64748b' }
-                },
-                y: {
-                  grid: { color: 'rgba(51, 65, 85, 0.3)' },
-                  ticks: { 
-                    color: '#64748b',
-                    callback: (val) => 'S$' + val
-                  }
-                }
+                x: { ticks: { color: '#64748b' }, grid: { display: false } },
+                y: { ticks: { color: '#64748b', callback: (v) => 'S$' + v }, grid: { color: 'rgba(51, 65, 85, 0.3)' } }
               }
             }
           });
         };
 
-        const fetchLiveExchangeRate = async () => {
-          try {
-            const res = await fetch('https://open.er-api.com/v6/latest/SGD');
-            const data = await res.json();
-            if (data && data.rates && data.rates.MYR) {
-              exchangeRate.value = parseFloat(data.rates.MYR.toFixed(4));
-            }
-          } catch (e) {
-            console.log('今日实时汇率自动获取失败，已切换至本地缓存。');
-          }
-        };
-
-        const checkDeviceWidth = () => {
-          isMobile.value = window.innerWidth < 1024; // Tailwind lg 阈值
-        };
-
-        // 实时订阅：监听数据与预算变化
         const setupRealtimeSubscription = () => {
-          // 监听账单表
-          supabaseClient
-            .channel('ledger-db-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'starry_ledger' }, () => {
-              fetchRecords();
-            })
-            .subscribe();
-
-          // 监听配置表 (预算变动实时多端刷新)
-          supabaseClient
-            .channel('config-db-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'starry_config' }, (payload) => {
-              if (payload.new && payload.new.id === 'global_budget') {
-                budgetSGD.value = Number(payload.new.budget_sgd);
-                budgetMYR.value = Number(payload.new.budget_myr);
-              }
-            })
-            .subscribe();
+          supabaseClient.channel('ledger-db-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'starry_ledger' }, () => { fetchRecords(); }).subscribe();
+          supabaseClient.channel('config-db-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'starry_config' }, (payload) => {
+            if (payload.new && payload.new.id === 'split_member_budget') {
+              budgetM1_SGD.value = Number(payload.new.m1_sgd || 0);
+              budgetM1_MYR.value = Number(payload.new.m1_myr || 0);
+              budgetM2_SGD.value = Number(payload.new.m2_sgd || 0);
+              budgetM2_MYR.value = Number(payload.new.m2_myr || 0);
+            }
+          }).subscribe();
         };
 
-        const totalToday = computed(() => {
-          const todayStr = new Date().toISOString().substring(0, 10);
-          return records.value
-            .filter(r => r.date === todayStr)
-            .reduce((sum, r) => sum + Number(r.amount), 0)
-            .toFixed(2);
-        });
-
+        const totalToday = computed(() => records.value.filter(r => r.date === new Date().toISOString().substring(0, 10)).reduce((sum, r) => sum + Number(r.amount), 0).toFixed(2));
         const totalThisWeek = computed(() => {
-          const now = new Date();
-          const day = now.getDay() || 7;
-          const monday = new Date(now.setDate(now.getDate() - day + 1));
+          const monday = new Date(new Date().setDate(new Date().getDate() - (new Date().getDay() || 7) + 1));
           monday.setHours(0,0,0,0);
-          
-          return records.value
-            .filter(r => {
-              const rDate = new Date(r.date);
-              return rDate >= monday;
-            })
-            .reduce((sum, r) => sum + Number(r.amount), 0)
-            .toFixed(2);
+          return records.value.filter(r => new Date(r.date) >= monday).reduce((sum, r) => sum + Number(r.amount), 0).toFixed(2);
         });
-
-        const totalMonth = computed(() => {
-          return records.value
-            .reduce((sum, r) => sum + Number(r.amount), 0)
-            .toFixed(2);
-        });
+        const totalMonth = computed(() => records.value.reduce((sum, r) => sum + Number(r.amount), 0).toFixed(2));
 
         onMounted(() => {
-          checkDeviceWidth();
-          window.addEventListener('resize', checkDeviceWidth);
-          fetchLiveExchangeRate();
-          fetchCloudBudget(); // 获取云端预算数据
+          isMobile.value = window.innerWidth < 1024;
+          window.addEventListener('resize', () => { isMobile.value = window.innerWidth < 1024; });
+          fetchCloudBudget();
           fetchRecords();
           setupRealtimeSubscription();
+          // 预加载今日汇率
+          fetch('https://open.er-api.com/v6/latest/SGD').then(r => r.json()).then(d => { if(d?.rates?.MYR) exchangeRate.value = parseFloat(d.rates.MYR.toFixed(4)); }).catch(()=>{});
         });
 
         return {
-          lang, t, toggleLang, isMobile,
-          member1, member2,
-          budgetSGD, budgetMYR, totalBudgetInSGD, budgetPercent,
+          lang, t, toggleLang, isMobile, member1, member2,
+          budgetM1_SGD, budgetM1_MYR, budgetM2_SGD, budgetM2_MYR,
+          totalM1BudgetInSGD, totalM2BudgetInSGD, aggregateBudgetInSGD, budgetPercent,
           exchangeRate, categories, getCategoryIconOnly, getCategoryDisplayName,
           records, loading, selectedMonth, form, compareRange,
           addRecord, deleteRecord, fetchRecords, exportToCSV,

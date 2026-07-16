@@ -1,98 +1,488 @@
 <!DOCTYPE html>
-<html lang="zh-Hans">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>星辰小帐 ✨</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { background: #0b0c15; color: #e2e8f0; font-family: sans-serif; }
-        [v-cloak] { display: none; }
-        .glass { background: rgba(22, 24, 38, 0.8); border: 1px solid rgba(255,255,255,0.05); }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>星辰小账 | Starry Ledger</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    body {
+      font-family: 'Poppins', 'Noto Sans SC', sans-serif;
+      background: radial-gradient(circle at bottom, #0f172a 0%, #020617 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+    /* 星空微光背景效果 */
+    .star-bg {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-image: 
+        radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+        radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px);
+      background-size: 550px 550px, 350px 350px;
+      background-position: 0 0, 40px 60px;
+      opacity: 0.15;
+      z-index: -1;
+    }
+    /* 玻璃拟态卡片 */
+    .glass-card {
+      background: rgba(30, 41, 59, 0.45);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
 </head>
-<body class="p-6">
-    <div id="app" v-cloak class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- 左侧功能区 -->
-        <div class="space-y-6">
-            <div class="glass p-6 rounded-3xl flex justify-between items-center">
-                <div class="flex gap-4 font-bold text-xl"><span>小星 ✨</span><span>|</span><span>小辰</span></div>
-                <div class="text-xs bg-indigo-900/50 px-4 py-2 rounded-full text-indigo-300 border border-indigo-500/30">
-                    💡 今日参考汇率: 1 SGD ≈ {{ exchangeRate }} MYR
-                </div>
+<body>
+  <div class="star-bg"></div>
+  
+  <div id="app" class="container mx-auto p-4 max-w-6xl" v-cloak>
+    <header class="flex justify-between items-center mb-6 py-4 border-b border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="text-amber-300 text-2xl animate-pulse"><i class="fa-solid fa-star-and-crescent"></i></div>
+        <div>
+          <h1 class="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-amber-200">
+            {{ lang === 'zh' ? '星辰小账' : 'Starry Ledger' }}
+          </h1>
+          <p class="text-xs text-slate-400">Double-sync Ledger</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-4">
+        <button @click="toggleLang" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-full border border-slate-700 transition">
+          {{ lang === 'zh' ? 'English' : '中文' }}
+        </button>
+        <div class="text-xs text-amber-200 bg-amber-950/40 border border-amber-900/50 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+          <i class="fa-solid fa-calculator"></i>
+          <span>1 SGD = </span>
+          <input type="number" step="0.0001" v-model.number="exchangeRate" class="w-16 bg-transparent text-center border-b border-amber-400/50 focus:outline-none focus:border-amber-400 font-mono">
+          <span>MYR</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="glass-card rounded-2xl p-4 mb-6 flex flex-wrap gap-4 items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-user-friends text-indigo-400"></i>
+        <span class="text-sm font-semibold text-slate-300">{{ t('members') }}:</span>
+      </div>
+      <div class="flex gap-4">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+          <input type="text" v-model="member1" class="bg-slate-800/60 border border-slate-700 text-xs px-2.5 py-1 rounded w-24 text-center text-slate-200 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+          <input type="text" v-model="member2" class="bg-slate-800/60 border border-slate-700 text-xs px-2.5 py-1 rounded w-24 text-center text-slate-200 focus:outline-none focus:border-amber-500">
+        </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <main class="lg:col-span-5 space-y-6">
+        <div class="glass-card rounded-2xl p-6 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
+          <h2 class="text-lg font-semibold mb-4 text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-pen-fancy text-indigo-400"></i> {{ t('addRecord') }}
+          </h2>
+          
+          <form @submit.prevent="addRecord" class="space-y-4">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1.5">{{ t('payer') }}</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2 rounded-xl border text-sm transition font-medium">
+                  {{ member1 }}
+                </button>
+                <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-amber-600/30 border-amber-500 text-amber-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2 rounded-xl border text-sm transition font-medium">
+                  {{ member2 }}
+                </button>
+              </div>
             </div>
 
-            <!-- PK 榜 -->
-            <div class="glass p-6 rounded-3xl">
-                <h2 class="text-sm text-slate-400 mb-4">🚀 星辰消费 PK 榜</h2>
-                <div class="w-full bg-slate-900 rounded-full h-5 flex overflow-hidden mb-4">
-                    <div class="bg-indigo-600 transition-all duration-500" :style="{width: stats.xiaoXingPercent + '%'}"></div>
-                    <div class="bg-pink-600 transition-all duration-500" :style="{width: stats.xiaoChenPercent + '%'}"></div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1.5">{{ t('amount') }}</label>
+              <div class="flex gap-2">
+                <div class="relative flex-1">
+                  <span class="absolute left-3 top-2.5 text-slate-500 font-semibold text-sm">{{ form.currency }}</span>
+                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 text-lg font-mono">
                 </div>
-                <div class="flex justify-between font-bold">
-                    <span>小星: S${{ stats.xiaoXing.toFixed(2) }}</span>
-                    <span>小辰: S${{ stats.xiaoChen.toFixed(2) }}</span>
-                </div>
+                <select v-model="form.currency" class="bg-slate-800 border border-slate-700 rounded-xl px-3 text-sm text-slate-300 focus:outline-none">
+                  <option value="SGD">SGD</option>
+                  <option value="MYR">MYR</option>
+                </select>
+              </div>
+              <p v-if="form.currency === 'MYR' && form.amount" class="text-xs text-amber-300/80 mt-1.5">
+                ≈ SGD {{ (form.amount / exchangeRate).toFixed(2) }} ({{ t('converted') }})
+              </p>
             </div>
 
-            <!-- 记账 -->
-            <div class="glass p-6 rounded-3xl">
-                <h2 class="text-sm text-slate-400 mb-4">✍️ 添加新账单</h2>
-                <div class="flex gap-4 mb-6">
-                    <button @click="form.payer='小星'" :class="form.payer==='小星'?'bg-indigo-600':'bg-slate-800'" class="flex-1 p-4 rounded-2xl font-bold transition">小星</button>
-                    <button @click="form.payer='小辰'" :class="form.payer==='小辰'?'bg-pink-600':'bg-slate-800'" class="flex-1 p-4 rounded-2xl font-bold transition">小辰</button>
-                </div>
-                <div class="grid grid-cols-5 gap-2 mb-6">
-                    <button v-for="c in ['餐饮','购物','交通','娱乐','其他']" @click="form.category=c" :class="form.category===c?'bg-slate-600':'bg-slate-800'" class="p-3 rounded-xl text-xs">{{c}}</button>
-                </div>
-                <div class="flex gap-2">
-                    <select v-model="form.currency" class="bg-slate-900 rounded-2xl px-4"><option>SGD</option><option>MYR</option></select>
-                    <input v-model="form.amount" type="number" placeholder="金额" class="flex-1 bg-slate-900 rounded-2xl px-6 py-4 outline-none focus:ring-2 ring-indigo-500">
-                    <button @click="save" class="bg-indigo-600 px-8 rounded-2xl font-bold hover:bg-indigo-500">保存</button>
-                </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">{{ t('category') }}</label>
+                <select v-model="form.category" class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 px-3 text-sm text-slate-300 focus:outline-none focus:border-indigo-500">
+                  <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1.5">{{ t('date') }}</label>
+                <input type="date" v-model="form.date" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-1.5 px-3 text-sm text-slate-300 focus:outline-none focus:border-indigo-500">
+              </div>
             </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1.5">{{ t('remark') }}</label>
+              <input type="text" v-model="form.remark" placeholder="..." class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 px-3 text-sm text-slate-300 focus:outline-none focus:border-indigo-500">
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-indigo-500 to-amber-500 hover:from-indigo-600 hover:to-amber-600 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-500/10">
+              {{ t('save') }}
+            </button>
+          </form>
         </div>
 
-        <!-- 右侧展示区 -->
-        <div class="glass p-8 rounded-3xl">
-            <h2 class="font-bold mb-6">📊 账单明细列表 (PC版)</h2>
-            <div class="space-y-4 max-h-[600px] overflow-y-auto">
-                <div v-for="ex in expenses" :key="ex.id" class="flex justify-between items-center p-4 bg-slate-900/50 rounded-2xl hover:bg-slate-800 transition">
-                    <div>
-                        <div class="font-bold text-sm">{{ ex.payer }} · {{ ex.category }}</div>
-                        <div class="text-xs text-slate-500">{{ new Date(ex.created_at).toLocaleDateString() }}</div>
-                    </div>
-                    <div class="flex items-center gap-6">
-                        <span class="font-mono font-bold text-indigo-300">{{ ex.amount }} {{ ex.currency }}</span>
-                        <button @click="remove(ex.id)" class="text-red-500 text-xs hover:text-red-400">删除</button>
-                    </div>
-                </div>
+        <div class="glass-card rounded-2xl p-5">
+          <h3 class="text-sm font-semibold text-slate-300 mb-4 flex items-center justify-between">
+            <span><i class="fa-solid fa-chart-pie text-indigo-400 mr-1.5"></i>{{ t('analysis') }}</span>
+            <span class="text-xs text-slate-500">{{ t('mainCurrencySGD') }}</span>
+          </h3>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-slate-900/40 p-3 rounded-xl border border-slate-800/80">
+              <p class="text-xs text-slate-500">{{ t('today') }}</p>
+              <p class="text-lg font-bold text-slate-200 mt-1 font-mono">S$ {{ totalToday }}</p>
             </div>
+            <div class="bg-slate-900/40 p-3 rounded-xl border border-slate-800/80">
+              <p class="text-xs text-slate-500">{{ t('thisWeek') }}</p>
+              <p class="text-lg font-bold text-slate-200 mt-1 font-mono">S$ {{ totalThisWeek }}</p>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-slate-800">
+            <div class="flex justify-between items-center mb-2">
+              <p class="text-xs text-slate-400">{{ t('monthSelector') }}</p>
+              <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-xs rounded px-2 py-0.5 text-slate-300">
+            </div>
+            <div class="flex justify-between items-center bg-indigo-950/20 p-3 rounded-xl border border-indigo-900/30">
+              <span class="text-xs text-indigo-300">{{ t('thisMonthTotal') }}</span>
+              <span class="text-base font-bold text-indigo-200 font-mono">S$ {{ totalMonth }}</span>
+            </div>
+          </div>
         </div>
+      </main>
+
+      <section class="lg:col-span-7 space-y-6">
+        <div class="glass-card rounded-2xl p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}
+            </h2>
+            <div class="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded-full">
+              {{ records.length }} {{ t('items') }}
+            </div>
+          </div>
+
+          <div class="space-y-3 max-h-[550px] overflow-y-auto pr-1">
+            <div v-if="loading" class="text-center py-8 text-slate-500">
+              <i class="fa-solid fa-circle-notch animate-spin text-xl mb-2"></i>
+              <p class="text-xs">{{ t('loading') }}...</p>
+            </div>
+            
+            <div v-else-if="records.length === 0" class="text-center py-12 text-slate-600 text-xs">
+              <i class="fa-regular fa-folder-open text-2xl mb-2 block"></i>
+              {{ t('noRecords') }}
+            </div>
+
+            <div v-else v-for="item in records" :key="item.id" class="group flex items-center justify-between p-3.5 rounded-xl bg-slate-900/30 hover:bg-slate-800/40 border border-slate-800/80 hover:border-slate-700 transition">
+              <div class="flex items-center gap-3">
+                <span :class="item.payer === member1 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'" class="text-[10px] px-2 py-0.5 rounded-full border font-medium">
+                  {{ item.payer }}
+                </span>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-slate-200">{{ item.category }}</span>
+                    <span v-if="item.remark" class="text-xs text-slate-500 font-normal">({{ item.remark }})</span>
+                  </div>
+                  <p class="text-[10px] text-slate-500 mt-0.5 font-mono">{{ item.date }}</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-4">
+                <div class="text-right">
+                  <p class="text-sm font-bold text-slate-200 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
+                  <p v-if="item.currency === 'MYR'" class="text-[10px] text-amber-400/80 font-mono">
+                    RM {{ Number(item.original_amount).toFixed(2) }}
+                  </p>
+                </div>
+                <button @click="deleteRecord(item.id)" class="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition duration-150 p-1">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
+  </div>
 
-    <script>
-        const supabase = supabase.createClient('YOUR_SUPABASE_URL_HERE', 'YOUR_SUPABASE_ANON_KEY_HERE');
-        Vue.createApp({
-            data() { return { expenses: [], exchangeRate: 3.15, form: { payer: '小星', category: '餐饮', currency: 'SGD', amount: '' } } },
-            computed: {
-                stats() {
-                    const xiaoXing = this.expenses.filter(e => e.payer === '小星').reduce((sum, e) => sum + Number(e.amount), 0);
-                    const xiaoChen = this.expenses.filter(e => e.payer === '小辰').reduce((sum, e) => sum + Number(e.amount), 0);
-                    const total = xiaoXing + xiaoChen || 1;
-                    return { xiaoXing, xiaoChen, xiaoXingPercent: (xiaoXing/total)*100, xiaoChenPercent: (xiaoChen/total)*100 };
-                }
-            },
-            methods: {
-                async fetchRate() { try { const res = await fetch('https://api.exchangerate-api.com/v4/latest/SGD'); const data = await res.json(); this.exchangeRate = data.rates.MYR.toFixed(2); } catch(e) {} },
-                async load() { const { data } = await supabase.from('expenses').select('*').order('created_at', {ascending: false}); this.expenses = data || []; },
-                async save() { if(!this.form.amount) return; await supabase.from('expenses').insert({...this.form, ledger_id: "global-ledger-001", created_at: new Date().toISOString()}); this.form.amount = ''; this.load(); },
-                async remove(id) { await supabase.from('expenses').delete().eq('id', id); this.load(); }
-            },
-            mounted() { this.fetchRate(); this.load(); }
-        }).mount('#app');
-    </script>
+  <script>
+    const { createApp, ref, reactive, computed, onMounted } = Vue;
+
+    // 填入你专属的 Supabase 配置
+    const SUPABASE_URL = 'https://vxbaikkfjyayfxygysfc.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'sb_publishable_GudLGDJg2D69FEJbdy7ksA_4Z8L9DvA';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    createApp({
+      setup() {
+        // 多语言词典
+        const lang = ref('zh');
+        const translations = {
+          zh: {
+            members: '记账成员',
+            addRecord: '新增星辰记录',
+            payer: '谁付的款',
+            amount: '金额',
+            category: '分类',
+            date: '日期',
+            remark: '备注',
+            save: '记入星辰',
+            analysis: '数据星轨 (今日/本周)',
+            mainCurrencySGD: '以新币(SGD)为主结算',
+            today: '今日消费',
+            thisWeek: '本周累计',
+            thisMonthTotal: '本月累计支出',
+            monthSelector: '月份查询',
+            details: '星轨迹账明细',
+            items: '笔记录',
+            loading: '正在从星轨读取数据',
+            noRecords: '暂无账目，开始第一笔吧！',
+            converted: '已折算'
+          },
+          en: {
+            members: 'Members',
+            addRecord: 'New Starry Record',
+            payer: 'Payer',
+            amount: 'Amount',
+            category: 'Category',
+            date: 'Date',
+            remark: 'Remark',
+            save: 'Record to Starry',
+            analysis: 'Analytics (Today/Week)',
+            mainCurrencySGD: 'Settled in SGD',
+            today: 'Today Spent',
+            thisWeek: 'This Week',
+            thisMonthTotal: 'Monthly Total',
+            monthSelector: 'Query Month',
+            details: 'Transaction Ledger',
+            items: 'records',
+            loading: 'Fetching from galaxy',
+            noRecords: 'Empty skies here. Add a record!',
+            converted: 'Converted'
+          }
+        };
+
+        const t = (key) => translations[lang.value][key] || key;
+        const toggleLang = () => lang.value = lang.value === 'zh' ? 'en' : 'zh';
+
+        // 默认成员名（可修改，数据会临时存在localStorage以防刷新丢失）
+        const member1 = ref(localStorage.getItem('member1') || '小星');
+        const member2 = ref(localStorage.getItem('member2') || '小辰');
+
+        // 监视姓名变化并保存
+        Vue.watch(member1, (val) => localStorage.setItem('member1', val));
+        Vue.watch(member2, (val) => localStorage.setItem('member2', val));
+
+        // 汇率管理（默认 1 SGD = 3.25 MYR，可查询接口更新或手动在页面无感修改）
+        const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
+        Vue.watch(exchangeRate, (val) => localStorage.setItem('exchangeRate', val));
+
+        // 默认账目分类
+        const categories = ['餐饮 Food', '交通 Transport', '购物 Shopping', '娱乐 Fun', '居家 Home', '其他 Others'];
+
+        // 状态及数据
+        const records = ref([]);
+        const loading = ref(false);
+        const selectedMonth = ref(new Date().toISOString().substring(0, 7)); // 默认当前月份
+
+        // 表单数据
+        const form = reactive({
+          payer: member1.value,
+          amount: null,
+          currency: 'SGD',
+          category: '餐饮 Food',
+          date: new Date().toISOString().substring(0, 10),
+          remark: ''
+        });
+
+        // 自动更新机制：如果是新月份的1号，无需操作，只需加载新月份数据即可
+        const checkAndResetForNewMonth = () => {
+          const today = new Date();
+          if (today.getDate() === 1) {
+            selectedMonth.value = today.toISOString().substring(0, 7);
+          }
+        };
+
+        // 获取线上记账记录
+        const fetchRecords = async () => {
+          loading.value = true;
+          try {
+            const startOfMonth = `${selectedMonth.value}-01`;
+            // 计算这个月的最后一天
+            const year = parseInt(selectedMonth.value.split('-')[0]);
+            const month = parseInt(selectedMonth.value.split('-')[1]);
+            const endOfMonth = new Date(year, month, 0).toISOString().substring(0, 10);
+
+            const { data, error } = await supabaseClient
+              .from('starry_ledger')
+              .select('*')
+              .gte('date', startOfMonth)
+              .lte('date', endOfMonth)
+              .order('date', { ascending: false })
+              .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            records.value = data || [];
+          } catch (err) {
+            console.error('Error fetching data:', err);
+          } finally {
+            loading.value = false;
+          }
+        };
+
+        // 写入新纪录到 Supabase
+        const addRecord = async () => {
+          if (!form.amount) return;
+
+          let finalAmountSGD = form.amount;
+          let originalAmount = form.amount;
+          
+          // 如果是马币(MYR)，自动折算为主币种新币(SGD)
+          if (form.currency === 'MYR') {
+            finalAmountSGD = parseFloat((form.amount / exchangeRate.value).toFixed(2));
+          }
+
+          try {
+            const { error } = await supabaseClient
+              .from('starry_ledger')
+              .insert([{
+                date: form.date,
+                amount: finalAmountSGD,
+                original_amount: originalAmount,
+                currency: form.currency,
+                category: form.category,
+                payer: form.payer,
+                remark: form.remark,
+                exchange_rate: exchangeRate.value
+              }]);
+
+            if (error) throw error;
+
+            // 重置表单输入
+            form.amount = null;
+            form.remark = '';
+            
+            // 重新拉取最新数据
+            await fetchRecords();
+          } catch (err) {
+            alert('保存失败，请检查网络：' + err.message);
+          }
+        };
+
+        // 删除记录
+        const deleteRecord = async (id) => {
+          if (!confirm(lang.value === 'zh' ? '确定要抹去这条星轨迹账吗？' : 'Are you sure to delete this record?')) return;
+          try {
+            const { error } = await supabaseClient
+              .from('starry_ledger')
+              .delete()
+              .eq('id', id);
+
+            if (error) throw error;
+            await fetchRecords();
+          } catch (err) {
+            console.error('Delete error:', err);
+          }
+        };
+
+        // 异步尝试获取今日汇率 (SGD to MYR)
+        const fetchLiveExchangeRate = async () => {
+          try {
+            // 使用公共免密钥汇率 API 
+            const res = await fetch('https://open.er-api.com/v6/latest/SGD');
+            const data = await res.json();
+            if (data && data.rates && data.rates.MYR) {
+              exchangeRate.value = parseFloat(data.rates.MYR.toFixed(4));
+            }
+          } catch (e) {
+            console.log('今日实时汇率自动获取失败，已切换至本地缓存汇率。');
+          }
+        };
+
+        // 实时监听 Supabase 数据变动（即时双人同步的核心）
+        const setupRealtimeSubscription = () => {
+          supabaseClient
+            .channel('schema-db-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'starry_ledger' }, () => {
+              fetchRecords();
+            })
+            .subscribe();
+        };
+
+        // 计算属性：今日总计（转换为SGD后的值）
+        const totalToday = computed(() => {
+          const todayStr = new Date().toISOString().substring(0, 10);
+          return records.value
+            .filter(r => r.date === todayStr)
+            .reduce((sum, r) => sum + Number(r.amount), 0)
+            .toFixed(2);
+        });
+
+        // 计算属性：本周总计（当前周，周一到周日）
+        const totalThisWeek = computed(() => {
+          const now = new Date();
+          const day = now.getDay() || 7; // 周日转为 7
+          const monday = new Date(now.setDate(now.getDate() - day + 1));
+          monday.setHours(0,0,0,0);
+          
+          return records.value
+            .filter(r => {
+              const rDate = new Date(r.date);
+              return rDate >= monday;
+            })
+            .reduce((sum, r) => sum + Number(r.amount), 0)
+            .toFixed(2);
+        });
+
+        // 计算属性：本月总计
+        const totalMonth = computed(() => {
+          return records.value
+            .reduce((sum, r) => sum + Number(r.amount), 0)
+            .toFixed(2);
+        });
+
+        onMounted(() => {
+          checkAndResetForNewMonth();
+          fetchLiveExchangeRate(); // 尝试获取最新汇率
+          fetchRecords();          // 读取当月账目
+          setupRealtimeSubscription(); // 建立实时监听
+        });
+
+        return {
+          lang, t, toggleLang,
+          member1, member2,
+          exchangeRate, categories,
+          records, loading, selectedMonth, form,
+          addRecord, deleteRecord, fetchRecords,
+          totalToday, totalThisWeek, totalMonth
+        };
+      }
+    }).mount('#app');
+  </script>
 </body>
 </html>

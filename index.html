@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <style>
     body {
@@ -35,12 +36,26 @@
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
+    /* 自定义滚动条 */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.3);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(251, 191, 36, 0.3);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(251, 191, 36, 0.6);
+    }
   </style>
 </head>
 <body>
   <div class="star-bg"></div>
   
-  <div id="app" class="container mx-auto p-4 max-w-6xl" v-cloak>
+  <div id="app" class="container mx-auto p-4 max-w-7xl" v-cloak>
     <header class="flex justify-between items-center mb-6 py-4 border-b border-slate-800">
       <div class="flex items-center gap-3">
         <div class="text-amber-300 text-2xl animate-pulse"><i class="fa-solid fa-star-and-crescent"></i></div>
@@ -65,20 +80,39 @@
       </div>
     </header>
 
-    <section class="glass-card rounded-2xl p-4 mb-6 flex flex-wrap gap-4 items-center justify-between">
-      <div class="flex items-center gap-2">
-        <i class="fa-solid fa-user-friends text-indigo-400"></i>
-        <span class="text-sm font-semibold text-slate-300">{{ t('members') }}:</span>
+    <section class="glass-card rounded-2xl p-4 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+      <div class="flex flex-wrap gap-4 items-center">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-user-friends text-indigo-400"></i>
+          <span class="text-sm font-semibold text-slate-300">{{ t('members') }}:</span>
+        </div>
+        <div class="flex gap-4">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+            <input type="text" v-model="member1" class="bg-slate-800/60 border border-slate-700 text-xs px-2.5 py-1 rounded w-24 text-center text-slate-200 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+            <input type="text" v-model="member2" class="bg-slate-800/60 border border-slate-700 text-xs px-2.5 py-1 rounded w-24 text-center text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
       </div>
-      <div class="flex gap-4">
-        <div class="flex items-center gap-1.5">
-          <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
-          <input type="text" v-model="member1" class="bg-slate-800/60 border border-slate-700 text-xs px-2.5 py-1 rounded w-24 text-center text-slate-200 focus:outline-none focus:border-indigo-500">
+
+      <div class="flex flex-wrap gap-3 items-center justify-start md:justify-end">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-piggy-bank text-emerald-400"></i>
+          <span class="text-sm font-semibold text-slate-300">{{ t('monthlyBudget') }}:</span>
         </div>
-        <div class="flex items-center gap-1.5">
-          <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-          <input type="text" v-model="member2" class="bg-slate-800/60 border border-slate-700 text-xs px-2.5 py-1 rounded w-24 text-center text-slate-200 focus:outline-none focus:border-amber-500">
+        <div class="flex gap-2">
+          <input type="number" v-model.number="budgetInput" class="bg-slate-800/60 border border-slate-700 text-xs px-2 py-1 rounded w-24 text-center text-slate-200 focus:outline-none focus:border-emerald-500 font-mono">
+          <select v-model="budgetCurrency" class="bg-slate-800 border border-slate-700 text-xs rounded px-2 py-1 text-slate-300 focus:outline-none">
+            <option value="SGD">SGD</option>
+            <option value="MYR">MYR</option>
+          </select>
         </div>
+        <span class="text-xs text-slate-400" v-if="budgetCurrency === 'MYR'">
+          (≈ SGD {{ budgetInSGD.toFixed(2) }})
+        </span>
       </div>
     </section>
 
@@ -145,8 +179,8 @@
           </form>
         </div>
 
-        <div class="glass-card rounded-2xl p-5">
-          <h3 class="text-sm font-semibold text-slate-300 mb-4 flex items-center justify-between">
+        <div class="glass-card rounded-2xl p-5 space-y-4">
+          <h3 class="text-sm font-semibold text-slate-300 flex items-center justify-between">
             <span><i class="fa-solid fa-chart-pie text-indigo-400 mr-1.5"></i>{{ t('analysis') }}</span>
             <span class="text-xs text-slate-500">{{ t('mainCurrencySGD') }}</span>
           </h3>
@@ -162,14 +196,26 @@
             </div>
           </div>
 
-          <div class="mt-4 pt-4 border-t border-slate-800">
-            <div class="flex justify-between items-center mb-2">
-              <p class="text-xs text-slate-400">{{ t('monthSelector') }}</p>
-              <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-xs rounded px-2 py-0.5 text-slate-300">
+          <div class="pt-2" v-if="budgetInSGD > 0">
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+              <span>{{ t('budgetProgress') }}</span>
+              <span class="font-mono">S$ {{ totalMonth }} / S$ {{ budgetInSGD.toFixed(2) }} ({{ budgetPercent }}%)</span>
             </div>
-            <div class="flex justify-between items-center bg-indigo-950/20 p-3 rounded-xl border border-indigo-900/30">
+            <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" 
+                   :class="budgetPercent > 100 ? 'bg-rose-500' : 'bg-emerald-500'" 
+                   :style="{ width: Math.min(budgetPercent, 100) + '%' }"></div>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-800 flex justify-between items-center">
+            <div class="flex flex-col">
+              <span class="text-[10px] text-slate-500">{{ t('monthSelector') }}</span>
+              <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-xs rounded px-2 py-0.5 mt-1 text-slate-300">
+            </div>
+            <div class="text-right">
               <span class="text-xs text-indigo-300">{{ t('thisMonthTotal') }}</span>
-              <span class="text-base font-bold text-indigo-200 font-mono">S$ {{ totalMonth }}</span>
+              <p class="text-lg font-bold text-indigo-200 font-mono">S$ {{ totalMonth }}</p>
             </div>
           </div>
         </div>
@@ -178,15 +224,40 @@
       <section class="lg:col-span-7 space-y-6">
         <div class="glass-card rounded-2xl p-6">
           <div class="flex justify-between items-center mb-4">
+            <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-chart-simple text-amber-400"></i> {{ t('doubleComparison') }}
+            </h2>
+            <div class="flex gap-1.5 bg-slate-800/80 p-0.5 rounded-lg border border-slate-700">
+              <button @click="compareRange = 'daily'" :class="compareRange === 'daily' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition duration-150">
+                {{ t('compareDaily') }}
+              </button>
+              <button @click="compareRange = 'weekly'" :class="compareRange === 'weekly' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition duration-150">
+                {{ t('compareWeekly') }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="relative w-full h-48 md:h-64">
+            <canvas id="comparisonChart"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6">
+          <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
             <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
               <i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}
             </h2>
-            <div class="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded-full">
-              {{ records.length }} {{ t('items') }}
+            <div class="flex items-center gap-2">
+              <button @click="exportToCSV" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-md shadow-amber-500/10">
+                <i class="fa-solid fa-file-csv text-sm"></i> {{ t('export') }}
+              </button>
+              <div class="text-xs text-slate-400 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+                {{ records.length }} {{ t('items') }}
+              </div>
             </div>
           </div>
 
-          <div class="space-y-3 max-h-[550px] overflow-y-auto pr-1">
+          <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
             <div v-if="loading" class="text-center py-8 text-slate-500">
               <i class="fa-solid fa-circle-notch animate-spin text-xl mb-2"></i>
               <p class="text-xs">{{ t('loading') }}...</p>
@@ -204,6 +275,7 @@
                 </span>
                 <div>
                   <div class="flex items-center gap-2">
+                    <i :class="getCategoryIcon(item.category)" class="text-slate-400 text-xs"></i>
                     <span class="text-sm font-medium text-slate-200">{{ item.category }}</span>
                     <span v-if="item.remark" class="text-xs text-slate-500 font-normal">({{ item.remark }})</span>
                   </div>
@@ -231,16 +303,14 @@
   </div>
 
   <script>
-    const { createApp, ref, reactive, computed, onMounted } = Vue;
+    const { createApp, ref, reactive, computed, onMounted, watch, nextTick } = Vue;
 
-    // 填入你专属的 Supabase 配置
     const SUPABASE_URL = 'https://vxbaikkfjyayfxygysfc.supabase.co'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_GudLGDJg2D69FEJbdy7ksA_4Z8L9DvA';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     createApp({
       setup() {
-        // 多语言词典
         const lang = ref('zh');
         const translations = {
           zh: {
@@ -262,7 +332,13 @@
             items: '笔记录',
             loading: '正在从星轨读取数据',
             noRecords: '暂无账目，开始第一笔吧！',
-            converted: '已折算'
+            converted: '已折算',
+            monthlyBudget: '每月预算',
+            budgetProgress: '当月预算使用进度',
+            doubleComparison: '双人同步消费对比',
+            compareDaily: '每日对比',
+            compareWeekly: '一周对比',
+            export: '导出 CSV'
           },
           en: {
             members: 'Members',
@@ -283,57 +359,94 @@
             items: 'records',
             loading: 'Fetching from galaxy',
             noRecords: 'Empty skies here. Add a record!',
-            converted: 'Converted'
+            converted: 'Converted',
+            monthlyBudget: 'Monthly Budget',
+            budgetProgress: 'Budget Progress',
+            doubleComparison: 'Double Ledger Comparison',
+            compareDaily: 'Daily',
+            compareWeekly: 'Weekly',
+            export: 'Export CSV'
           }
         };
 
         const t = (key) => translations[lang.value][key] || key;
         const toggleLang = () => lang.value = lang.value === 'zh' ? 'en' : 'zh';
 
-        // 默认成员名（可修改，数据会临时存在localStorage以防刷新丢失）
+        // 默认成员名
         const member1 = ref(localStorage.getItem('member1') || '小星');
         const member2 = ref(localStorage.getItem('member2') || '小辰');
+        watch(member1, (val) => { localStorage.setItem('member1', val); updateChart(); });
+        watch(member2, (val) => { localStorage.setItem('member2', val); updateChart(); });
 
-        // 监视姓名变化并保存
-        Vue.watch(member1, (val) => localStorage.setItem('member1', val));
-        Vue.watch(member2, (val) => localStorage.setItem('member2', val));
+        // 预算设置
+        const budgetInput = ref(parseFloat(localStorage.getItem('monthlyBudgetVal')) || 2000);
+        const budgetCurrency = ref(localStorage.getItem('monthlyBudgetCurrency') || 'SGD');
+        watch(budgetInput, (val) => localStorage.setItem('monthlyBudgetVal', val));
+        watch(budgetCurrency, (val) => localStorage.setItem('monthlyBudgetCurrency', val));
 
-        // 汇率管理（默认 1 SGD = 3.25 MYR，可查询接口更新或手动在页面无感修改）
+        // 汇率
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
-        Vue.watch(exchangeRate, (val) => localStorage.setItem('exchangeRate', val));
+        watch(exchangeRate, (val) => localStorage.setItem('exchangeRate', val));
 
-        // 默认账目分类
-        const categories = ['餐饮 Food', '交通 Transport', '购物 Shopping', '娱乐 Fun', '居家 Home', '其他 Others'];
+        // 按要求更新分类清单
+        const categories = [
+          '日常伙食 Daily Meal', 
+          '餐厅 Restaurant', 
+          '交通 Transport', 
+          '购物 Shopping', 
+          '娱乐 Fun', 
+          '旅行 Travel', 
+          '其他 Others'
+        ];
 
-        // 状态及数据
+        // 各分类图标映射
+        const getCategoryIcon = (cat) => {
+          if (cat.includes('日常伙食')) return 'fa-solid fa-bowl-rice text-amber-300';
+          if (cat.includes('餐厅')) return 'fa-solid fa-utensils text-rose-300';
+          if (cat.includes('交通')) return 'fa-solid fa-car text-sky-300';
+          if (cat.includes('购物')) return 'fa-solid fa-bag-shopping text-purple-300';
+          if (cat.includes('娱乐')) return 'fa-solid fa-gamepad text-emerald-300';
+          if (cat.includes('旅行')) return 'fa-solid fa-plane text-pink-300';
+          return 'fa-solid fa-circle-notch text-slate-400';
+        };
+
         const records = ref([]);
         const loading = ref(false);
-        const selectedMonth = ref(new Date().toISOString().substring(0, 7)); // 默认当前月份
+        const selectedMonth = ref(new Date().toISOString().substring(0, 7));
+        const compareRange = ref('daily'); // 'daily' 或 'weekly'
+        let chartInstance = null;
 
-        // 表单数据
         const form = reactive({
           payer: member1.value,
           amount: null,
           currency: 'SGD',
-          category: '餐饮 Food',
+          category: '日常伙食 Daily Meal',
           date: new Date().toISOString().substring(0, 10),
           remark: ''
         });
 
-        // 自动更新机制：如果是新月份的1号，无需操作，只需加载新月份数据即可
-        const checkAndResetForNewMonth = () => {
-          const today = new Date();
-          if (today.getDate() === 1) {
-            selectedMonth.value = today.toISOString().substring(0, 7);
-          }
-        };
+        // 监听对比视图模式变化，实时重新生成图表
+        watch(compareRange, () => {
+          updateChart();
+        });
 
-        // 获取线上记账记录
+        // 计算新币视角的预算数额
+        const budgetInSGD = computed(() => {
+          if (budgetCurrency.value === 'MYR') {
+            return budgetInput.value / exchangeRate.value;
+          }
+          return budgetInput.value;
+        });
+
+        const budgetPercent = computed(() => {
+          if (!budgetInSGD.value) return 0;
+          return Math.round((parseFloat(totalMonth.value) / budgetInSGD.value) * 100);
+        });
+
         const fetchRecords = async () => {
           loading.value = true;
           try {
             const startOfMonth = `${selectedMonth.value}-01`;
-            // 计算这个月的最后一天
             const year = parseInt(selectedMonth.value.split('-')[0]);
             const month = parseInt(selectedMonth.value.split('-')[1]);
             const endOfMonth = new Date(year, month, 0).toISOString().substring(0, 10);
@@ -348,6 +461,11 @@
 
             if (error) throw error;
             records.value = data || [];
+            
+            // 数据获取完，更新对比图表
+            nextTick(() => {
+              updateChart();
+            });
           } catch (err) {
             console.error('Error fetching data:', err);
           } finally {
@@ -355,14 +473,12 @@
           }
         };
 
-        // 写入新纪录到 Supabase
         const addRecord = async () => {
           if (!form.amount) return;
 
           let finalAmountSGD = form.amount;
           let originalAmount = form.amount;
           
-          // 如果是马币(MYR)，自动折算为主币种新币(SGD)
           if (form.currency === 'MYR') {
             finalAmountSGD = parseFloat((form.amount / exchangeRate.value).toFixed(2));
           }
@@ -383,20 +499,16 @@
 
             if (error) throw error;
 
-            // 重置表单输入
             form.amount = null;
             form.remark = '';
-            
-            // 重新拉取最新数据
             await fetchRecords();
           } catch (err) {
             alert('保存失败，请检查网络：' + err.message);
           }
         };
 
-        // 删除记录
         const deleteRecord = async (id) => {
-          if (!confirm(lang.value === 'zh' ? '确定要抹去这条星轨迹账吗？' : 'Are you sure to delete this record?')) return;
+          if (!confirm(lang.value === 'zh' ? '确定要删除这条账目吗？' : 'Are you sure to delete this record?')) return;
           try {
             const { error } = await supabaseClient
               .from('starry_ledger')
@@ -410,21 +522,158 @@
           }
         };
 
-        // 异步尝试获取今日汇率 (SGD to MYR)
+        // 导出 CSV 逻辑
+        const exportToCSV = () => {
+          if (records.value.length === 0) {
+            alert(lang.value === 'zh' ? '暂无数据可以导出' : 'No data to export');
+            return;
+          }
+
+          let csvContent = '\uFEFF'; // 解决 Excel 中文乱码的 BOM 头
+          csvContent += 'Date,Payer,Category,Amount(SGD),Original Amount,Currency,Remark\n';
+
+          records.value.forEach(r => {
+            const row = [
+              r.date,
+              `"${r.payer}"`,
+              `"${r.category}"`,
+              r.amount,
+              r.original_amount || r.amount,
+              r.currency,
+              `"${r.remark || ''}"`
+            ];
+            csvContent += row.join(',') + '\n';
+          });
+
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.setAttribute('href', url);
+          link.setAttribute('download', `Starry_Ledger_${selectedMonth.value}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
+
+        // 图表渲染引擎 (基于 Chart.js)
+        const updateChart = () => {
+          const ctx = document.getElementById('comparisonChart');
+          if (!ctx) return;
+
+          // 销毁旧图表
+          if (chartInstance) {
+            chartInstance.destroy();
+          }
+
+          let labels = [];
+          let m1Data = [];
+          let m2Data = [];
+
+          if (compareRange.value === 'daily') {
+            // 获取本月有消费记录的所有日期，按升序排列
+            const dates = [...new Set(records.value.map(r => r.date))].sort();
+            // 取最近 10 天防止图表太挤
+            labels = dates.slice(-10); 
+            
+            labels.forEach(d => {
+              const dayRecords = records.value.filter(r => r.date === d);
+              const m1Sum = dayRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
+              const m2Sum = dayRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
+              m1Data.push(m1Sum);
+              m2Data.push(m2Sum);
+            });
+          } else {
+            // 按周对比 (周一到周日，通过 JS 计算所属自然周)
+            const getWeekNumber = (d) => {
+              const date = new Date(d);
+              date.setHours(0, 0, 0, 0);
+              date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+              const week1 = new Date(date.getFullYear(), 0, 4);
+              return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+            };
+
+            const weeks = [...new Set(records.value.map(r => {
+              const wk = getWeekNumber(r.date);
+              return `W${wk}`;
+            }))].sort();
+
+            labels = weeks;
+            labels.forEach(w => {
+              const weekRecords = records.value.filter(r => `W${getWeekNumber(r.date)}` === w);
+              const m1Sum = weekRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
+              const m2Sum = weekRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
+              m1Data.push(m1Sum);
+              m2Data.push(m2Sum);
+            });
+          }
+
+          chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: member1.value,
+                  data: m1Data,
+                  backgroundColor: 'rgba(99, 102, 241, 0.75)', // Indigo
+                  borderColor: 'rgb(99, 102, 241)',
+                  borderWidth: 1,
+                  borderRadius: 6
+                },
+                {
+                  label: member2.value,
+                  data: m2Data,
+                  backgroundColor: 'rgba(245, 158, 11, 0.75)', // Amber
+                  borderColor: 'rgb(245, 158, 11)',
+                  borderWidth: 1,
+                  borderRadius: 6
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  labels: { color: '#94a3b8', font: { family: 'Poppins' } }
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return `${context.dataset.label}: S$ ${context.parsed.y.toFixed(2)}`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  grid: { display: false },
+                  ticks: { color: '#64748b' }
+                },
+                y: {
+                  grid: { color: 'rgba(51, 65, 85, 0.3)' },
+                  ticks: { 
+                    color: '#64748b',
+                    callback: (val) => 'S$' + val
+                  }
+                }
+              }
+            }
+          });
+        };
+
         const fetchLiveExchangeRate = async () => {
           try {
-            // 使用公共免密钥汇率 API 
             const res = await fetch('https://open.er-api.com/v6/latest/SGD');
             const data = await res.json();
             if (data && data.rates && data.rates.MYR) {
               exchangeRate.value = parseFloat(data.rates.MYR.toFixed(4));
             }
           } catch (e) {
-            console.log('今日实时汇率自动获取失败，已切换至本地缓存汇率。');
+            console.log('今日实时汇率获取失败，已切换至本地缓存。');
           }
         };
 
-        // 实时监听 Supabase 数据变动（即时双人同步的核心）
         const setupRealtimeSubscription = () => {
           supabaseClient
             .channel('schema-db-changes')
@@ -434,7 +683,7 @@
             .subscribe();
         };
 
-        // 计算属性：今日总计（转换为SGD后的值）
+        // 统计计算
         const totalToday = computed(() => {
           const todayStr = new Date().toISOString().substring(0, 10);
           return records.value
@@ -443,10 +692,9 @@
             .toFixed(2);
         });
 
-        // 计算属性：本周总计（当前周，周一到周日）
         const totalThisWeek = computed(() => {
           const now = new Date();
-          const day = now.getDay() || 7; // 周日转为 7
+          const day = now.getDay() || 7;
           const monday = new Date(now.setDate(now.getDate() - day + 1));
           monday.setHours(0,0,0,0);
           
@@ -459,7 +707,6 @@
             .toFixed(2);
         });
 
-        // 计算属性：本月总计
         const totalMonth = computed(() => {
           return records.value
             .reduce((sum, r) => sum + Number(r.amount), 0)
@@ -467,18 +714,18 @@
         });
 
         onMounted(() => {
-          checkAndResetForNewMonth();
-          fetchLiveExchangeRate(); // 尝试获取最新汇率
-          fetchRecords();          // 读取当月账目
-          setupRealtimeSubscription(); // 建立实时监听
+          fetchLiveExchangeRate();
+          fetchRecords();
+          setupRealtimeSubscription();
         });
 
         return {
           lang, t, toggleLang,
           member1, member2,
-          exchangeRate, categories,
-          records, loading, selectedMonth, form,
-          addRecord, deleteRecord, fetchRecords,
+          budgetInput, budgetCurrency, budgetInSGD, budgetPercent,
+          exchangeRate, categories, getCategoryIcon,
+          records, loading, selectedMonth, form, compareRange,
+          addRecord, deleteRecord, fetchRecords, exportToCSV,
           totalToday, totalThisWeek, totalMonth
         };
       }

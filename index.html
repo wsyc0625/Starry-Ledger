@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>星辰小帐</title>
+    <title>星辰小帐 ✨</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,14 +15,12 @@
 </head>
 <body class="p-4">
     <div id="app" v-cloak class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- 左侧控制区 -->
         <div class="lg:col-span-5 space-y-6">
             <div class="glass p-4 rounded-2xl flex justify-between items-center">
                 <div class="flex gap-2 font-bold text-lg"><span>小星 ✨</span><span>|</span><span>小辰</span></div>
                 <button @click="fetchRate" class="text-xs bg-slate-700 px-3 py-1 rounded-full text-indigo-300">SGD 1 ≈ {{ exchangeRate }} MYR</button>
             </div>
             
-            <!-- PK 榜 -->
             <div class="glass p-6 rounded-2xl">
                 <h2 class="text-sm text-slate-400 mb-4">星辰消费 PK 榜</h2>
                 <div class="w-full bg-slate-800 rounded-full h-4 flex overflow-hidden mb-2">
@@ -30,38 +28,36 @@
                     <div class="bg-pink-600" :style="{width: stats.xiaoChenPercent + '%'}"></div>
                 </div>
                 <div class="flex justify-between text-xs font-bold">
-                    <span>小星: {{ stats.xiaoXing }} SGD</span>
-                    <span>小辰: {{ stats.xiaoChen }} SGD</span>
+                    <span>小星: {{ stats.xiaoXing.toFixed(2) }} SGD</span>
+                    <span>小辰: {{ stats.xiaoChen.toFixed(2) }} SGD</span>
                 </div>
             </div>
 
-            <!-- 添加记录 -->
             <div class="glass p-6 rounded-2xl">
                 <h2 class="text-sm text-slate-400 mb-4">添加新账单</h2>
                 <div class="grid grid-cols-2 gap-2 mb-4">
-                    <button @click="form.payer='小星'" :class="form.payer==='小星'?'bg-indigo-600':'bg-slate-700'" class="p-3 rounded-xl text-sm font-bold">小星</button>
-                    <button @click="form.payer='小辰'" :class="form.payer==='小辰'?'bg-pink-600':'bg-slate-700'" class="p-3 rounded-xl text-sm font-bold">小辰</button>
+                    <button @click="form.payer='小星'" :class="form.payer==='小星'?'bg-indigo-600':'bg-slate-700'" class="p-3 rounded-xl text-sm font-bold transition">小星</button>
+                    <button @click="form.payer='小辰'" :class="form.payer==='小辰'?'bg-pink-600':'bg-slate-700'" class="p-3 rounded-xl text-sm font-bold transition">小辰</button>
                 </div>
                 <div class="flex gap-2">
                     <select v-model="form.currency" class="bg-slate-800 rounded-xl px-2 text-sm"><option>SGD</option><option>MYR</option></select>
-                    <input v-model="form.amount" type="number" placeholder="金额" class="flex-1 bg-slate-800 rounded-xl px-4 py-2 text-sm">
-                    <button @click="save" class="bg-blue-600 px-6 rounded-xl text-sm font-bold">保存</button>
+                    <input v-model="form.amount" type="number" placeholder="金额" class="flex-1 bg-slate-800 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <button @click="save" class="bg-blue-600 px-6 rounded-xl text-sm font-bold hover:bg-blue-500 transition">保存</button>
                 </div>
             </div>
         </div>
 
-        <!-- 右侧账单列表 -->
         <div class="lg:col-span-7 glass p-6 rounded-2xl">
             <h2 class="font-bold mb-4">账单明细</h2>
             <div class="space-y-3">
                 <div v-for="ex in expenses" :key="ex.id" class="flex justify-between items-center p-4 bg-slate-800/50 rounded-xl">
                     <div>
                         <div class="font-bold text-sm">{{ ex.payer }}</div>
-                        <div class="text-xs text-slate-400">{{ new Date(ex.created_at).toLocaleDateString() }}</div>
+                        <div class="text-xs text-slate-400">{{ new Date(ex.created_at).toLocaleString() }}</div>
                     </div>
                     <div class="flex items-center gap-4">
                         <span class="font-mono text-sm">{{ ex.amount }} {{ ex.currency }}</span>
-                        <button @click="remove(ex.id)" class="text-red-400 text-xs hover:text-red-300">删除</button>
+                        <button @click="remove(ex.id)" class="text-red-400 text-xs hover:text-red-300 transition">删除</button>
                     </div>
                 </div>
             </div>
@@ -69,7 +65,7 @@
     </div>
 
     <script>
-        const supabase = supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_ANON_KEY');
+        const supabase = supabase.createClient('YOUR_SUPABASE_URL_HERE', 'YOUR_SUPABASE_ANON_KEY_HERE');
         Vue.createApp({
             data() {
                 return {
@@ -92,7 +88,7 @@
                         const res = await fetch('https://api.exchangerate-api.com/v4/latest/SGD');
                         const data = await res.json();
                         this.exchangeRate = data.rates.MYR.toFixed(2);
-                    } catch(e) {}
+                    } catch(e) { console.error("汇率获取失败"); }
                 },
                 async load() {
                     const { data } = await supabase.from('expenses').select('*').order('created_at', {ascending: false});
@@ -104,6 +100,7 @@
                         payer: this.form.payer, 
                         amount: this.form.amount, 
                         currency: this.form.currency,
+                        ledger_id: "global-ledger-001",
                         created_at: new Date().toISOString()
                     });
                     this.form.amount = '';

@@ -4,16 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>星辰小账 | Starry Ledger</title>
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts & FontAwesome Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Vue 3 -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <style>
@@ -63,7 +58,6 @@
   <div class="star-bg"></div>
   
   <div id="app" class="container mx-auto p-3 md:p-4 max-w-7xl" v-cloak>
-    <!-- 顶部导航栏 -->
     <header class="flex justify-between items-center mb-4 md:mb-6 py-3 border-b border-slate-800">
       <div class="flex items-center gap-2">
         <div class="text-amber-300 text-xl md:text-2xl animate-pulse"><i class="fa-solid fa-star-and-crescent"></i></div>
@@ -85,67 +79,26 @@
       </div>
     </header>
 
-    <!-- 成员与独立双币预算看板 (核心重构：分开设置、分别展示各自与Total) -->
-    <section class="glass-card rounded-2xl p-4 mb-4 md:mb-6 space-y-4">
-      <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-center">
-        
-        <!-- 左侧：成员 1 专属双币预算 -->
-        <div class="xl:col-span-5 p-3 rounded-xl bg-indigo-950/20 border border-indigo-900/40 flex flex-wrap gap-2.5 items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
-            <input type="text" v-model="member1" class="bg-slate-800/80 border border-slate-700 text-xs px-2 py-0.5 rounded w-20 font-semibold text-indigo-200 focus:outline-none">
-          </div>
-          <div class="flex gap-2">
-            <div class="flex items-center gap-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800">
-              <span class="text-[9px] text-slate-400">SGD:</span>
-              <input type="number" v-model.number="budgetM1_SGD" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-indigo-500 bg-slate-800/40'" class="text-[11px] w-12 text-center font-mono focus:outline-none rounded">
-            </div>
-            <div class="flex items-center gap-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800">
-              <span class="text-[9px] text-slate-400">MYR:</span>
-              <input type="number" v-model.number="budgetM1_MYR" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-indigo-500 bg-slate-800/40'" class="text-[11px] w-12 text-center font-mono focus:outline-none rounded">
-            </div>
-          </div>
-          <div class="text-[11px] text-indigo-300 font-mono font-medium">
-            S$ {{ totalM1BudgetInSGD.toFixed(2) }}
-          </div>
+    <section class="glass-card rounded-2xl p-3 md:p-4 mb-4 md:mb-6 flex flex-wrap gap-3 items-center">
+      <div class="flex items-center gap-1.5 text-xs md:text-sm font-semibold text-slate-300">
+        <i class="fa-solid fa-user-friends text-indigo-400"></i>
+        <span>{{ t('members') }}:</span>
+      </div>
+      <div class="flex gap-3">
+        <div class="flex items-center gap-2 bg-indigo-950/20 border border-indigo-900/40 px-2.5 py-1 rounded-lg">
+          <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+          <input type="text" v-model="member1" class="bg-transparent text-xs font-semibold text-indigo-200 w-20 text-center focus:outline-none">
         </div>
-
-        <!-- 中间：成员 2 专属双币预算 -->
-        <div class="xl:col-span-5 p-3 rounded-xl bg-amber-950/20 border border-amber-900/40 flex flex-wrap gap-2.5 items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-            <input type="text" v-model="member2" class="bg-slate-800/80 border border-slate-700 text-xs px-2 py-0.5 rounded w-20 font-semibold text-amber-200 focus:outline-none">
-          </div>
-          <div class="flex gap-2">
-            <div class="flex items-center gap-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800">
-              <span class="text-[9px] text-slate-400">SGD:</span>
-              <input type="number" v-model.number="budgetM2_SGD" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-amber-500 bg-slate-800/40'" class="text-[11px] w-12 text-center font-mono focus:outline-none rounded">
-            </div>
-            <div class="flex items-center gap-1 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800">
-              <span class="text-[9px] text-slate-400">MYR:</span>
-              <input type="number" v-model.number="budgetM2_MYR" @change="updateCloudBudget" :readonly="isMobile" :class="isMobile ? 'pointer-events-none text-slate-400 bg-transparent' : 'text-slate-200 focus:border-amber-500 bg-slate-800/40'" class="text-[11px] w-12 text-center font-mono focus:outline-none rounded">
-            </div>
-          </div>
-          <div class="text-[11px] text-amber-300 font-mono font-medium">
-            S$ {{ totalM2BudgetInSGD.toFixed(2) }}
-          </div>
+        <div class="flex items-center gap-2 bg-amber-950/20 border border-amber-900/40 px-2.5 py-1 rounded-lg">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <input type="text" v-model="member2" class="bg-transparent text-xs font-semibold text-amber-200 w-20 text-center focus:outline-none">
         </div>
-
-        <!-- 右侧：全局合并 Total 预算大看板 -->
-        <div class="xl:col-span-2 text-center bg-emerald-950/30 border border-emerald-900/50 p-3 rounded-xl flex xl:flex-col justify-between items-center">
-          <span class="text-[10px] md:text-xs text-emerald-400 font-bold tracking-wider uppercase"><i class="fa-solid fa-piggy-bank mr-1"></i>{{ t('totalBudget') }}</span>
-          <p class="text-xs md:text-sm font-bold text-emerald-200 font-mono mt-0.5">S$ {{ aggregateBudgetInSGD.toFixed(2) }}</p>
-        </div>
-
       </div>
     </section>
 
-    <!-- 核心布局 -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
       
-      <!-- ================= 手机与PC公共输入左面板 ================= -->
       <main class="lg:col-span-5 space-y-4 md:space-y-6">
-        <!-- 快捷记账卡片 -->
         <div class="glass-card rounded-2xl p-4 md:p-6 relative overflow-hidden">
           <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
           <h2 class="text-base md:text-lg font-semibold mb-3 md:mb-4 text-slate-200 flex items-center gap-2">
@@ -153,7 +106,6 @@
           </h2>
           
           <form @submit.prevent="addRecord" class="space-y-3.5">
-            <!-- 记账人选择 -->
             <div>
               <label class="block text-[11px] text-slate-400 mb-1">{{ t('payer') }}</label>
               <div class="grid grid-cols-2 gap-2">
@@ -166,7 +118,6 @@
               </div>
             </div>
 
-            <!-- 金额 & 币种 -->
             <div>
               <label class="block text-[11px] text-slate-400 mb-1">{{ t('amount') }}</label>
               <div class="flex gap-2">
@@ -184,7 +135,6 @@
               </p>
             </div>
 
-            <!-- 记账选项分类小图标网格 -->
             <div>
               <label class="block text-[11px] text-slate-400 mb-1.5">{{ t('category') }}</label>
               <div class="grid grid-cols-4 gap-1.5">
@@ -197,7 +147,6 @@
               </div>
             </div>
 
-            <!-- 日期与备注 -->
             <div class="grid grid-cols-12 gap-2">
               <div class="col-span-5">
                 <label class="block text-[11px] text-slate-400 mb-1">{{ t('date') }}</label>
@@ -215,7 +164,6 @@
           </form>
         </div>
 
-        <!-- 基础查询与总合并预算使用进度 -->
         <div class="glass-card rounded-2xl p-4 space-y-3.5">
           <h3 class="text-xs md:text-sm font-semibold text-slate-300 flex items-center justify-between">
             <span><i class="fa-solid fa-chart-pie text-indigo-400 mr-1.5"></i>{{ t('analysis') }}</span>
@@ -233,20 +181,6 @@
             </div>
           </div>
 
-          <!-- 合并总预算进度条 -->
-          <div class="pt-1" v-if="aggregateBudgetInSGD > 0">
-            <div class="flex justify-between text-[10px] text-slate-400 mb-1">
-              <span>{{ t('budgetProgress') }}</span>
-              <span class="font-mono">S$ {{ totalMonth }} / S$ {{ aggregateBudgetInSGD.toFixed(0) }} ({{ budgetPercent }}%)</span>
-            </div>
-            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-              <div class="h-full rounded-full transition-all duration-500" 
-                   :class="budgetPercent > 100 ? 'bg-rose-500' : 'bg-emerald-500'" 
-                   :style="{ width: Math.min(budgetPercent, 100) + '%' }"></div>
-            </div>
-          </div>
-
-          <!-- 月份切换及汇总展示 -->
           <div class="pt-3 border-t border-slate-800/60 flex justify-between items-center">
             <div class="flex flex-col">
               <span class="text-[9px] text-slate-500">{{ t('monthSelector') }}</span>
@@ -260,9 +194,7 @@
         </div>
       </main>
 
-      <!-- ================= PC 模式明细及双人对比 (Right Side) ================= -->
       <section class="lg:col-span-7 space-y-4 md:space-y-6">
-        <!-- 消费对比图表 -->
         <div class="glass-card rounded-2xl p-6 hidden lg:block">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
@@ -285,7 +217,6 @@
           </div>
         </div>
 
-        <!-- 账目记录轨迹明细 -->
         <div class="glass-card rounded-2xl p-4 md:p-6">
           <div class="flex justify-between items-center mb-3 md:mb-4 flex-wrap gap-2">
             <h2 class="text-base md:text-lg font-semibold text-slate-200 flex items-center gap-2">
@@ -301,7 +232,6 @@
             </div>
           </div>
 
-          <!-- 轨迹滚动条容器 -->
           <div class="space-y-2 max-h-[350px] md:max-h-[400px] overflow-y-auto pr-0.5">
             <div v-if="loading" class="text-center py-8 text-slate-500">
               <i class="fa-solid fa-circle-notch animate-spin text-lg mb-2"></i>
@@ -313,7 +243,6 @@
               {{ t('noRecords') }}
             </div>
 
-            <!-- 条目卡片 -->
             <div v-else v-for="item in records" :key="item.id" class="group flex items-center justify-between p-3 rounded-xl bg-slate-900/35 hover:bg-slate-800/40 border border-slate-850 hover:border-slate-700 transition duration-150">
               <div class="flex items-center gap-2.5">
                 <span :class="item.payer === member1 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'" class="text-[9px] px-1.5 py-0.5 rounded-full border font-semibold">
@@ -322,7 +251,7 @@
                 <div>
                   <div class="flex items-center gap-1.5">
                     <i :class="getCategoryIconOnly(item.category)" class="text-xs"></i>
-                    <span class="text-xs md:text-sm font-medium text-slate-200">{{ getCategoryDisplayName(cat = item.category) }}</span>
+                    <span class="text-xs md:text-sm font-medium text-slate-200">{{ getCategoryDisplayName(item.category) }}</span>
                     <span v-if="item.remark" class="text-[10px] text-slate-500 font-normal">({{ item.remark }})</span>
                   </div>
                   <p class="text-[9px] text-slate-500 mt-0.5 font-mono">{{ item.date }}</p>
@@ -362,95 +291,33 @@
 
         const translations = {
           zh: {
-            addRecord: '快速记账', payer: '支付人', amount: '消费金额', category: '选择分类', date: '日期', remark: '备注', save: '存入星宿',
+            members: '记账成员', addRecord: '快速记账', payer: '支付人', amount: '消费金额', category: '选择分类', date: '日期', remark: '备注', save: '存入星宿',
             analysis: '今日/本周星轨', mainCurrencySGD: '新币(SGD)主结算', today: '今日消费', thisWeek: '本周累计', thisMonthTotal: '当月累计',
             monthSelector: '月份筛选', details: '账单轨迹明细', items: '笔', loading: '调阅星轨中', noRecords: '晴空万里，暂无账目！',
-            converted: '已折算', totalBudget: '合并总预算', budgetProgress: '总预算使用进度', doubleComparison: '双人同步消费对比',
-            compareDaily: '每日', compareWeekly: '周度', compareMonthly: '月度', export: '导出 CSV'
+            converted: '已折算', doubleComparison: '双人同步消费对比', compareDaily: '每日', compareWeekly: '周度', compareMonthly: '月度', export: '导出 CSV'
           },
           en: {
-            addRecord: 'Quick Record', payer: 'Payer', amount: 'Amount', category: 'Category', date: 'Date', remark: 'Remark', save: 'Save Record',
+            members: 'Members', addRecord: 'Quick Record', payer: 'Payer', amount: 'Amount', category: 'Category', date: 'Date', remark: 'Remark', save: 'Save Record',
             analysis: 'Stats (Today/Week)', mainCurrencySGD: 'Settled in SGD', today: 'Today', thisWeek: 'This Week', thisMonthTotal: 'Month Total',
             monthSelector: 'Select Month', details: 'Transaction Ledger', items: 'items', loading: 'Loading galaxy data', noRecords: 'Empty skies here. Add a record!',
-            converted: 'Converted', totalBudget: 'Combined Budget', budgetProgress: 'Total Budget Progress', doubleComparison: 'Double Ledger Comparison',
-            compareDaily: 'Daily', compareWeekly: 'Weekly', compareMonthly: 'Monthly', export: 'Export CSV'
+            converted: 'Converted', doubleComparison: 'Double Ledger Comparison', compareDaily: 'Daily', compareWeekly: 'Weekly', compareMonthly: 'Monthly', export: 'Export CSV'
           }
         };
 
         const t = (key) => translations[lang.value][key] || key;
         const toggleLang = () => lang.value = lang.value === 'zh' ? 'en' : 'zh';
 
-        // 默认双人名字
+        // 双人名字
         const member1 = ref(localStorage.getItem('member1') || '小星');
         const member2 = ref(localStorage.getItem('member2') || '小辰');
         watch(member1, (val) => { localStorage.setItem('member1', val); updateChart(); });
         watch(member2, (val) => { localStorage.setItem('member2', val); updateChart(); });
 
-        // 分开管理的独立预算模型
-        const budgetM1_SGD = ref(500);
-        const budgetM1_MYR = ref(1500);
-        const budgetM2_SGD = ref(500);
-        const budgetM2_MYR = ref(1500);
-
-        // 从云端配置表载入多重预算结构
-        const fetchCloudBudget = async () => {
-          try {
-            const { data, error } = await supabaseClient
-              .from('starry_config')
-              .select('*')
-              .eq('id', 'split_member_budget')
-              .single();
-            if (data) {
-              budgetM1_SGD.value = Number(data.m1_sgd || 500);
-              budgetM1_MYR.value = Number(data.m1_myr || 1500);
-              budgetM2_SGD.value = Number(data.m2_sgd || 500);
-              budgetM2_MYR.value = Number(data.m2_myr || 1500);
-            }
-          } catch (e) {
-            console.error('Failed to load cloud split budget:', e);
-          }
-        };
-
-        // PC模式变动时，回写云端
-        const updateCloudBudget = async () => {
-          if (isMobile.value) return;
-          try {
-            await supabaseClient
-              .from('starry_config')
-              .upsert({
-                id: 'split_member_budget',
-                m1_sgd: budgetM1_SGD.value,
-                m1_myr: budgetM1_MYR.value,
-                m2_sgd: budgetM2_SGD.value,
-                m2_myr: budgetM2_MYR.value,
-                updated_at: new Date().toISOString()
-              });
-          } catch (e) {
-            console.error('Failed to sync split budget to cloud:', e);
-          }
-        };
-
         // 汇率
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
         watch(exchangeRate, (val) => localStorage.setItem('exchangeRate', val));
 
-        // 独立换算计算器
-        const totalM1BudgetInSGD = computed(() => {
-          const myrConv = budgetM1_MYR.value ? (budgetM1_MYR.value / exchangeRate.value) : 0;
-          return (budgetM1_SGD.value || 0) + myrConv;
-        });
-
-        const totalM2BudgetInSGD = computed(() => {
-          const myrConv = budgetM2_MYR.value ? (budgetM2_MYR.value / exchangeRate.value) : 0;
-          return (budgetM2_SGD.value || 0) + myrConv;
-        });
-
-        // 大合并总计
-        const aggregateBudgetInSGD = computed(() => {
-          return totalM1BudgetInSGD.value + totalM2BudgetInSGD.value;
-        });
-
-        // 记账选项列表与图标提取
+        // 记账选项分类清单与图标
         const categories = [
           '日常伙食 Daily Meal', '餐厅 Restaurant', '交通 Transport', '购物 Shopping', 
           '娱乐 Fun', '旅行 Travel', '房租 Rent', '其他 Others'
@@ -486,15 +353,10 @@
           remark: ''
         });
 
-        // 纠正记账表单内双人改名后的动态同步
+        // 动态同步支付人的改名
         watch(member1, (newVal) => { if(form.payer !== member2.value) form.payer = newVal; });
         watch(member2, (newVal) => { if(form.payer === member2.value) form.payer = newVal; });
         watch(compareRange, () => { updateChart(); });
-
-        const budgetPercent = computed(() => {
-          if (!aggregateBudgetInSGD.value) return 0;
-          return Math.round((parseFloat(totalMonth.value) / aggregateBudgetInSGD.value) * 100);
-        });
 
         const fetchRecords = async () => {
           loading.value = true;
@@ -518,7 +380,7 @@
             nextTick(() => { updateChart(); });
           } catch (err) {
             console.error('Error fetching data:', err);
-          } finaly {
+          } finally {
             loading.value = false;
           }
         };
@@ -661,14 +523,6 @@
 
         const setupRealtimeSubscription = () => {
           supabaseClient.channel('ledger-db-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'starry_ledger' }, () => { fetchRecords(); }).subscribe();
-          supabaseClient.channel('config-db-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'starry_config' }, (payload) => {
-            if (payload.new && payload.new.id === 'split_member_budget') {
-              budgetM1_SGD.value = Number(payload.new.m1_sgd || 0);
-              budgetM1_MYR.value = Number(payload.new.m1_myr || 0);
-              budgetM2_SGD.value = Number(payload.new.m2_sgd || 0);
-              budgetM2_MYR.value = Number(payload.new.m2_myr || 0);
-            }
-          }).subscribe();
         };
 
         const totalToday = computed(() => records.value.filter(r => r.date === new Date().toISOString().substring(0, 10)).reduce((sum, r) => sum + Number(r.amount), 0).toFixed(2));
@@ -682,7 +536,6 @@
         onMounted(() => {
           isMobile.value = window.innerWidth < 1024;
           window.addEventListener('resize', () => { isMobile.value = window.innerWidth < 1024; });
-          fetchCloudBudget();
           fetchRecords();
           setupRealtimeSubscription();
           // 预加载今日汇率
@@ -691,12 +544,10 @@
 
         return {
           lang, t, toggleLang, isMobile, member1, member2,
-          budgetM1_SGD, budgetM1_MYR, budgetM2_SGD, budgetM2_MYR,
-          totalM1BudgetInSGD, totalM2BudgetInSGD, aggregateBudgetInSGD, budgetPercent,
           exchangeRate, categories, getCategoryIconOnly, getCategoryDisplayName,
           records, loading, selectedMonth, form, compareRange,
           addRecord, deleteRecord, fetchRecords, exportToCSV,
-          totalToday, totalThisWeek, totalMonth, updateCloudBudget
+          totalToday, totalThisWeek, totalMonth
         };
       }
     }).mount('#app');

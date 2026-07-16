@@ -4,26 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>星辰小账 | Starry Ledger</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
+  <script src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/vue/3.2.31/vue.global.prod.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <style>
-    /* 防止 Vue 模板在加载未完成时闪烁/露出源码 */
+    /* 核心防御：Vue 未加载完成前，完美隐藏所有大括号乱码模板 */
     [v-cloak] {
       display: none !important;
     }
     
     body {
-      font-family: 'Poppins', 'Noto Sans SC', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: radial-gradient(circle at bottom, #0f172a 0%, #020617 100%);
       color: #e2e8f0;
       min-height: 100vh;
-      -webkit-tap-highlight-color: transparent;
     }
     .star-bg {
       position: fixed;
@@ -32,31 +31,13 @@
         radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
         radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px);
       background-size: 550px 550px, 350px 350px;
-      background-position: 0 0, 40px 60px;
-      opacity: 0.15;
+      opacity: 0.12;
       z-index: -1;
     }
     .glass-card {
       background: rgba(30, 41, 59, 0.45);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    ::-webkit-scrollbar {
-      width: 5px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.3);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(251, 191, 36, 0.25);
-      border-radius: 3px;
     }
   </style>
 </head>
@@ -93,11 +74,11 @@
       <div class="flex flex-wrap gap-3">
         <div class="flex items-center gap-2 bg-indigo-950/40 border border-indigo-900/60 px-3 py-1.5 rounded-xl">
           <span class="w-2.5 h-2.5 rounded-full bg-indigo-400 shrink-0"></span>
-          <input type="text" v-model="member1" class="bg-transparent text-xs font-semibold text-indigo-200 w-24 text-center focus:outline-none placeholder-slate-500" placeholder="Member 1">
+          <input type="text" v-model="member1" class="bg-transparent text-xs font-semibold text-indigo-200 w-24 text-center focus:outline-none" placeholder="Member 1">
         </div>
         <div class="flex items-center gap-2 bg-amber-950/40 border border-amber-900/60 px-3 py-1.5 rounded-xl">
           <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
-          <input type="text" v-model="member2" class="bg-transparent text-xs font-semibold text-amber-200 w-24 text-center focus:outline-none placeholder-slate-500" placeholder="Member 2">
+          <input type="text" v-model="member2" class="bg-transparent text-xs font-semibold text-amber-200 w-24 text-center focus:outline-none" placeholder="Member 2">
         </div>
       </div>
     </section>
@@ -106,7 +87,6 @@
       
       <main class="lg:col-span-5 space-y-4 md:space-y-6">
         <div class="glass-card rounded-2xl p-4 md:p-6 relative overflow-hidden">
-          <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
           <h2 class="text-base md:text-lg font-semibold mb-3 md:mb-4 text-slate-200 flex items-center gap-2">
             <i class="fa-solid fa-pen-fancy text-indigo-400"></i> {{ t('addRecord') }}
           </h2>
@@ -115,10 +95,10 @@
             <div>
               <label class="block text-[11px] text-slate-400 mb-1">{{ t('payer') }}</label>
               <div class="grid grid-cols-2 gap-2">
-                <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2.5 rounded-xl border text-xs md:text-sm transition font-medium">
+                <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2.5 rounded-xl border text-xs transition">
                   {{ member1 }}
                 </button>
-                <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-amber-600/30 border-amber-500 text-amber-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2.5 rounded-xl border text-xs md:text-sm transition font-medium">
+                <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-amber-600/30 border-amber-500 text-amber-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2.5 rounded-xl border text-xs transition">
                   {{ member2 }}
                 </button>
               </div>
@@ -129,16 +109,13 @@
               <div class="flex gap-2">
                 <div class="relative flex-1">
                   <span class="absolute left-3 top-2.5 text-slate-500 font-semibold text-sm">{{ form.currency }}</span>
-                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 text-base font-mono">
+                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 font-mono text-base">
                 </div>
-                <select v-model="form.currency" class="bg-slate-800 border border-slate-700 rounded-xl px-3 text-xs md:text-sm text-slate-300 focus:outline-none">
+                <select v-model="form.currency" class="bg-slate-800 border border-slate-700 rounded-xl px-3 text-xs text-slate-300 focus:outline-none">
                   <option value="SGD">SGD</option>
                   <option value="MYR">MYR</option>
                 </select>
               </div>
-              <p v-if="form.currency === 'MYR' && form.amount" class="text-[10px] text-amber-300/80 mt-1">
-                ≈ SGD {{ (form.amount / exchangeRate).toFixed(2) }} ({{ t('converted') }})
-              </p>
             </div>
 
             <div>
@@ -146,7 +123,7 @@
               <div class="grid grid-cols-4 gap-1.5">
                 <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
                   :class="form.category === cat ? 'bg-slate-800 border-indigo-500/80 text-white shadow-md' : 'bg-slate-900/40 border-slate-800 text-slate-400'"
-                  class="flex flex-col items-center justify-center py-2 rounded-xl border transition duration-150 active:scale-95">
+                  class="flex flex-col items-center justify-center py-2 rounded-xl border transition">
                   <i :class="getCategoryIconOnly(cat)" class="text-base mb-1"></i>
                   <span class="text-[9px] truncate w-full text-center px-0.5">{{ getCategoryDisplayName(cat) }}</span>
                 </button>
@@ -171,45 +148,23 @@
         </div>
 
         <div class="glass-card rounded-2xl p-4 space-y-3.5">
-          <h3 class="text-xs md:text-sm font-semibold text-slate-300 flex items-center justify-between">
+          <h3 class="text-xs font-semibold text-slate-300 flex items-center justify-between">
             <span><i class="fa-solid fa-chart-pie text-indigo-400 mr-1.5"></i>{{ t('analysis') }}</span>
-            <span class="text-[10px] text-slate-500 font-normal">{{ t('mainCurrencySGD') }}</span>
           </h3>
           
           <div class="space-y-2.5">
             <div class="bg-indigo-950/15 p-2.5 rounded-xl border border-indigo-900/20">
-              <div class="flex justify-between items-center mb-1">
-                <span class="text-xs font-semibold text-indigo-300 flex items-center gap-1.5">
-                  <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>{{ member1 }}
-                </span>
-              </div>
+              <span class="text-xs font-semibold text-indigo-300 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>{{ member1 }}</span>
               <div class="grid grid-cols-2 gap-3 mt-1">
-                <div>
-                  <p class="text-[9px] text-slate-500">{{ t('today') }}</p>
-                  <p class="text-sm font-bold text-slate-200 font-mono">S$ {{ totalTodayM1 }}</p>
-                </div>
-                <div>
-                  <p class="text-[9px] text-slate-500">{{ t('thisWeek') }}</p>
-                  <p class="text-sm font-bold text-slate-200 font-mono">S$ {{ totalThisWeekM1 }}</p>
-                </div>
+                <div><p class="text-[9px] text-slate-500">{{ t('today') }}</p><p class="text-sm font-bold text-slate-200 font-mono">S$ {{ totalTodayM1 }}</p></div>
+                <div><p class="text-[9px] text-slate-500">{{ t('thisWeek') }}</p><p class="text-sm font-bold text-slate-200 font-mono">S$ {{ totalThisWeekM1 }}</p></div>
               </div>
             </div>
-
             <div class="bg-amber-950/15 p-2.5 rounded-xl border border-amber-900/20">
-              <div class="flex justify-between items-center mb-1">
-                <span class="text-xs font-semibold text-amber-300 flex items-center gap-1.5">
-                  <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>{{ member2 }}
-                </span>
-              </div>
+              <span class="text-xs font-semibold text-amber-300 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>{{ member2 }}</span>
               <div class="grid grid-cols-2 gap-3 mt-1">
-                <div>
-                  <p class="text-[9px] text-slate-500">{{ t('today') }}</p>
-                  <p class="text-sm font-bold text-slate-200 font-mono">S$ {{ totalTodayM2 }}</p>
-                </div>
-                <div>
-                  <p class="text-[9px] text-slate-500">{{ t('thisWeek') }}</p>
-                  <p class="text-sm font-bold text-slate-200 font-mono">S$ {{ totalThisWeekM2 }}</p>
-                </div>
+                <div><p class="text-[9px] text-slate-500">{{ t('today') }}</p><p class="text-sm font-bold text-slate-200 font-mono">S$ {{ totalTodayM2 }}</p></div>
+                <div><p class="text-[9px] text-slate-500">{{ t('thisWeek') }}</p><p class="text-sm font-bold text-slate-200 font-mono">S$ {{ totalThisWeekM2 }}</p></div>
               </div>
             </div>
           </div>
@@ -217,7 +172,7 @@
           <div class="pt-3 border-t border-slate-800/60 flex justify-between items-center">
             <div class="flex flex-col">
               <span class="text-[9px] text-slate-500">{{ t('monthSelector') }}</span>
-              <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-[10px] rounded px-1.5 py-0.5 mt-0.5 text-slate-300 focus:outline-none">
+              <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-[10px] rounded px-1.5 py-0.5 mt-0.5 text-slate-300">
             </div>
             <div class="text-right">
               <span class="text-[10px] text-indigo-300">{{ t('thisMonthTotal') }}</span>
@@ -234,14 +189,11 @@
               <i class="fa-solid fa-chart-simple text-amber-400"></i> {{ t('doubleComparison') }}
             </h2>
             <div class="flex gap-1.5 bg-slate-800/80 p-0.5 rounded-lg border border-slate-700">
-              <button @click="compareRange = 'daily'" :class="compareRange === 'daily' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition">
+              <button @click="compareRange = 'daily'" :class="compareRange === 'daily' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md">
                 {{ t('compareDaily') }}
               </button>
-              <button @click="compareRange = 'weekly'" :class="compareRange === 'weekly' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition">
+              <button @click="compareRange = 'weekly'" :class="compareRange === 'weekly' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md">
                 {{ t('compareWeekly') }}
-              </button>
-              <button @click="compareRange = 'monthly'" :class="compareRange === 'monthly' ? 'bg-amber-500 text-slate-950 font-semibold' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-md transition">
-                {{ t('compareMonthly') }}
               </button>
             </div>
           </div>
@@ -257,64 +209,50 @@
                 <i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}
               </h2>
               <div class="flex items-center gap-2">
-                <button @click="exportToCSV" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs px-3.5 py-1.5 rounded-lg transition items-center gap-1.5 shadow-md flex">
-                  <i class="fa-solid fa-file-csv text-sm"></i> {{ t('export') }}
+                <button @click="exportToCSV" class="hidden lg:flex bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs px-3.5 py-1.5 rounded-lg items-center gap-1">
+                  <i class="fa-solid fa-file-csv"></i> {{ t('export') }}
                 </button>
-                <div class="text-[10px] md:text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700">
-                  {{ filteredRecords.length }} {{ t('items') }}
-                </div>
               </div>
             </div>
 
             <div class="flex gap-1.5 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80 self-start">
-              <button @click="filterRange = 'today'" :class="filterRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300 font-semibold' : 'text-slate-400 border-transparent'" class="text-xs px-3.5 py-1.5 rounded-lg border transition">
+              <button @click="filterRange = 'today'" :class="filterRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300 font-semibold' : 'text-slate-400 border-transparent'" class="text-xs px-3.5 py-1.5 rounded-lg border">
                 {{ t('rangeToday') }}
               </button>
-              <button @click="filterRange = 'week'" :class="filterRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300 font-semibold' : 'text-slate-400 border-transparent'" class="text-xs px-3.5 py-1.5 rounded-lg border transition">
+              <button @click="filterRange = 'week'" :class="filterRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300 font-semibold' : 'text-slate-400 border-transparent'" class="text-xs px-3.5 py-1.5 rounded-lg border">
                 {{ t('rangeWeek') }}
               </button>
-              <button @click="filterRange = 'month'" :class="filterRange === 'month' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300 font-semibold' : 'text-slate-400 border-transparent'" class="text-xs px-3.5 py-1.5 rounded-lg border transition">
+              <button @click="filterRange = 'month'" :class="filterRange === 'month' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300 font-semibold' : 'text-slate-400 border-transparent'" class="text-xs px-3.5 py-1.5 rounded-lg border">
                 {{ t('rangeMonth') }}
               </button>
             </div>
           </div>
 
-          <div class="space-y-2 max-h-[350px] md:max-h-[400px] overflow-y-auto pr-0.5">
+          <div class="space-y-2 max-h-[350px] md:max-h-[400px] overflow-y-auto">
             <div v-if="loading" class="text-center py-8 text-slate-500">
               <i class="fa-solid fa-circle-notch animate-spin text-lg mb-2"></i>
               <p class="text-xs">{{ t('loading') }}...</p>
             </div>
-            
             <div v-else-if="filteredRecords.length === 0" class="text-center py-10 text-slate-600 text-xs">
-              <i class="fa-regular fa-folder-open text-xl mb-1.5 block"></i>
               {{ t('noRecords') }}
             </div>
 
-            <div v-else v-for="item in filteredRecords" :key="item.id" class="group flex items-center justify-between p-3 rounded-xl bg-slate-900/35 hover:bg-slate-800/40 border border-slate-850 hover:border-slate-700 transition duration-150">
-              <div class="flex items-center gap-2.5">
+            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex items-center justify-between p-3 rounded-xl bg-slate-900/35 border border-slate-800">
+              <div class="flex items-center gap-2">
                 <span :class="item.payer === member1 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'" class="text-[9px] px-1.5 py-0.5 rounded-full border font-semibold">
                   {{ item.payer }}
                 </span>
                 <div>
-                  <div class="flex items-center gap-1.5">
-                    <i :class="getCategoryIconOnly(item.category)" class="text-xs"></i>
-                    <span class="text-xs md:text-sm font-medium text-slate-200">{{ getCategoryDisplayName(item.category) }}</span>
-                    <span v-if="item.remark" class="text-[10px] text-slate-500 font-normal">({{ item.remark }})</span>
-                  </div>
-                  <p class="text-[9px] text-slate-500 mt-0.5 font-mono">{{ item.date }}</p>
+                  <span class="text-xs md:text-sm font-medium text-slate-200">{{ getCategoryDisplayName(item.category) }}</span>
+                  <span v-if="item.remark" class="text-[10px] text-slate-500"> ({{ item.remark }})</span>
+                  <p class="text-[9px] text-slate-500 font-mono">{{ item.date }}</p>
                 </div>
               </div>
-
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-2">
                 <div class="text-right">
-                  <p class="text-xs md:text-sm font-bold text-slate-200 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
-                  <p v-if="item.currency === 'MYR'" class="text-[9px] text-amber-400/80 font-mono">
-                    RM {{ Number(item.original_amount).toFixed(2) }}
-                  </p>
+                  <p class="text-xs font-bold text-slate-200 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
                 </div>
-                <button @click="deleteRecord(item.id)" class="text-rose-500/75 hover:text-rose-400 lg:opacity-0 lg:group-hover:opacity-100 transition duration-150 p-1">
-                  <i class="fa-regular fa-trash-can text-xs md:text-sm"></i>
-                </button>
+                <button @click="deleteRecord(item.id)" class="text-rose-500 p-1"><i class="fa-regular fa-trash-can text-xs"></i></button>
               </div>
             </div>
           </div>
@@ -331,19 +269,17 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_GudLGDJg2D69FEJbdy7ksA_4Z8L9DvA';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 获取精确本地当天日期字符串 (避免时区差导致差一天)
     const getLocalDateString = () => {
-      const timezoneOffset = new Date().getTimezoneOffset() * 60000;
-      return new Date(Date.now() - timezoneOffset).toISOString().split('T')[0];
+      const offset = new Date().getTimezoneOffset() * 60000;
+      return new Date(Date.now() - offset).toISOString().split('T')[0];
     };
 
-    // 获取本周一的本地日期
     const getMondayOfThisWeek = () => {
       const today = new Date();
       const day = today.getDay() || 7;
       const monday = new Date(today.setDate(today.getDate() - day + 1));
-      const timezoneOffset = monday.getTimezoneOffset() * 60000;
-      return new Date(monday.getTime() - timezoneOffset).toISOString().split('T')[0];
+      const offset = monday.getTimezoneOffset() * 60000;
+      return new Date(monday.getTime() - offset).toISOString().split('T')[0];
     };
 
     createApp({
@@ -354,16 +290,16 @@
         const translations = {
           zh: {
             members: '记账成员', addRecord: '快速记账', payer: '支付人', amount: '消费金额', category: '选择分类', date: '日期', remark: '备注', save: '存入星宿',
-            analysis: '今日/本周星轨', mainCurrencySGD: '新币(SGD)主结算', today: '今日消费', thisWeek: '本周累计', thisMonthTotal: '当月累计',
-            monthSelector: '月份筛选', details: '账单轨迹明细', items: '笔', loading: '调阅星轨中', noRecords: '该时段内暂无账单账目！',
-            converted: '已折算', doubleComparison: '双人同步消费对比', compareDaily: '每日', compareWeekly: '周度', compareMonthly: '月度', export: '导出 CSV',
+            analysis: '今日/本周数据汇总', mainCurrencySGD: '新币结算', today: '今日', thisWeek: '本周', thisMonthTotal: '当月累计',
+            monthSelector: '月份筛选', details: '账单轨迹明细', items: '笔', loading: '读取中', noRecords: '该时段内暂无数据',
+            converted: '已折算', doubleComparison: '消费对比', compareDaily: '每日', compareWeekly: '周度', export: '导出',
             rangeToday: '今日', rangeWeek: '本周', rangeMonth: '本月'
           },
           en: {
-            members: 'Members', addRecord: 'Quick Record', payer: 'Payer', amount: 'Amount', category: 'Category', date: 'Date', remark: 'Remark', save: 'Save Record',
-            analysis: 'Stats (Today/Week)', mainCurrencySGD: 'Settled in SGD', today: 'Today', thisWeek: 'This Week', thisMonthTotal: 'Month Total',
-            monthSelector: 'Select Month', details: 'Transaction Ledger', items: 'items', loading: 'Loading galaxy data', noRecords: 'No records found for this period!',
-            converted: 'Converted', doubleComparison: 'Double Ledger Comparison', compareDaily: 'Daily', compareWeekly: 'Weekly', compareMonthly: 'Monthly', export: 'Export CSV',
+            members: 'Members', addRecord: 'Quick Add', payer: 'Payer', amount: 'Amount', category: 'Category', date: 'Date', remark: 'Remark', save: 'Save',
+            analysis: 'Stats', mainCurrencySGD: 'SGD Settled', today: 'Today', thisWeek: 'Week', thisMonthTotal: 'Month Total',
+            monthSelector: 'Month', details: 'Details', items: 'items', loading: 'Loading', noRecords: 'No records',
+            converted: 'Converted', doubleComparison: 'Comparison', compareDaily: 'Daily', compareWeekly: 'Weekly', export: 'Export',
             rangeToday: 'Today', rangeWeek: 'Weekly', rangeMonth: 'Monthly'
           }
         };
@@ -371,25 +307,16 @@
         const t = (key) => translations[lang.value][key] || key;
         const toggleLang = () => lang.value = lang.value === 'zh' ? 'en' : 'zh';
 
-        // 双人名字
         const member1 = ref(localStorage.getItem('member1') || '小星');
         const member2 = ref(localStorage.getItem('member2') || '小辰');
         watch(member1, (val) => { localStorage.setItem('member1', val); updateChart(); });
         watch(member2, (val) => { localStorage.setItem('member2', val); updateChart(); });
 
-        // 汇率
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
         watch(exchangeRate, (val) => localStorage.setItem('exchangeRate', val));
 
-        // 记账分类
-        const categories = [
-          '日常伙食 Daily Meal', '餐厅 Restaurant', '交通 Transport', '购物 Shopping', 
-          '娱乐 Fun', '旅行 Travel', '房租 Rent', '其他 Others'
-        ];
-
-        const getCategoryDisplayName = (cat) => {
-          return lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
-        };
+        const categories = ['日常伙食 Daily Meal', '餐厅 Restaurant', '交通 Transport', '购物 Shopping', '娱乐 Fun', '旅行 Travel', '房租 Rent', '其他 Others'];
+        const getCategoryDisplayName = (cat) => lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
 
         const getCategoryIconOnly = (cat) => {
           if (cat.includes('日常伙食')) return 'fa-solid fa-bowl-rice text-amber-300';
@@ -406,22 +333,15 @@
         const loading = ref(false);
         const selectedMonth = ref(getLocalDateString().substring(0, 7));
         const compareRange = ref('daily');
-        const filterRange = ref('today'); // 明细默认显示: 'today' (当日) | 可选 'week' (本周) | 'month' (月)
+        const filterRange = ref('today');
         let chartInstance = null;
 
         const form = reactive({
-          payer: member1.value,
-          amount: null,
-          currency: 'SGD',
-          category: '日常伙食 Daily Meal',
-          date: getLocalDateString(), // 确保初始化为本地时间当天
-          remark: ''
+          payer: member1.value, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: ''
         });
 
-        // 动态同步支付人更名
         watch(member1, (newVal) => { if(form.payer !== member2.value) form.payer = newVal; });
         watch(member2, (newVal) => { if(form.payer === member2.value) form.payer = newVal; });
-        watch(compareRange, () => { updateChart(); });
 
         const fetchRecords = async () => {
           loading.value = true;
@@ -436,229 +356,93 @@
               .select('*')
               .gte('date', startOfMonth)
               .lte('date', endOfMonth)
-              .order('date', { ascending: false })
-              .order('created_at', { ascending: false });
+              .order('date', { ascending: false });
 
             if (error) throw error;
             records.value = data || [];
-            
             nextTick(() => { updateChart(); });
           } catch (err) {
-            console.error('Error fetching data:', err);
+            console.error(err);
           } finally {
             loading.value = false;
           }
         };
 
-        // 根据当前选定的 filterRange ('today' | 'week' | 'month') 动态过滤明细轨迹
         const filteredRecords = computed(() => {
-          const todayStr = getLocalDateString();
-          const mondayStr = getMondayOfThisWeek();
-
-          if (filterRange.value === 'today') {
-            return records.value.filter(r => r.date === todayStr);
-          } else if (filterRange.value === 'week') {
-            return records.value.filter(r => r.date >= mondayStr);
-          }
-          // 'month' 展示整月数据
+          const today = getLocalDateString();
+          const monday = getMondayOfThisWeek();
+          if (filterRange.value === 'today') return records.value.filter(r => r.date === today);
+          if (filterRange.value === 'week') return records.value.filter(r => r.date >= monday);
           return records.value;
         });
 
         const addRecord = async () => {
           if (!form.amount) return;
-          let finalAmountSGD = form.amount;
-          let originalAmount = form.amount;
-          if (form.currency === 'MYR') {
-            finalAmountSGD = parseFloat((form.amount / exchangeRate.value).toFixed(2));
-          }
+          let finalSGD = form.amount;
+          if (form.currency === 'MYR') finalSGD = parseFloat((form.amount / exchangeRate.value).toFixed(2));
           try {
-            const { error } = await supabaseClient
-              .from('starry_ledger')
-              .insert([{
-                date: form.date,
-                amount: finalAmountSGD,
-                original_amount: originalAmount,
-                currency: form.currency,
-                category: form.category,
-                payer: form.payer,
-                remark: form.remark,
-                exchange_rate: exchangeRate.value
-              }]);
+            const { error } = await supabaseClient.from('starry_ledger').insert([{
+              date: form.date, amount: finalSGD, original_amount: form.amount, currency: form.currency, category: form.category, payer: form.payer, remark: form.remark, exchange_rate: exchangeRate.value
+            }]);
             if (error) throw error;
-            form.amount = null;
-            form.remark = '';
-            form.date = getLocalDateString(); // 提交保存后重新归位至当天日期
+            form.amount = null; form.remark = ''; form.date = getLocalDateString();
             await fetchRecords();
-          } catch (err) {
-            alert('保存失败：' + err.message);
-          }
+          } catch (e) { alert(e.message); }
         };
 
         const deleteRecord = async (id) => {
-          if (!confirm(lang.value === 'zh' ? '确定要删除这条账目吗？' : 'Are you sure to delete this record?')) return;
-          try {
-            const { error } = await supabaseClient.from('starry_ledger').delete().eq('id', id);
-            if (error) throw error;
-            await fetchRecords();
-          } catch (err) {
-            console.error(err);
-          }
+          if (!confirm('确定删除吗？')) return;
+          await supabaseClient.from('starry_ledger').delete().eq('id', id);
+          await fetchRecords();
         };
 
-        // 仅导出当前已过滤显示的轨迹明细
         const exportToCSV = () => {
-          if (filteredRecords.value.length === 0) {
-            alert(lang.value === 'zh' ? '当前范围内无数据可供导出' : 'No data available to export in this range');
-            return;
-          }
-          let csv = '\uFEFFDate,Payer,Category,Amount(SGD),Original Amount,Currency,Remark\n';
-          filteredRecords.value.forEach(r => {
-            csv += `${r.date},"${r.payer}","${r.category}",${r.amount},${r.original_amount || r.amount},${r.currency},"${r.remark || ''}"\n`;
-          });
+          let csv = '\uFEFFDate,Payer,Category,Amount(SGD)\n';
+          filteredRecords.value.forEach(r => { csv += `${r.date},${r.payer},${r.category},${r.amount}\n`; });
           const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
           const link = document.createElement('a');
           link.href = URL.createObjectURL(blob);
-          link.download = `Starry_Ledger_${filterRange.value}_${selectedMonth.value}.csv`;
+          link.download = `ledger_${filterRange.value}.csv`;
           link.click();
         };
 
-        const fetchYearlyMonthlySummary = async () => {
-          const currentYear = new Date().getFullYear();
-          try {
-            const { data } = await supabaseClient
-              .from('starry_ledger')
-              .select('date, amount, payer')
-              .gte('date', `${currentYear}-01-01`)
-              .lte('date', `${currentYear}-12-31`);
-            return data || [];
-          } catch (e) { return []; }
-        };
-
-        const updateChart = async () => {
+        const updateChart = () => {
           const ctx = document.getElementById('comparisonChart');
           if (!ctx || isMobile.value) return;
-
           if (chartInstance) chartInstance.destroy();
 
-          let labels = [];
-          let m1Data = [];
-          let m2Data = [];
-
-          if (compareRange.value === 'daily') {
-            labels = [...new Set(records.value.map(r => r.date))].sort().slice(-10); 
-            labels.forEach(d => {
-              const dayRecords = records.value.filter(r => r.date === d);
-              m1Data.push(dayRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0));
-              m2Data.push(dayRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0));
-            });
-          } else if (compareRange.value === 'weekly') {
-            const getWeekNumber = (d) => {
-              const date = new Date(d);
-              date.setHours(0,0,0,0);
-              date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-              return 1 + Math.round(((date.getTime() - new Date(date.getFullYear(), 0, 4).getTime()) / 86400000 - 3 + (new Date(date.getFullYear(), 0, 4).getDay() + 6) % 7) / 7);
-            };
-            labels = [...new Set(records.value.map(r => `W${getWeekNumber(r.date)}`))].sort();
-            labels.forEach(w => {
-              const weekRecords = records.value.filter(r => `W${getWeekNumber(r.date)}` === w);
-              m1Data.push(weekRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0));
-              m2Data.push(weekRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0));
-            });
-          } else if (compareRange.value === 'monthly') {
-            const yearlyData = await fetchYearlyMonthlySummary();
-            labels = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map(m => `${new Date().getFullYear()}-${m}`);
-            labels.forEach(m => {
-              const monthRecords = yearlyData.filter(r => r.date.startsWith(m));
-              m1Data.push(monthRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0));
-              m2Data.push(monthRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0));
-            });
-          }
+          const labels = [...new Set(records.value.map(r => r.date))].sort().slice(-7);
+          const m1Data = labels.map(d => records.value.filter(r => r.date === d && r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0));
+          const m2Data = labels.map(d => records.value.filter(r => r.date === d && r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0));
 
           chartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
-              labels: labels,
+              labels,
               datasets: [
-                { label: member1.value, data: m1Data, backgroundColor: 'rgba(99, 102, 241, 0.75)', borderColor: 'rgb(99, 102, 241)', borderWidth: 1, borderRadius: 6 },
-                { label: member2.value, data: m2Data, backgroundColor: 'rgba(245, 158, 11, 0.75)', borderColor: 'rgb(245, 158, 11)', borderWidth: 1, borderRadius: 6 }
+                { label: member1.value, data: m1Data, backgroundColor: 'rgba(99, 102, 241, 0.7)' },
+                { label: member2.value, data: m2Data, backgroundColor: 'rgba(245, 158, 11, 0.7)' }
               ]
             },
-            options: {
-              responsive: true, maintainAspectRatio: false,
-              plugins: {
-                legend: { labels: { color: '#94a3b8' } },
-                tooltip: {
-                  callbacks: {
-                    label: (context) => {
-                      const value = context.parsed.y;
-                      const total = (m1Data[context.dataIndex] || 0) + (m2Data[context.dataIndex] || 0);
-                      return `${context.dataset.label}: S$ ${value.toFixed(2)} (${total > 0 ? ((value/total)*100).toFixed(1) : 0}%)`;
-                    }
-                  }
-                }
-              },
-              scales: {
-                x: { ticks: { color: '#64748b' }, grid: { display: false } },
-                y: { ticks: { color: '#64748b', callback: (v) => 'S$' + v }, grid: { color: 'rgba(51, 65, 85, 0.3)' } }
-              }
-            }
+            options: { responsive: true, maintainAspectRatio: false }
           });
         };
 
-        const setupRealtimeSubscription = () => {
-          supabaseClient.channel('ledger-db-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'starry_ledger' }, () => { fetchRecords(); }).subscribe();
-        };
-
-        // 各别独立统计（今日、本周）
-        const totalTodayM1 = computed(() => {
-          const todayStr = getLocalDateString();
-          return records.value
-            .filter(r => r.date === todayStr && r.payer === member1.value)
-            .reduce((sum, r) => sum + Number(r.amount), 0)
-            .toFixed(2);
-        });
-
-        const totalTodayM2 = computed(() => {
-          const todayStr = getLocalDateString();
-          return records.value
-            .filter(r => r.date === todayStr && r.payer === member2.value)
-            .reduce((sum, r) => sum + Number(r.amount), 0)
-            .toFixed(2);
-        });
-
-        const totalThisWeekM1 = computed(() => {
-          const monday = getMondayOfThisWeek();
-          return records.value
-            .filter(r => r.date >= monday && r.payer === member1.value)
-            .reduce((sum, r) => sum + Number(r.amount), 0)
-            .toFixed(2);
-        });
-
-        const totalThisWeekM2 = computed(() => {
-          const monday = getMondayOfThisWeek();
-          return records.value
-            .filter(r => r.date >= monday && r.payer === member2.value)
-            .reduce((sum, r) => sum + Number(r.amount), 0)
-            .toFixed(2);
-        });
-
-        const totalMonth = computed(() => records.value.reduce((sum, r) => sum + Number(r.amount), 0).toFixed(2));
+        const totalTodayM1 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+        const totalTodayM2 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+        const totalThisWeekM1 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+        const totalThisWeekM2 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+        const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
         onMounted(() => {
           isMobile.value = window.innerWidth < 1024;
-          window.addEventListener('resize', () => { isMobile.value = window.innerWidth < 1024; });
           fetchRecords();
-          setupRealtimeSubscription();
-          // 预加载今日汇率
-          fetch('https://open.er-api.com/v6/latest/SGD').then(r => r.json()).then(d => { if(d?.rates?.MYR) exchangeRate.value = parseFloat(d.rates.MYR.toFixed(4)); }).catch(()=>{});
         });
 
         return {
-          lang, t, toggleLang, isMobile, member1, member2,
-          exchangeRate, categories, getCategoryIconOnly, getCategoryDisplayName,
+          lang, t, toggleLang, isMobile, member1, member2, exchangeRate, categories, getCategoryIconOnly, getCategoryDisplayName,
           records, filteredRecords, loading, selectedMonth, form, compareRange, filterRange,
-          addRecord, deleteRecord, fetchRecords, exportToCSV,
-          totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth
+          addRecord, deleteRecord, fetchRecords, exportToCSV, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth
         };
       }
     }).mount('#app');

@@ -3,145 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>星辰小帐 - Starry Ledger</title>
+    <title>星辰小帐</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background: radial-gradient(circle at top right, #1a1a2e, #0f0f1a); min-height: 100vh; color: #e2e8f0; }
-        [v-cloak] { display: none !important; }
+        body { background: #0f0f1a; color: #e2e8f0; }
+        [v-cloak] { display: none; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
-<body class="p-2 md:p-6">
+<body class="p-4">
     <div id="app" v-cloak class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- 左侧：记账与看板 (手机适配) -->
         <div class="lg:col-span-5 space-y-6">
             <div class="glass p-4 rounded-2xl flex justify-between items-center">
-                <div class="flex gap-2 font-bold text-sm">
-                    <span :class="{'text-indigo-400': player === 'player1'}">小星 ✨</span>
-                    <span>|</span>
-                    <span :class="{'text-pink-400': player === 'player2'}">小辰</span>
-                </div>
-                <button @click="fetchLiveRate" class="text-xs bg-slate-700 px-3 py-1 rounded-full">SGD: 1 ≈ {{ exchangeRate }} MYR</button>
+                <div class="flex gap-2 font-bold"><span>小星 ✨</span><span>|</span><span>小辰</span></div>
+                <button @click="fetchRate" class="text-xs bg-slate-700 px-3 py-1 rounded-full">SGD 1 ≈ {{ exchangeRate }} MYR</button>
             </div>
-
+            
             <div class="glass p-6 rounded-2xl">
-                <h2 class="text-sm text-slate-400 mb-4">星辰消费 PK 榜</h2>
-                <div class="flex h-2 rounded-full overflow-hidden mb-2">
-                    <div class="bg-indigo-500" :style="{width: pkProgress + '%'}"></div>
-                    <div class="bg-pink-500" :style="{width: (100 - pkProgress) + '%'}"></div>
-                </div>
-                <div class="flex justify-between text-sm font-bold">
-                    <span>小星: {{ stats.player1 }}</span>
-                    <span>小辰: {{ stats.player2 }}</span>
-                </div>
-            </div>
-
-            <div class="glass p-6 rounded-2xl">
-                <h2 class="text-sm mb-4">添加新账单</h2>
+                <h2 class="text-sm text-slate-400 mb-2">添加新账单</h2>
                 <div class="grid grid-cols-2 gap-2 mb-4">
-                    <button @click="player='player1'" :class="player==='player1'?'bg-indigo-600':'bg-slate-700'" class="p-2 rounded-xl text-sm">小星</button>
-                    <button @click="player='player2'" :class="player==='player2'?'bg-pink-600':'bg-slate-700'" class="p-2 rounded-xl text-sm">小辰</button>
+                    <button @click="form.payer='player1'" :class="form.payer==='player1'?'bg-indigo-600':'bg-slate-700'" class="p-2 rounded-xl text-sm">小星</button>
+                    <button @click="form.payer='player2'" :class="form.payer==='player2'?'bg-pink-600':'bg-slate-700'" class="p-2 rounded-xl text-sm">小辰</button>
                 </div>
-                <div class="grid grid-cols-5 gap-2 mb-4">
-                    <button v-for="c in categories" :key="c.id" @click="category=c.id" :class="category===c.id?'border-indigo-400':'border-transparent'" class="border p-2 rounded-xl bg-slate-800 text-center text-xs">
-                        {{c.icon}}<br>{{c.name}}
-                    </button>
-                </div>
-                <div class="flex gap-2">
-                    <select v-model="currency" class="bg-slate-800 rounded-xl px-2 text-sm">
-                        <option value="SGD">SGD</option>
-                        <option value="MYR">MYR</option>
-                    </select>
-                    <input v-model="amount" type="number" placeholder="金额" class="flex-1 bg-slate-800 rounded-xl px-4 py-2 text-sm">
-                    <button @click="saveExpense" class="bg-blue-600 px-6 rounded-xl text-sm font-bold">保存</button>
+                <div class="flex gap-2 mb-4">
+                    <select v-model="form.currency" class="bg-slate-800 rounded-xl px-2 text-sm"><option value="SGD">SGD</option><option value="MYR">MYR</option></select>
+                    <input v-model="form.amount" type="number" placeholder="金额" class="flex-1 bg-slate-800 rounded-xl px-4 py-2 text-sm">
+                    <button @click="save" class="bg-blue-600 px-6 rounded-xl text-sm">保存</button>
                 </div>
             </div>
         </div>
 
-        <!-- 右侧：PC 模式高级面板 -->
         <div class="lg:col-span-7 glass p-6 rounded-2xl">
-            <h2 class="text-lg font-bold mb-6">账单明细列表</h2>
-            <div class="overflow-y-auto max-h-[600px] space-y-2">
-                <div v-for="ex in expenses" :key="ex.id" class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg hover:bg-slate-700 transition">
-                    <div>
-                        <span class="text-xs text-slate-400">{{ new Date(ex.created_at).toLocaleDateString() }}</span>
-                        <p class="text-sm font-bold">{{ ex.payer === 'player1' ? '小星' : '小辰' }} - {{ ex.category }}</p>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <span class="font-mono text-sm">{{ ex.amount }} {{ ex.currency }}</span>
-                        <button @click="deleteExpense(ex.id)" class="text-red-400 hover:text-red-300 text-xs px-2">删除</button>
-                    </div>
+            <h2 class="font-bold mb-4">账单明细</h2>
+            <div class="space-y-2">
+                <div v-for="ex in expenses" :key="ex.id" class="flex justify-between p-3 bg-slate-800/50 rounded-lg">
+                    <span>{{ ex.payer }} - {{ ex.amount }} {{ ex.currency }}</span>
+                    <button @click="remove(ex.id)" class="text-red-400 text-xs">删除</button>
                 </div>
-                <p v-if="expenses.length === 0" class="text-center text-slate-500 py-10 text-sm">暂无明细记录</p>
             </div>
         </div>
     </div>
 
     <script>
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+        const supabase = supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_ANON_KEY');
         const { createApp } = Vue;
         createApp({
             data() {
                 return {
-                    player: 'player1', category: 'food', amount: '', currency: 'SGD',
-                    exchangeRate: 3.15, expenses: [],
-                    categories: [
-                        {id: 'food', name: '餐饮', icon: '🍔'},
-                        {id: 'shopping', name: '购物', icon: '🛒'},
-                        {id: 'transport', name: '交通', icon: '🚗'},
-                        {id: 'fun', name: '娱乐', icon: '🎬'},
-                        {id: 'other', name: '其他', icon: '📝'}
-                    ]
-                }
-            },
-            computed: {
-                stats() {
-                    let s1 = 0, s2 = 0;
-                    this.expenses.forEach(e => {
-                        const val = e.currency === 'SGD' ? e.amount : e.amount / this.exchangeRate;
-                        if (e.payer === 'player1') s1 += val; else s2 += val;
-                    });
-                    return { player1: s1.toFixed(2), player2: s2.toFixed(2) };
-                },
-                pkProgress() {
-                    const total = parseFloat(this.stats.player1) + parseFloat(this.stats.player2);
-                    return total === 0 ? 50 : (parseFloat(this.stats.player1) / total) * 100;
+                    expenses: [],
+                    exchangeRate: 3.15,
+                    form: { payer: 'player1', currency: 'SGD', amount: '' }
                 }
             },
             methods: {
-                async fetchLiveRate() {
+                async fetchRate() {
                     try {
                         const res = await fetch('https://api.exchangerate-api.com/v4/latest/SGD');
                         const data = await res.json();
                         this.exchangeRate = data.rates.MYR;
-                    } catch(e) { console.error(e); }
+                    } catch(e) {}
                 },
-                async loadData() {
-                    const { data } = await supabase.from('expenses').select('*').order('created_at', {ascending: false});
+                async load() {
+                    const { data } = await supabase.from('expenses').select('*').order('id', {ascending: false});
                     this.expenses = data || [];
                 },
-                async saveExpense() {
-                    if(!this.amount) return;
-                    const { error } = await supabase.from('expenses').insert({
-                        payer: this.player, category: this.category, amount: this.amount, currency: this.currency
-                    });
-                    if(error) alert('保存失败: ' + error.message);
-                    else { this.amount = ''; this.loadData(); }
+                async save() {
+                    if(!this.form.amount) return;
+                    await supabase.from('expenses').insert({payer: this.form.payer, amount: this.form.amount, currency: this.form.currency, ledger_id: '3a5518b8-4d79-a34f-a5cb8900decb'});
+                    this.form.amount = '';
+                    this.load();
                 },
-                async deleteExpense(id) {
+                async remove(id) {
                     await supabase.from('expenses').delete().eq('id', id);
-                    this.loadData();
+                    this.load();
                 }
             },
-            mounted() {
-                this.fetchLiveRate();
-                this.loadData();
-            }
+            mounted() { this.fetchRate(); this.load(); }
         }).mount('#app');
     </script>
 </body>

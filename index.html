@@ -366,7 +366,7 @@
             </div>
           </div>
 
-          <!-- PC 专属：分类深度对比表（已将“日常总支出”完美沉底并隐藏占比列） -->
+          <!-- PC 专属：分类深度对比表 -->
           <div class="overflow-x-auto">
             <table class="w-full text-[11px] text-slate-300">
               <thead>
@@ -399,7 +399,7 @@
                     <td class="py-2 text-right font-mono text-[10px] text-slate-500">{{ row.ratio }}%</td>
                   </tr>
 
-                  <!-- 2. 🌟 精致沉底：日常总支出行时刻在最下方，且隐藏右侧占比（置空） -->
+                  <!-- 2. 🌟 完美沉底：日常总支出行，且添加小星和小辰占日常合计的各自占比百分比 -->
                   <tr class="border-t-2 border-dashed border-indigo-500/30 bg-indigo-950/30 transition-all font-semibold">
                     <td class="py-2.5 text-left flex items-center gap-1.5">
                       <i class="fa-solid fa-calculator text-indigo-400 text-xs"></i>
@@ -408,10 +408,10 @@
                         {{ lang === 'zh' ? '不含房租合计' : 'Excl. Rent' }}
                       </span>
                     </td>
-                    <td class="py-2.5 text-right font-mono text-indigo-300">S$ {{ dailyM1Sum.toFixed(2) }}</td>
-                    <td class="py-2.5 text-right font-mono text-amber-300">S$ {{ dailyM2Sum.toFixed(2) }}</td>
+                    <td class="py-2.5 text-right font-mono text-indigo-300">S$ {{ dailyM1Sum.toFixed(2) }} <span class="text-[10px] text-slate-400 ml-0.5">({{ dailyM1Percent }}%)</span></td>
+                    <td class="py-2.5 text-right font-mono text-amber-300">S$ {{ dailyM2Sum.toFixed(2) }} <span class="text-[10px] text-slate-400 ml-0.5">({{ dailyM2Percent }}%)</span></td>
                     <td class="py-2.5 text-right font-mono text-indigo-200 font-bold">S$ {{ dailyTotalSum.toFixed(2) }}</td>
-                    <td class="py-2.5 text-right font-mono"></td> <!-- 留空，隐藏占比列 -->
+                    <td class="py-2.5 text-right font-mono"></td>
                   </tr>
                 </template>
               </tbody>
@@ -764,6 +764,17 @@
           return dailyM1Sum.value + dailyM2Sum.value;
         });
 
+        // 计算日常小星与小辰各自占日常总支出的百分比
+        const dailyM1Percent = computed(() => {
+          const total = dailyM1Sum.value + dailyM2Sum.value;
+          return total > 0 ? Math.round((dailyM1Sum.value / total) * 100) : 0;
+        });
+
+        const dailyM2Percent = computed(() => {
+          const total = dailyM1Sum.value + dailyM2Sum.value;
+          return total > 0 ? 100 - dailyM1Percent.value : 0;
+        });
+
         const chartTotalSum = computed(() => {
           if (chartMember.value === 'all') {
             let filteredBase = records.value;
@@ -909,7 +920,7 @@
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
         onMounted(() => { fetchRecords(); });
-        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, offsetMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices, showDatePicker, activePicker, panelYear, selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected, dailyM1Sum, dailyM2Sum, dailyTotalSum };
+        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, offsetMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices, showDatePicker, activePicker, panelYear, selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected, dailyM1Sum, dailyM2Sum, dailyTotalSum, dailyM1Percent, dailyM2Percent };
       }
     }).mount('#app');
   </script>

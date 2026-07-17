@@ -15,6 +15,7 @@
     .star-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px); background-size: 550px 550px; opacity: 0.12; z-index: -1; }
     .glass-card { background: rgba(30, 41, 59, 0.45); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
     [v-cloak] { display: none !important; }
+    .chart-ring { transition: stroke-dashoffset 0.6s ease-in-out, stroke 0.3s; }
   </style>
 </head>
 <body>
@@ -204,18 +205,57 @@
 
       <!-- 右侧明细与PC对比面板 -->
       <section class="lg:col-span-7 space-y-4">
-        <!-- PC 专属：多维度品类对比统计看板 -->
+        <!-- PC 专属：多维度品类对比统计看板（内含高级星环对比图表） -->
         <div class="hidden md:block glass-card rounded-2xl p-4 space-y-4">
           <div class="flex justify-between items-center border-b border-slate-800/80 pb-2">
             <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
               <i class="fa-solid fa-chart-column text-indigo-400"></i> {{ t('pcCategoryTitle') }}
             </h2>
             
-            <!-- 时间维度筛选控制器 -->
+            <!-- 时间维度筛选控制器（完美支持每日、每周、每月） -->
             <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
               <button @click="categoryRange = 'today'" :class="categoryRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2.5 py-1 rounded-lg transition">{{ t('rangeToday') }}</button>
               <button @click="categoryRange = 'week'" :class="categoryRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2.5 py-1 rounded-lg transition">{{ t('rangeWeek') }}</button>
               <button @click="categoryRange = 'month'" :class="categoryRange === 'month' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2.5 py-1 rounded-lg transition">{{ t('rangeMonth') }}</button>
+            </div>
+          </div>
+
+          <!-- 星轨圆环分布图表区 (Donut Chart Panel) -->
+          <div class="grid grid-cols-12 gap-4 items-center bg-slate-950/20 p-4 rounded-xl border border-slate-800/50">
+            <!-- 左侧：星环图 (Donut Shape Rendered by SVG) -->
+            <div class="col-span-5 flex justify-center relative">
+              <svg width="150" height="150" viewBox="0 0 150 150" class="transform -rotate-90">
+                <!-- 背景圆圈 -->
+                <circle cx="75" cy="75" r="55" fill="transparent" stroke="#1e293b" stroke-width="12" />
+                <!-- 动态环形切片 -->
+                <circle v-for="(slice, index) in chartSlices" :key="index"
+                  cx="75" cy="75" r="55" fill="transparent" 
+                  :stroke="slice.color" 
+                  stroke-width="12" 
+                  :stroke-dasharray="345.57" 
+                  :stroke-dashoffset="slice.offset"
+                  class="chart-ring"
+                  stroke-linecap="round" />
+              </svg>
+              <!-- 环心文本：当前区间内总花费（已排除房租） -->
+              <div class="absolute inset-0 flex flex-col justify-center items-center text-center">
+                <span class="text-[8px] text-slate-500 uppercase tracking-widest">{{ t('tableTotal') }}</span>
+                <span class="text-xs font-bold text-slate-200 font-mono mt-0.5">S$ {{ chartTotalSum }}</span>
+              </div>
+            </div>
+
+            <!-- 右侧：动态图例分布 -->
+            <div class="col-span-7 space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
+              <div v-if="chartSlices.length === 0" class="text-center text-slate-600 text-[10px] py-8">
+                {{ t('noRecords') }}
+              </div>
+              <div v-else v-for="slice in chartSlices" :key="slice.cat" class="flex items-center justify-between text-[10px] py-0.5 px-1.5 rounded hover:bg-slate-800/30 transition">
+                <div class="flex items-center gap-1.5 truncate">
+                  <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: slice.color }"></span>
+                  <span class="text-slate-300 truncate">{{ getCategoryDisplayName(slice.cat) }}</span>
+                </div>
+                <span class="font-mono text-slate-400 font-semibold pl-2">{{ slice.percentage }}%</span>
+              </div>
             </div>
           </div>
 
@@ -363,6 +403,19 @@
           '固定月费 Subscriptions', '零星杂费 Sundries', '其他 Miscellaneous'
         ];
 
+        // 各分类专属色调（用于 SVG 环形渲染）
+        const categoryColors = {
+          '日常伙食 Daily Meal': '#f59e0b',  // 琥珀
+          '餐厅聚餐 Restaurant': '#f43f5e',  // 玫瑰
+          '交通出行 Transport': '#0ea5e9',   // 天空
+          '购物消费 Shopping': '#a855f7',   // 紫罗兰
+          '休闲娱乐 Fun': '#10b981',        // 翡翠
+          '居住房租 Housing': '#f97316',     // 橙
+          '固定月费 Subscriptions': '#6366f1', // 靛蓝
+          '零星杂费 Sundries': '#94a3b8',      // 蓝灰
+          '其他 Miscellaneous': '#14b8a6'    // 青
+        };
+
         const getCategoryDisplayName = (cat) => lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
 
         const getCategoryIconOnly = (cat) => {
@@ -440,6 +493,39 @@
           }).filter(item => item.total > 0).sort((a, b) => b.total - a.total);
         });
 
+        // ================= 星环图动态渲染逻辑 (Donut Rendering Logic) =================
+        // 计算当前范围内的总支出（排除房租，让图表与日常预算完全对齐）
+        const chartTotalSum = computed(() => {
+          return categoryComparison.value
+            .filter(item => item.cat !== '居住房租 Housing')
+            .reduce((sum, item) => sum + item.total, 0)
+            .toFixed(2);
+        });
+
+        // 动态将品类比例转化为 SVG 环绕角度 dashoffset
+        const chartSlices = computed(() => {
+          const validItems = categoryComparison.value.filter(item => item.cat !== '居住房租 Housing');
+          const totalSumVal = parseFloat(chartTotalSum.value) || 1;
+          const circumference = 345.57; // 2 * PI * r (r=55)
+
+          let accumulatedPercent = 0;
+          return validItems.map(item => {
+            const percent = item.total / totalSumVal;
+            const percentageText = Math.round(percent * 100);
+            // 每一个切片的起点偏移量
+            const offset = circumference - (percent * circumference) - (accumulatedPercent * circumference);
+            accumulatedPercent += percent;
+
+            return {
+              cat: item.cat,
+              color: categoryColors[item.cat] || '#ffffff',
+              percentage: percentageText,
+              offset: offset
+            };
+          });
+        });
+        // =========================================================================
+
         const addRecord = async () => {
           if (!form.amount) return;
           let finalSGD = form.currency === 'MYR' ? parseFloat((form.amount / exchangeRate.value).toFixed(2)) : form.amount;
@@ -509,7 +595,7 @@
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
         onMounted(() => { fetchRecords(); });
-        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, form, filterRange, categoryRange, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison };
+        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, form, filterRange, categoryRange, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices };
       }
     }).mount('#app');
   </script>

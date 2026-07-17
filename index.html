@@ -253,15 +253,15 @@
       <section class="lg:col-span-7 space-y-4">
         <!-- PC 专属：多维度品类对比统计看板（内含高级星环对比图表） -->
         <div class="hidden md:block glass-card rounded-2xl p-4 space-y-4">
-          <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-800/80 pb-2">
+          <div class="flex flex-col xl:flex-row justify-between xl:items-center gap-2 border-b border-slate-800/80 pb-2">
             <!-- 标题栏 + 自定义年月快捷选择器 -->
             <div class="flex items-center gap-2">
-              <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
-                <i class="fa-solid fa-chart-column text-indigo-400"></i> {{ t('pcCategoryTitle') }}
+              <h2 class="text-xs xl:text-sm font-semibold text-slate-200 flex items-center gap-1.5">
+                <i class="fa-solid fa-chart-column text-indigo-400"></i> {{ lang === 'zh' ? '星纪 PC 专属：品类对比深度查询' : 'Starry PC Exclusive: Deep Category Inquiry' }}
               </h2>
               
               <!-- 升级：超大热区 & 年份直观可见的自定化月份选择器（顶部） -->
-              <div class="relative flex items-center bg-slate-950/50 border border-slate-800 rounded-2xl p-1 ml-2">
+              <div class="relative flex items-center bg-slate-950/50 border border-slate-800 rounded-2xl p-1 ml-1">
                 <!-- 左箭头：极大增加点击区与字号 -->
                 <button @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-3 py-1.5 text-base transition">◀</button>
                 
@@ -301,11 +301,12 @@
                 <button @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-amber-600/30 border-amber-500 text-amber-300' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ member2 }}</button>
               </div>
 
-              <!-- 时间维度筛选控制器 -->
-              <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
+              <!-- 时间维度筛选控制器：新加入「按年」查询按钮 -->
+              <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80 font-medium">
                 <button @click="categoryRange = 'today'" :class="categoryRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeToday') }}</button>
                 <button @click="categoryRange = 'week'" :class="categoryRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
                 <button @click="categoryRange = 'month'" :class="categoryRange === 'month' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeMonth') }}</button>
+                <button @click="categoryRange = 'year'" :class="categoryRange === 'year' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ lang === 'zh' ? '全年' : 'Yearly' }}</button>
               </div>
             </div>
           </div>
@@ -491,7 +492,7 @@
             analysis: '星象数据汇总', today: '今日星度', thisWeek: '本周星行', thisMonthTotal: '当月星轨总计',
             details: '星轨账目明细', loading: '星力感应中', noRecords: '星空空空如也',
             rangeToday: '今日', rangeWeek: '本周', rangeMonth: '本月', exportBtn: '导出星轨', ratio: '星能对比',
-            pcCategoryTitle: 'PC 品类对比', tableCat: '消费品类', tableTotal: '总支出', tableRatio: '分类占比',
+            tableCat: '消费品类', tableTotal: '总支出', tableRatio: '分类占比',
             budgetSuffix: '月度预算', budgetLabel: '每月预算', remainingBudget: '本月剩余日常预算',
             nearBudget: '接近上限', overBudget: '超支警告', excludeHousing: '不含房租', excludeLabel: '不计入日常预算',
             viewAll: '全部'
@@ -501,7 +502,7 @@
             analysis: 'Astro Stats', today: 'Today', thisWeek: 'Weekly', thisMonthTotal: 'Monthly Total',
             details: 'Starry Trails', loading: 'Channelling...', noRecords: 'No stars in sight',
             rangeToday: 'Today', rangeWeek: 'Weekly', rangeMonth: 'Monthly', exportBtn: 'Export Trails', ratio: 'Power Ratio',
-            pcCategoryTitle: 'PC Analytics', tableCat: 'Category', tableTotal: 'Total', tableRatio: 'Share',
+            tableCat: 'Category', tableTotal: 'Total', tableRatio: 'Share',
             budgetSuffix: ' Budget', budgetLabel: 'Budget', remainingBudget: 'Remaining Budget',
             nearBudget: 'Near Limit', overBudget: 'Over Budget', excludeHousing: 'Excl. Rent', excludeLabel: 'Excl. from Budget',
             viewAll: 'All'
@@ -613,20 +614,36 @@
         };
         
         const filterRange = ref('today');
-        const categoryRange = ref('month');
+        const categoryRange = ref('month'); // 可选：'today', 'week', 'month', 'year'
         const chartMember = ref('all'); // 'all', 'm1', 'm2'
 
         const form = reactive({ payer: member1.value, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
 
+        // 核心：拉取 Supabase 数据。如果是“按年”统计，需要拉取整整一年的完整账目
         const fetchRecords = async () => {
           loading.value = true;
           try {
-            const start = `${selectedMonth.value}-01`;
-            const end = new Date(parseInt(selectedMonth.value.split('-')[0]), parseInt(selectedMonth.value.split('-')[1]), 0).toISOString().substring(0, 10);
+            let start, end;
+            if (categoryRange.value === 'year') {
+              // 全年查询：拉取当前选择年份的1月1日至12月31日
+              const currentYear = selectedMonth.value.split('-')[0];
+              start = `${currentYear}-01-01`;
+              end = `${currentYear}-12-31`;
+            } else {
+              // 月度查询：拉取当月
+              start = `${selectedMonth.value}-01`;
+              end = new Date(parseInt(selectedMonth.value.split('-')[0]), parseInt(selectedMonth.value.split('-')[1]), 0).toISOString().substring(0, 10);
+            }
+
             const { data } = await supabaseClient.from('starry_ledger').select('*').gte('date', start).lte('date', end).order('date', { ascending: false });
             records.value = data || [];
           } catch (err) { console.error(err); } finally { loading.value = false; }
         };
+
+        // 监听 categoryRange 改变，如果是切换到了‘year’或者切换回‘month’，重新拉取数据库。
+        watch(categoryRange, () => {
+          fetchRecords();
+        });
 
         // 月度切换微调（加/减一个月）
         const offsetMonth = (steps) => {
@@ -669,14 +686,14 @@
           return 'text-emerald-400 font-bold'; 
         };
 
-        // 基础品类统计汇总
+        // 基础品类统计汇总（包含“全年/按年”维度的联动计算）
         const categoryComparison = computed(() => {
           let filteredBase = records.value;
           if (categoryRange.value === 'today') {
             filteredBase = records.value.filter(r => r.date === getLocalDateString());
           } else if (categoryRange.value === 'week') {
             filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
-          }
+          } // 如果是 'month' 或 'year'，在 fetchRecords 时就已经把对应月份或整年的数据拉到 records.value 里面了，直接读取。
 
           let totalRangeSum = 0;
           if (chartMember.value === 'all') {

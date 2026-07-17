@@ -197,7 +197,7 @@
             </h2>
             
             <div class="flex items-center gap-2 flex-wrap">
-              <!-- 成员视角切换器（支持 全部 / 小星 / 小辰） -->
+              <!-- 成员视角切换器 -->
               <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
                 <button @click="chartMember = 'all'" :class="chartMember === 'all' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ t('viewAll') }}</button>
                 <button @click="chartMember = 'm1'" :class="chartMember === 'm1' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ member1 }}</button>
@@ -215,20 +215,19 @@
 
           <!-- 星轨圆环分布图表区 (Donut Chart Panel) -->
           <div class="grid grid-cols-12 gap-4 items-center bg-slate-950/20 p-4 rounded-xl border border-slate-800/50">
-            <!-- 左侧：星环图（始终根据品类颜色呈现） -->
+            <!-- 左侧：星环图（修正为：只渲染各部分比例大小，并按比例段落接力分布） -->
             <div class="col-span-5 flex justify-center relative">
               <svg width="150" height="150" viewBox="0 0 150 150" class="transform -rotate-90">
                 <!-- 背景圆圈 -->
                 <circle cx="75" cy="75" r="55" fill="transparent" stroke="#1e293b" stroke-width="12" />
-                <!-- 动态环形切片 -->
+                <!-- 动态环形切片 (修复了重叠和计算错误的问题) -->
                 <circle v-for="(slice, index) in chartSlices" :key="index"
                   cx="75" cy="75" r="55" fill="transparent" 
                   :stroke="slice.color" 
                   stroke-width="12" 
-                  :stroke-dasharray="345.57" 
+                  :stroke-dasharray="slice.dashArray" 
                   :stroke-dashoffset="slice.offset"
-                  class="chart-ring"
-                  stroke-linecap="round" />
+                  class="chart-ring" />
               </svg>
               <!-- 环心文本 -->
               <div class="absolute inset-0 flex flex-col justify-center items-center text-center">
@@ -239,7 +238,7 @@
               </div>
             </div>
 
-            <!-- 右侧：动态图例分布（始终以品类色进行区分显示） -->
+            <!-- 右侧：动态图例分布 -->
             <div class="col-span-7 space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
               <div v-if="chartSlices.length === 0" class="text-center text-slate-600 text-[10px] py-8">
                 {{ t('noRecords') }}
@@ -400,7 +399,7 @@
           '固定月费 Subscriptions', '零星杂费 Sundries', '其他 Miscellaneous'
         ];
 
-        // 各分类专属色调（无论是谁的账单，品类对应色调始终完全统一）
+        // 各分类专属色调
         const categoryColors = {
           '日常伙食 Daily Meal': '#f59e0b',  // 琥珀
           '餐厅聚餐 Restaurant': '#f43f5e',  // 玫瑰
@@ -523,10 +522,10 @@
             .toFixed(2);
         });
 
-        // ================= ★ 炫彩星环核心渲染逻辑 ★ =================
+        // ================= ★ 炫彩星环核心渲染逻辑 (已修复重叠渲染问题) ★ =================
         const chartSlices = computed(() => {
           const totalSumVal = parseFloat(chartTotalSum.value) || 1;
-          const circumference = 345.57; // 2 * PI * r (r=55)
+          const circumference = 345.57; // 圆周长 (2 * PI * r, r=55)
 
           let rawSlices = [];
 
@@ -538,7 +537,6 @@
           const validRecords = filteredBase.filter(r => r.category !== '居住房租 Housing');
 
           if (chartMember.value === 'all') {
-            // 1. 全部视图：同样按“消费品类”区分星轨颜色（小星和小辰花在同品类上的钱会被合并计算）
             categories.filter(c => c !== '居住房租 Housing').forEach(cat => {
               const catSum = validRecords.filter(r => r.category === cat).reduce((sum, r) => sum + Number(r.amount), 0);
               if (catSum > 0) {
@@ -551,7 +549,6 @@
               }
             });
           } else {
-            // 2. 个人视图：同样按“消费品类”区分炫彩颜色
             const activeMember = chartMember.value === 'm1' ? member1.value : member2.value;
             const memberRecords = validRecords.filter(r => r.payer === activeMember);
             
@@ -568,20 +565,28 @@
             });
           }
 
-          // 排序：按金额从大到小排列
+          // 按金额从大到小排列
           rawSlices.sort((a, b) => b.total - a.total);
 
-          // 转换为 SVG 环形所需的偏移量 (Dashoffset)
+          // 核心修复点：将前一项积累的占比正确用来累加 offset 形成无缝衔接
           let accumulatedPercent = 0;
           return rawSlices.map(slice => {
             const percent = slice.total / totalSumVal;
             const percentageText = Math.round(percent * 100);
-            const offset = circumference - (percent * circumference) - (accumulatedPercent * circumference);
+            
+            // 每一个切片的起点是上一个结束的地方 (SVG 偏移量计算)
+            const offset = circumference - (accumulatedPercent * circumference);
+            // 本切片自身的可见画笔线段长度为 (percent * circumference)
+            const strokeLength = percent * circumference;
+            // dashArray 表示：[实线长度, 空白长度]
+            const dashArray = `${strokeLength} ${circumference - strokeLength}`;
+
             accumulatedPercent += percent;
 
             return {
               ...slice,
               percentage: percentageText,
+              dashArray: dashArray,
               offset: offset
             };
           });
@@ -652,7 +657,7 @@
         const totalTodayM1 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         const totalTodayM2 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         const totalThisWeekM1 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
-        const totalThisWeekM2 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+        const totalThisWeekM2 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member2.value && r.category !== '居住房造 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 

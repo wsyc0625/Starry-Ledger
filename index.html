@@ -119,12 +119,12 @@
             </div>
           </div>
 
-          <!-- 星能对比百分比（仅当有消费时显示） -->
+          <!-- 星能对比百分比 -->
           <div v-if="totalRatioSum > 0" class="pt-2 border-t border-slate-800/40 space-y-1">
             <div class="flex justify-between text-[9px] text-slate-400 font-mono">
-              <span>{{ member1 }}: {{ m1Percent }}%</span>
+              <span>{{ member1 }}: {{ m1Percent }}% (S$ {{ m1TotalNum.toFixed(2) }})</span>
               <span class="text-indigo-300 font-semibold">{{ t('ratio') }}</span>
-              <span>{{ member2 }}: {{ m2Percent }}%</span>
+              <span>{{ member2 }}: {{ m2Percent }}% (S$ {{ m2TotalNum.toFixed(2) }})</span>
             </div>
             <div class="w-full bg-slate-900/80 rounded-full h-1.5 overflow-hidden flex">
               <div class="bg-indigo-500 h-full transition-all duration-500" :style="{ width: m1Percent + '%' }"></div>
@@ -142,8 +142,90 @@
         </div>
       </main>
 
-      <!-- 右侧明细面板 -->
+      <!-- 右侧明细与PC对比面板 -->
       <section class="lg:col-span-7 space-y-4">
+        
+        <!-- PC 专属：双人深度消费统计与AA结算分析看板 (仅在 md 以上大屏显示) -->
+        <div class="hidden md:block glass-card rounded-2xl p-4 space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-800/80 pb-2">
+            <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-calculator text-amber-400 animate-pulse"></i> {{ t('pcAnalysisTitle') }}
+            </h2>
+            <span class="text-[10px] text-slate-500">{{ selectedMonth }} {{ t('monthReport') }}</span>
+          </div>
+
+          <!-- 双人开销条状对比与差额自动计算 -->
+          <div class="grid grid-cols-12 gap-4 items-center">
+            <div class="col-span-5 text-right pr-2">
+              <p class="text-xs text-indigo-300 font-medium">{{ member1 }}</p>
+              <p class="text-base font-extrabold font-mono text-indigo-200">S$ {{ m1TotalNum.toFixed(2) }}</p>
+              <p class="text-[9px] text-slate-500">{{ m1Percent }}% {{ t('ofTotal') }}</p>
+            </div>
+            
+            <!-- 中间可视化刻度条 -->
+            <div class="col-span-2 flex flex-col items-center justify-center">
+              <div class="h-10 w-0.5 bg-slate-800 relative">
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-amber-500/20 text-amber-300 text-[9px] px-1 py-0.5 rounded border border-amber-500/40 font-mono">VS</div>
+              </div>
+            </div>
+
+            <div class="col-span-5 text-left pl-2">
+              <p class="text-xs text-amber-300 font-medium">{{ member2 }}</p>
+              <p class="text-base font-extrabold font-mono text-amber-200">S$ {{ m2TotalNum.toFixed(2) }}</p>
+              <p class="text-[9px] text-slate-500">{{ m2Percent }}% {{ t('ofTotal') }}</p>
+            </div>
+          </div>
+
+          <!-- AA差额智慧结算提示 -->
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <span class="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 text-xs"><i class="fa-solid fa-scale-balanced"></i></span>
+              <div>
+                <h4 class="text-xs font-semibold text-slate-300">{{ t('aaStatus') }}</h4>
+                <p class="text-[10px] text-slate-400">{{ t('aaStatusDesc') }}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span v-if="m1TotalNum === m2TotalNum" class="text-xs font-bold text-emerald-400 font-mono">✔ {{ t('balanced') }}</span>
+              <div v-else>
+                <span class="text-[10px] text-slate-400">{{ t('suggestTransfer') }}</span>
+                <p class="text-xs font-bold text-amber-300 font-mono">
+                  {{ m1TotalNum > m2TotalNum ? member2 : member1 }} ➔ {{ m1TotalNum > m2TotalNum ? member1 : member2 }}
+                </p>
+                <p class="text-sm font-extrabold text-amber-400 font-mono">S$ {{ (Math.abs(m1TotalNum - m2TotalNum) / 2).toFixed(2) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- PC 专属：分类深度对比表 (按消费分类拆解双方花费) -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-[11px] text-slate-300">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-500">
+                  <th class="py-1.5 text-left font-medium">{{ t('tableCat') }}</th>
+                  <th class="py-1.5 text-right font-medium text-indigo-400">{{ member1 }}</th>
+                  <th class="py-1.5 text-right font-medium text-amber-400">{{ member2 }}</th>
+                  <th class="py-1.5 text-right font-medium">{{ t('tableTotal') }}</th>
+                  <th class="py-1.5 text-right font-medium">{{ t('tableRatio') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in categoryComparison" :key="row.cat" class="border-b border-slate-900 hover:bg-slate-800/20 transition">
+                  <td class="py-2 text-left flex items-center gap-1.5">
+                    <i :class="getCategoryIconOnly(row.cat)" class="text-xs"></i>
+                    <span>{{ getCategoryDisplayName(row.cat) }}</span>
+                  </td>
+                  <td class="py-2 text-right font-mono text-indigo-300/90">S$ {{ row.m1.toFixed(2) }}</td>
+                  <td class="py-2 text-right font-mono text-amber-300/90">S$ {{ row.m2.toFixed(2) }}</td>
+                  <td class="py-2 text-right font-mono font-semibold text-slate-200">S$ {{ row.total.toFixed(2) }}</td>
+                  <td class="py-2 text-right font-mono text-[10px] text-slate-500">{{ row.ratio }}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 账目明细（支持手机端滑动/PC端固定） -->
         <div class="glass-card rounded-2xl p-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <h2 class="text-base font-semibold text-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}</h2>
@@ -210,13 +292,19 @@
             members: '仙侣星员', addRecord: '寻星记账', payer: '支付人', amount: '消费金额', category: '选择分类', date: '日期', remark: '备注', save: '存入星宿',
             analysis: '星象数据汇总', today: '今日星度', thisWeek: '本周星行', thisMonthTotal: '当月星轨总计',
             details: '星轨账目明细', loading: '星力感应中', noRecords: '星空空空如也',
-            rangeToday: '今日', rangeWeek: '本周', rangeMonth: '本月', exportBtn: '导出星轨', ratio: '星能对比'
+            rangeToday: '今日', rangeWeek: '本周', rangeMonth: '本月', exportBtn: '导出星轨', ratio: '星能对比',
+            pcAnalysisTitle: '星纪 PC 专属：双星深度对比分析', monthReport: '当月账目简报', ofTotal: '月总支出占比',
+            aaStatus: 'AA 差额对账', aaStatusDesc: '以 AA 平摊为基准的债务清算建议', balanced: '天秤守恒：双方支出完美平摊！',
+            suggestTransfer: '建议转账给对方', tableCat: '消费品类', tableTotal: '总支出', tableRatio: '全站占比'
           },
           en: {
             members: 'Astrogang', addRecord: 'Star Trace', payer: 'Payer', amount: 'Amount', category: 'Category', date: 'Date', remark: 'Remark', save: 'Save to Starry',
             analysis: 'Astro Stats', today: 'Today', thisWeek: 'Weekly', thisMonthTotal: 'Monthly Total',
             details: 'Starry Trails', loading: 'Channelling...', noRecords: 'No stars in sight',
-            rangeToday: 'Today', rangeWeek: 'Weekly', rangeMonth: 'Monthly', exportBtn: 'Export Trails', ratio: 'Power Ratio'
+            rangeToday: 'Today', rangeWeek: 'Weekly', rangeMonth: 'Monthly', exportBtn: 'Export Trails', ratio: 'Power Ratio',
+            pcAnalysisTitle: 'PC Mode: Binary Star Deep Analysis', monthReport: 'Monthly Report', ofTotal: 'of total',
+            aaStatus: 'Debt Settlement', aaStatusDesc: 'Equal share basis repayment advice', balanced: 'Perfect equilibrium achieved!',
+            suggestTransfer: 'Recommended Transfer', tableCat: 'Category', tableTotal: 'Total', tableRatio: 'Share'
           }
         };
 
@@ -279,6 +367,25 @@
         const m1Percent = computed(() => totalRatioSum.value > 0 ? Math.round((m1TotalNum.value / totalRatioSum.value) * 100) : 50);
         const m2Percent = computed(() => totalRatioSum.value > 0 ? 100 - m1Percent.value : 50);
 
+        // PC 专属：计算各品类的双人对比数据
+        const categoryComparison = computed(() => {
+          const totalAll = totalRatioSum.value || 1;
+          return categories.map(cat => {
+            const catRecords = records.value.filter(r => r.category === cat);
+            const m1Sum = catRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
+            const m2Sum = catRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
+            const catTotal = m1Sum + m2Sum;
+            return {
+              cat,
+              m1: m1Sum,
+              m2: m2Sum,
+              total: catTotal,
+              ratio: Math.round((catTotal / totalAll) * 100)
+            };
+          }).filter(item => item.total > 0) // 过滤掉当月无消费的品类
+            .sort((a, b) => b.total - a.total); // 按花费高低降序排列
+        });
+
         const addRecord = async () => {
           if (!form.amount) return;
           let finalSGD = form.currency === 'MYR' ? parseFloat((form.amount / exchangeRate.value).toFixed(2)) : form.amount;
@@ -319,7 +426,7 @@
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
         onMounted(() => { fetchRecords(); });
-        return { lang, t, toggleLang, member1, member2, exchangeRate, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, form, filterRange, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV };
+        return { lang, t, toggleLang, member1, member2, exchangeRate, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, form, filterRange, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison };
       }
     }).mount('#app');
   </script>

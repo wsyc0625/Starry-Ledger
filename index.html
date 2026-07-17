@@ -136,7 +136,7 @@
                     <span v-if="budgetM1 && m1PercentOfBudget >= 100" class="text-[8px] text-rose-500 font-bold block">🚨 {{ t('overBudget') }}</span>
                     <span v-else-if="budgetM1 && m1PercentOfBudget >= 80" class="text-[8px] text-amber-500 font-bold block">⚠️ {{ t('nearBudget') }}</span>
                   </p>
-                  <!-- 根据不同状态应用 绿、黄、红 颜色反馈（不含房租） -->
+                  <!-- 根据不同状态应用 绿、黄、红 颜色反馈 -->
                   <p :class="getBudgetColorClass(m1PercentOfBudget, budgetM1)" class="text-xs font-bold font-mono">S$ {{ remainM1 }}</p>
                 </div>
               </div>
@@ -171,7 +171,7 @@
                     <span v-if="budgetM2 && m2PercentOfBudget >= 100" class="text-[8px] text-rose-500 font-bold block">🚨 {{ t('overBudget') }}</span>
                     <span v-else-if="budgetM2 && m2PercentOfBudget >= 80" class="text-[8px] text-amber-500 font-bold block">⚠️ {{ t('nearBudget') }}</span>
                   </p>
-                  <!-- 根据不同状态应用 绿、黄、红 颜色反馈（不含房租） -->
+                  <!-- 根据不同状态应用 绿、黄、红 颜色反馈 -->
                   <p :class="getBudgetColorClass(m2PercentOfBudget, budgetM2)" class="text-xs font-bold font-mono">S$ {{ remainM2 }}</p>
                 </div>
               </div>
@@ -191,7 +191,7 @@
             </div>
           </div>
 
-          <!-- 月份切换与总计（总计依然包含房租，让数据真实完整） -->
+          <!-- 月份切换与总计 -->
           <div class="pt-2 border-t border-slate-800/60 flex justify-between items-center">
             <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-[10px] rounded px-1.5 py-0.5 text-slate-300">
             <div class="text-right">
@@ -279,12 +279,19 @@
                 <div>
                   <span class="text-xs font-medium text-slate-200">{{ getCategoryDisplayName(item.category) }}</span>
                   <span v-if="item.category.includes('居住房租')" class="text-[9px] text-slate-500 ml-1">({{ t('excludeLabel') }})</span>
-                  <span v-if="item.remark" class="text-[10px] text-slate-500"> ({{ item.remark }})</span>
+                  <span v-if="item.remark" class="text-[10px] text-slate-500 font-sans"> ({{ item.remark }})</span>
                   <p class="text-[9px] text-slate-500 font-mono">{{ item.date }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <p class="text-xs font-bold text-slate-200 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
+                <div class="text-right">
+                  <!-- 主金额（始终折算为新币展示） -->
+                  <p class="text-xs font-bold text-slate-200 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
+                  <!-- 外币提示：如果是用外币（如马币 MYR）记账，会在下方展示原始金额，新币记账则不显示 -->
+                  <p v-if="item.currency && item.currency !== 'SGD'" class="text-[9px] text-amber-400/90 font-mono font-medium">
+                    ({{ item.currency === 'MYR' ? 'RM' : item.currency }} {{ Number(item.original_amount).toFixed(2) }})
+                  </p>
+                </div>
                 <button @click="deleteRecord(item.id)" class="text-rose-500 p-1 hover:text-rose-400 transition"><i class="fa-regular fa-trash-can text-xs"></i></button>
               </div>
             </div>
@@ -341,7 +348,6 @@
         const member2 = ref(localStorage.getItem('member2') || '小辰');
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
         
-        // 预算数据初始化与双向绑定
         const budgetM1 = ref(localStorage.getItem('budget_m1') ? parseFloat(localStorage.getItem('budget_m1')) : null);
         const budgetM2 = ref(localStorage.getItem('budget_m2') ? parseFloat(localStorage.getItem('budget_m2')) : null);
         
@@ -395,7 +401,6 @@
           return records.value;
         });
 
-        // 【方案 1 核心调整】：计算用于预算的日常开支总数时，主动排除 '居住房租 Housing'
         const m1TotalNum = computed(() => records.value.filter(r => r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0));
         const m2TotalNum = computed(() => records.value.filter(r => r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0));
         
@@ -403,15 +408,12 @@
         const m1Percent = computed(() => totalRatioSum.value > 0 ? Math.round((m1TotalNum.value / totalRatioSum.value) * 100) : 50);
         const m2Percent = computed(() => totalRatioSum.value > 0 ? 100 - m1Percent.value : 50);
 
-        // 动态计算剩余预算（已排除房租）
         const remainM1 = computed(() => ((budgetM1.value || 0) - m1TotalNum.value).toFixed(2));
         const remainM2 = computed(() => ((budgetM2.value || 0) - m2TotalNum.value).toFixed(2));
 
-        // 动态计算预算使用百分比（已排除房租）
         const m1PercentOfBudget = computed(() => budgetM1.value ? Math.round((m1TotalNum.value / budgetM1.value) * 100) : 0);
         const m2PercentOfBudget = computed(() => budgetM2.value ? Math.round((m2TotalNum.value / budgetM2.value) * 100) : 0);
 
-        // 辅助方法：动态获取颜色分类类名
         const getBudgetColorClass = (percent, budget) => {
           if (!budget) return 'text-slate-200'; 
           if (percent >= 100) return 'text-rose-400 font-bold'; 
@@ -442,7 +444,6 @@
           if (!form.amount) return;
           let finalSGD = form.currency === 'MYR' ? parseFloat((form.amount / exchangeRate.value).toFixed(2)) : form.amount;
           
-          // 记录本次记账前的支出总额（不含房租）
           const priorM1Total = m1TotalNum.value;
           const priorM2Total = m2TotalNum.value;
 
@@ -450,10 +451,8 @@
             await supabaseClient.from('starry_ledger').insert([{ date: form.date, amount: finalSGD, original_amount: form.amount, currency: form.currency, category: form.category, payer: form.payer, remark: form.remark, exchange_rate: exchangeRate.value }]);
             form.amount = null; form.remark = ''; form.date = getLocalDateString();
             
-            // 重新拉取新数据
             await fetchRecords();
 
-            // 数据拉取完成后计算新比例。因为计算属性已扣除房租，这里弹窗也会完美避开房租支出！
             setTimeout(() => {
               if (form.payer === member1.value && budgetM1.value) {
                 const newTotal = m1TotalNum.value;
@@ -502,13 +501,11 @@
           document.body.removeChild(link);
         };
 
-        // 今日、本周、本月总计中也同步过滤或保留相应的展现
         const totalTodayM1 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         const totalTodayM2 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         const totalThisWeekM1 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         const totalThisWeekM2 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         
-        // 只有这个当月星轨总计保持真实总额（含房租），方便知晓真实流出
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
         onMounted(() => { fetchRecords(); });

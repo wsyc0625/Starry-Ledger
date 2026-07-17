@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>星辰小账 | Starry Ledger</title>
   
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
   
-  <script src="https://cdn.staticfile.org/vue/3.2.31/vue.global.prod.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
@@ -34,12 +35,15 @@
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
+    [v-cloak] {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
   <div class="star-bg"></div>
   
-  <div id="app" class="container mx-auto p-3 md:p-4 max-w-7xl">
+  <div id="app" v-cloak class="container mx-auto p-3 md:p-4 max-w-7xl">
     <header class="flex justify-between items-center mb-4 md:mb-6 py-3 border-b border-slate-800">
       <div class="flex items-center gap-2">
         <div class="text-amber-300 text-xl md:text-2xl animate-pulse"><i class="fa-solid fa-star-and-crescent"></i></div>
@@ -67,13 +71,16 @@
         <span>{{ t('members') }}:</span>
       </div>
       <div class="flex flex-wrap gap-3">
-        <div class="flex items-center gap-2 bg-indigo-950/40 border border-indigo-900/60 px-3 py-1.5 rounded-xl">
+        <div class="flex items-center gap-2 bg-transparent md:bg-indigo-950/40 border border-transparent md:border-indigo-900/60 px-0 md:px-3 py-0 md:py-1.5 rounded-xl">
           <span class="w-2.5 h-2.5 rounded-full bg-indigo-400 shrink-0"></span>
-          <input type="text" v-model="member1" class="bg-transparent text-xs font-semibold text-indigo-200 w-24 text-center focus:outline-none" placeholder="Member 1">
+          <span class="text-xs font-semibold text-indigo-200 md:hidden">{{ member1 }}</span>
+          <input type="text" v-model="member1" class="hidden md:block bg-transparent text-xs font-semibold text-indigo-200 w-24 text-center focus:outline-none" placeholder="Member 1">
         </div>
-        <div class="flex items-center gap-2 bg-amber-950/40 border border-amber-900/60 px-3 py-1.5 rounded-xl">
+        
+        <div class="flex items-center gap-2 bg-transparent md:bg-amber-950/40 border border-transparent md:border-amber-900/60 px-0 md:px-3 py-0 md:py-1.5 rounded-xl">
           <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
-          <input type="text" v-model="member2" class="bg-transparent text-xs font-semibold text-amber-200 w-24 text-center focus:outline-none" placeholder="Member 2">
+          <span class="text-xs font-semibold text-amber-200 md:hidden">{{ member2 }}</span>
+          <input type="text" v-model="member2" class="hidden md:block bg-transparent text-xs font-semibold text-amber-200 w-24 text-center focus:outline-none" placeholder="Member 2">
         </div>
       </div>
     </section>
@@ -309,7 +316,17 @@
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
         watch(exchangeRate, (val) => localStorage.setItem('exchangeRate', val));
 
-        const categories = ['日常伙食 Daily Meal', '餐厅 Restaurant', '交通 Transport', '购物 Shopping', '娱乐 Fun', '旅行 Travel', '房租 Rent', '其他 Others'];
+        const categories = [
+          '日常伙食 Daily Meal', 
+          '餐厅聚餐 Restaurant', 
+          '交通出行 Transport', 
+          '购物消费 Shopping', 
+          '休闲娱乐 Fun', 
+          '居住房租 Housing', 
+          '固定月费 Subscriptions', 
+          '零星杂费 Sundries'
+        ];
+        
         const getCategoryDisplayName = (cat) => lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
 
         const getCategoryIconOnly = (cat) => {
@@ -318,9 +335,9 @@
           if (cat.includes('交通')) return 'fa-solid fa-car text-sky-300';
           if (cat.includes('购物')) return 'fa-solid fa-bag-shopping text-purple-300';
           if (cat.includes('娱乐')) return 'fa-solid fa-gamepad text-emerald-300';
-          if (cat.includes('旅行')) return 'fa-solid fa-plane text-pink-300';
-          if (cat.includes('房租')) return 'fa-solid fa-house-chimney text-amber-400';
-          return 'fa-solid fa-circle-notch text-slate-400';
+          if (cat.includes('居住房租')) return 'fa-solid fa-house-chimney text-orange-300';
+          if (cat.includes('固定月费')) return 'fa-solid fa-calendar-check text-indigo-300';
+          return 'fa-solid fa-receipt text-slate-400';
         };
 
         const records = ref([]);
@@ -402,7 +419,6 @@
 
         const updateChart = () => {
           const ctx = document.getElementById('comparisonChart');
-          // 安全检测：如果手机端该元素被隐藏不存在，则优雅退出，避免 JS 报错导致程序挂起
           if (!ctx) return;
           if (chartInstance) chartInstance.destroy();
 
@@ -423,7 +439,7 @@
               options: { responsive: true, maintainAspectRatio: false }
             });
           } catch (e) {
-            console.warn("Chart render skipped on mobile:", e);
+            console.warn("Chart render skipped", e);
           }
         };
 

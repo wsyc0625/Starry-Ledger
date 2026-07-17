@@ -16,91 +16,58 @@
     .glass-card { background: rgba(30, 41, 59, 0.45); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
     [v-cloak] { display: none !important; }
     .chart-ring { transition: stroke-dashoffset 0.6s ease-in-out, stroke 0.3s; }
-
-    /* ======================================================
-       手机端（Mobile）自适应适配方案
-       当屏幕宽度小于 768px 时，强制执行自适应尺寸，防止偏大偏小
-       ====================================================== */
-    @media (max-width: 768px) {
-      /* 容器全屏铺满，去除大边距 */
-      #app {
-        max-width: 100% !important;
-        width: 100% !important;
-        padding: 12px !important;
-      }
-      
-      /* 卡片自适应宽度与内边距 */
-      .glass-card {
-        padding: 16px !important;
-        width: 100% !important;
-        border-radius: 16px !important;
-        box-sizing: border-box !important;
-      }
-
-      /* 统一手机端表单控件的高度和字体，方便触控且不挤压 */
-      input, select, button {
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-      }
-
-      /* 预算分析看板在手机端的间距优化 */
-      .grid-cols-3 {
-        gap: 8px !important;
-      }
-    }
   </style>
 </head>
 <body>
   <div class="star-bg"></div>
-  <!-- 调整 1：将 max-w-7xl 升级为 max-w-[90rem] (约 1440px)，并整体加大 padding -->
-  <div id="app" v-cloak class="container mx-auto p-4 md:p-6 max-w-[90rem]">
+  <div id="app" v-cloak class="container mx-auto p-3 md:p-4 max-w-7xl">
     <!-- 顶部导航栏 -->
-    <header class="flex justify-between items-center mb-6 py-4 border-b border-slate-800">
-      <div class="flex items-center gap-3">
-        <div class="text-amber-300 text-2xl animate-pulse"><i class="fa-solid fa-star-and-crescent"></i></div>
-        <h1 class="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-amber-200">{{ lang === 'zh' ? '星辰小账' : 'Starry Ledger' }}</h1>
+    <header class="flex justify-between items-center mb-4 py-3 border-b border-slate-800">
+      <div class="flex items-center gap-2">
+        <div class="text-amber-300 text-xl animate-pulse"><i class="fa-solid fa-star-and-crescent"></i></div>
+        <h1 class="text-lg font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-amber-200">{{ lang === 'zh' ? '星辰小账' : 'Starry Ledger' }}</h1>
       </div>
-      <div class="flex items-center gap-3">
-        <button @click="toggleLang" class="text-xs bg-slate-800 hover:bg-slate-700 px-3.5 py-1.5 rounded-full border border-slate-700 transition">{{ lang === 'zh' ? 'English' : '中文' }}</button>
-        <div class="text-xs text-amber-200 bg-amber-950/40 border border-amber-900/50 px-3 py-1.5 rounded-full flex items-center gap-1.5 font-mono">
+      <div class="flex items-center gap-2">
+        <button @click="toggleLang" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-full border border-slate-700 transition">{{ lang === 'zh' ? 'English' : '中文' }}</button>
+        <div class="text-[10px] text-amber-200 bg-amber-950/40 border border-amber-900/50 px-2 py-1 rounded-full flex items-center gap-1 font-mono">
           <span>1 SGD = </span>
-          <input type="number" step="0.0001" v-model.number="exchangeRate" class="w-14 bg-transparent text-center border-b border-amber-400/50 focus:outline-none focus:border-amber-400 font-bold">
+          <input type="number" step="0.0001" v-model.number="exchangeRate" class="w-12 bg-transparent text-center border-b border-amber-400/50 focus:outline-none focus:border-amber-400 font-bold">
           <span>MYR</span>
         </div>
       </div>
     </header>
 
     <!-- 成员管理 -->
-    <section class="hidden md:flex glass-card rounded-2xl p-4 mb-5 items-center gap-5">
-      <span class="text-sm font-semibold text-slate-300"><i class="fa-solid fa-user-friends text-indigo-400 mr-2"></i>{{ t('members') }}:</span>
-      <input type="text" v-model="member1" class="bg-indigo-950/40 text-sm font-semibold text-indigo-200 w-28 text-center py-1.5 rounded-xl border border-indigo-900/60 focus:outline-none">
-      <input type="text" v-model="member2" class="bg-amber-950/40 text-sm font-semibold text-amber-200 w-28 text-center py-1.5 rounded-xl border border-amber-900/60 focus:outline-none">
+    <section class="hidden md:flex glass-card rounded-2xl p-3 mb-4 items-center gap-4">
+      <span class="text-xs font-semibold text-slate-300"><i class="fa-solid fa-user-friends text-indigo-400 mr-1.5"></i>{{ t('members') }}:</span>
+      <input type="text" v-model="member1" class="bg-indigo-950/40 text-xs font-semibold text-indigo-200 w-24 text-center py-1 rounded-xl border border-indigo-900/60 focus:outline-none">
+      <input type="text" v-model="member2" class="bg-amber-950/40 text-xs font-semibold text-amber-200 w-24 text-center py-1 rounded-xl border border-amber-900/60 focus:outline-none">
     </section>
 
-    <!-- 核心布局：调大间距 (gap-6) -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- 核心布局 -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
       <!-- 左侧控制面板 -->
-      <main class="lg:col-span-5 space-y-5">
+      <main class="lg:col-span-5 space-y-4">
         <!-- 记账板块 -->
-        <div class="glass-card rounded-2xl p-5">
-          <h2 class="text-lg font-semibold mb-4 text-slate-200 flex items-center gap-2.5"><i class="fa-solid fa-pen-fancy text-indigo-400"></i> {{ t('addRecord') }}</h2>
-          <form @submit.prevent="addRecord" class="space-y-4">
+        <div class="glass-card rounded-2xl p-4">
+          <h2 class="text-base font-semibold mb-3 text-slate-200 flex items-center gap-2"><i class="fa-solid fa-pen-fancy text-indigo-400"></i> {{ t('addRecord') }}</h2>
+          <form @submit.prevent="addRecord" class="space-y-3.5">
             <div>
-              <label class="block text-xs text-slate-400 mb-1.5">{{ t('payer') }}</label>
-              <div class="grid grid-cols-2 gap-3">
-                <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2.5 rounded-xl border text-xs sm:text-sm transition">{{ member1 }}</button>
-                <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-amber-600/30 border-amber-500 text-amber-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2.5 rounded-xl border text-xs sm:text-sm transition">{{ member2 }}</button>
+              <label class="block text-[11px] text-slate-400 mb-1">{{ t('payer') }}</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2 rounded-xl border text-xs transition">{{ member1 }}</button>
+                <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-amber-600/30 border-amber-500 text-amber-200' : 'bg-slate-800/50 border-slate-700 text-slate-400'" class="py-2 rounded-xl border text-xs transition">{{ member2 }}</button>
               </div>
             </div>
 
             <div>
-              <label class="block text-xs text-slate-400 mb-1.5">{{ t('amount') }}</label>
-              <div class="flex gap-3">
+              <label class="block text-[11px] text-slate-400 mb-1">{{ t('amount') }}</label>
+              <div class="flex gap-2">
                 <div class="relative flex-1">
-                  <span class="absolute left-4 top-2.5 text-slate-500 font-semibold text-sm">{{ form.currency }}</span>
-                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 pl-14 pr-4 text-white focus:outline-none focus:border-indigo-500 font-mono text-sm sm:text-base">
+                  <span class="absolute left-3 top-2 text-slate-500 font-semibold text-sm">{{ form.currency }}</span>
+                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-1.5 pl-12 pr-4 text-white focus:outline-none focus:border-indigo-500 font-mono">
                 </div>
-                <select v-model="form.currency" class="bg-slate-800 border border-slate-700 rounded-xl px-3 text-xs sm:text-sm text-slate-300 focus:outline-none">
+                <select v-model="form.currency" class="bg-slate-800 border border-slate-700 rounded-xl px-2 text-xs text-slate-300 focus:outline-none">
                   <option value="SGD">SGD</option>
                   <option value="MYR">MYR</option>
                 </select>
@@ -108,178 +75,178 @@
             </div>
 
             <div>
-              <label class="block text-xs text-slate-400 mb-2">{{ t('category') }}</label>
-              <div class="grid grid-cols-3 gap-2">
+              <label class="block text-[11px] text-slate-400 mb-1.5">{{ t('category') }}</label>
+              <div class="grid grid-cols-3 gap-1.5">
                 <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
-                  :class="form.category === cat ? 'bg-slate-800 border-indigo-500/80 text-white shadow-md' : 'bg-slate-900/40 border-slate-800 text-slate-400'" class="flex flex-col items-center justify-center py-2.5 rounded-xl border transition">
-                  <i :class="getCategoryIconOnly(cat)" class="text-lg mb-1.5"></i>
-                  <span class="text-[10px] sm:text-xs truncate w-full text-center px-1">{{ getCategoryDisplayName(cat) }}</span>
+                  :class="form.category === cat ? 'bg-slate-800 border-indigo-500/80 text-white shadow-md' : 'bg-slate-900/40 border-slate-800 text-slate-400'" class="flex flex-col items-center justify-center py-2 rounded-xl border transition">
+                  <i :class="getCategoryIconOnly(cat)" class="text-base mb-1"></i>
+                  <span class="text-[9px] truncate w-full text-center px-0.5">{{ getCategoryDisplayName(cat) }}</span>
                 </button>
               </div>
             </div>
 
-            <div class="grid grid-cols-12 gap-3">
+            <div class="grid grid-cols-12 gap-2">
               <div class="col-span-5">
-                <label class="block text-xs text-slate-400 mb-1.5">{{ t('date') }}</label>
-                <input type="date" v-model="form.date" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 px-2 text-xs sm:text-sm text-slate-300 focus:outline-none">
+                <label class="block text-[11px] text-slate-400 mb-1">{{ t('date') }}</label>
+                <input type="date" v-model="form.date" required class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-1.5 px-2 text-xs text-slate-300 focus:outline-none">
               </div>
               <div class="col-span-7">
-                <label class="block text-xs text-slate-400 mb-1.5">{{ t('remark') }}</label>
-                <input type="text" v-model="form.remark" placeholder="..." class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-2 px-3 text-xs sm:text-sm text-slate-300 focus:outline-none">
+                <label class="block text-[11px] text-slate-400 mb-1">{{ t('remark') }}</label>
+                <input type="text" v-model="form.remark" placeholder="..." class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-1.5 px-3 text-xs text-slate-300 focus:outline-none">
               </div>
             </div>
 
-            <button type="submit" class="w-full bg-gradient-to-r from-indigo-500 to-amber-500 text-slate-950 font-bold py-3 rounded-xl text-sm sm:text-base shadow-md transition transform active:scale-95">{{ t('save') }}</button>
+            <button type="submit" class="w-full bg-gradient-to-r from-indigo-500 to-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm shadow-md transition transform active:scale-95">{{ t('save') }}</button>
           </form>
         </div>
 
         <!-- 数据汇总与预算看板 -->
-        <div class="glass-card rounded-2xl p-5 space-y-4">
-          <h3 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
+        <div class="glass-card rounded-2xl p-4 space-y-3">
+          <h3 class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
             <i class="fa-solid fa-chart-pie text-indigo-400"></i>{{ t('analysis') }}
-            <span class="text-[10px] text-slate-500 font-normal ml-auto">({{ t('excludeHousing') }})</span>
+            <span class="text-[9px] text-slate-500 font-normal ml-auto">({{ t('excludeHousing') }})</span>
           </h3>
           
-          <div class="space-y-3">
+          <div class="space-y-2.5">
             <!-- 成员 1 卡片 -->
-            <div class="bg-indigo-950/15 p-3.5 rounded-xl border border-indigo-900/20 space-y-2.5">
+            <div class="bg-indigo-950/15 p-2.5 rounded-xl border border-indigo-900/20 space-y-2">
               <div class="flex justify-between items-center">
-                <span class="text-sm font-semibold text-indigo-300">{{ member1 }}</span>
-                <div class="text-xs text-slate-400 flex items-center gap-1.5">
+                <span class="text-xs font-semibold text-indigo-300">{{ member1 }}</span>
+                <div class="text-[10px] text-slate-400 flex items-center gap-1">
                   <span>{{ t('budgetLabel') }}:</span>
                   <span class="md:hidden font-mono text-indigo-200 font-bold">S$ {{ budgetM1 || 0 }}</span>
-                  <div class="hidden md:flex items-center gap-1 font-mono text-indigo-200 font-bold bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-900/50">
+                  <div class="hidden md:flex items-center gap-0.5 font-mono text-indigo-200 font-bold bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-900/50">
                     <span>S$</span>
-                    <input type="number" v-model.number="budgetM1" placeholder="未设" class="w-14 bg-transparent text-indigo-200 font-bold focus:outline-none border-b border-transparent focus:border-indigo-400 text-center py-0 text-xs">
+                    <input type="number" v-model.number="budgetM1" placeholder="未设" class="w-12 bg-transparent text-indigo-200 font-bold focus:outline-none border-b border-transparent focus:border-indigo-400 text-center py-0">
                   </div>
                 </div>
               </div>
-              <div class="grid grid-cols-3 gap-3 text-center sm:text-left">
-                <div><p class="text-[10px] text-slate-500">{{ t('today') }}</p><p class="text-sm font-bold font-mono text-slate-200">S$ {{ totalTodayM1 }}</p></div>
-                <div><p class="text-[10px] text-slate-500">{{ t('thisWeek') }}</p><p class="text-sm font-bold font-mono text-slate-200">S$ {{ totalThisWeekM1 }}</p></div>
+              <div class="grid grid-cols-3 gap-2 text-center sm:text-left">
+                <div><p class="text-[9px] text-slate-500">{{ t('today') }}</p><p class="text-xs font-bold font-mono text-slate-200">S$ {{ totalTodayM1 }}</p></div>
+                <div><p class="text-[9px] text-slate-500">{{ t('thisWeek') }}</p><p class="text-xs font-bold font-mono text-slate-200">S$ {{ totalThisWeekM1 }}</p></div>
                 <div class="border-l border-slate-800/60 pl-2 text-right">
-                  <p class="text-[10px] text-slate-500">
+                  <p class="text-[9px] text-slate-500">
                     {{ t('remainingBudget') }}
-                    <span v-if="budgetM1 && m1PercentOfBudget >= 100" class="text-[9px] text-rose-500 font-bold block">🚨 {{ t('overBudget') }}</span>
-                    <span v-else-if="budgetM1 && m1PercentOfBudget >= 80" class="text-[9px] text-amber-500 font-bold block">⚠️ {{ t('nearBudget') }}</span>
+                    <span v-if="budgetM1 && m1PercentOfBudget >= 100" class="text-[8px] text-rose-500 font-bold block">🚨 {{ t('overBudget') }}</span>
+                    <span v-else-if="budgetM1 && m1PercentOfBudget >= 80" class="text-[8px] text-amber-500 font-bold block">⚠️ {{ t('nearBudget') }}</span>
                   </p>
-                  <p :class="getBudgetColorClass(m1PercentOfBudget, budgetM1)" class="text-sm font-bold font-mono">S$ {{ remainM1 }}</p>
+                  <p :class="getBudgetColorClass(m1PercentOfBudget, budgetM1)" class="text-xs font-bold font-mono">S$ {{ remainM1 }}</p>
                 </div>
               </div>
             </div>
 
             <!-- 成员 2 卡片 -->
-            <div class="bg-amber-950/15 p-3.5 rounded-xl border border-amber-900/20 space-y-2.5">
+            <div class="bg-amber-950/15 p-2.5 rounded-xl border border-amber-900/20 space-y-2">
               <div class="flex justify-between items-center">
-                <span class="text-sm font-semibold text-amber-300">{{ member2 }}</span>
-                <div class="text-xs text-slate-400 flex items-center gap-1.5">
+                <span class="text-xs font-semibold text-amber-300">{{ member2 }}</span>
+                <div class="text-[10px] text-slate-400 flex items-center gap-1">
                   <span>{{ t('budgetLabel') }}:</span>
                   <span class="md:hidden font-mono text-amber-200 font-bold">S$ {{ budgetM2 || 0 }}</span>
-                  <div class="hidden md:flex items-center gap-1 font-mono text-amber-200 font-bold bg-amber-950/40 px-2 py-0.5 rounded border border-amber-900/50">
+                  <div class="hidden md:flex items-center gap-0.5 font-mono text-amber-200 font-bold bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-900/50">
                     <span>S$</span>
-                    <input type="number" v-model.number="budgetM2" placeholder="未设" class="w-14 bg-transparent text-amber-200 font-bold focus:outline-none border-b border-transparent focus:border-amber-400 text-center py-0 text-xs">
+                    <input type="number" v-model.number="budgetM2" placeholder="未设" class="w-12 bg-transparent text-amber-200 font-bold focus:outline-none border-b border-transparent focus:border-amber-400 text-center py-0">
                   </div>
                 </div>
               </div>
-              <div class="grid grid-cols-3 gap-3 text-center sm:text-left">
-                <div><p class="text-[10px] text-slate-500">{{ t('today') }}</p><p class="text-sm font-bold font-mono text-slate-200">S$ {{ totalTodayM2 }}</p></div>
-                <div><p class="text-[10px] text-slate-500">{{ t('thisWeek') }}</p><p class="text-sm font-bold font-mono text-slate-200">S$ {{ totalThisWeekM2 }}</p></div>
+              <div class="grid grid-cols-3 gap-2 text-center sm:text-left">
+                <div><p class="text-[9px] text-slate-500">{{ t('today') }}</p><p class="text-xs font-bold font-mono text-slate-200">S$ {{ totalTodayM2 }}</p></div>
+                <div><p class="text-[9px] text-slate-500">{{ t('thisWeek') }}</p><p class="text-xs font-bold font-mono text-slate-200">S$ {{ totalThisWeekM2 }}</p></div>
                 <div class="border-l border-slate-800/60 pl-2 text-right">
-                  <p class="text-[10px] text-slate-500">
+                  <p class="text-[9px] text-slate-500">
                     {{ t('remainingBudget') }}
-                    <span v-if="budgetM2 && m2PercentOfBudget >= 100" class="text-[9px] text-rose-500 font-bold block">🚨 {{ t('overBudget') }}</span>
-                    <span v-else-if="budgetM2 && m2PercentOfBudget >= 80" class="text-[9px] text-amber-500 font-bold block">⚠️ {{ t('nearBudget') }}</span>
+                    <span v-if="budgetM2 && m2PercentOfBudget >= 100" class="text-[8px] text-rose-500 font-bold block">🚨 {{ t('overBudget') }}</span>
+                    <span v-else-if="budgetM2 && m2PercentOfBudget >= 80" class="text-[8px] text-amber-500 font-bold block">⚠️ {{ t('nearBudget') }}</span>
                   </p>
-                  <p :class="getBudgetColorClass(m2PercentOfBudget, budgetM2)" class="text-sm font-bold font-mono">S$ {{ remainM2 }}</p>
+                  <p :class="getBudgetColorClass(m2PercentOfBudget, budgetM2)" class="text-xs font-bold font-mono">S$ {{ remainM2 }}</p>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- 消费占比百分比条（不含房租） -->
-          <div v-if="totalRatioSum > 0" class="pt-3 border-t border-slate-800/40 space-y-1.5">
-            <div class="flex justify-between text-[10px] sm:text-xs text-slate-400 font-mono">
+          <div v-if="totalRatioSum > 0" class="pt-2 border-t border-slate-800/40 space-y-1">
+            <div class="flex justify-between text-[9px] text-slate-400 font-mono">
               <span>{{ member1 }}: {{ m1Percent }}% (S$ {{ m1TotalNum.toFixed(2) }})</span>
               <span class="text-indigo-300 font-semibold">{{ t('ratio') }}</span>
               <span>{{ member2 }}: {{ m2Percent }}% (S$ {{ m2TotalNum.toFixed(2) }})</span>
             </div>
-            <div class="w-full bg-slate-900/80 rounded-full h-2 overflow-hidden flex">
+            <div class="w-full bg-slate-900/80 rounded-full h-1.5 overflow-hidden flex">
               <div class="bg-indigo-500 h-full transition-all duration-500" :style="{ width: m1Percent + '%' }"></div>
               <div class="bg-amber-500 h-full transition-all duration-500" :style="{ width: m2Percent + '%' }"></div>
             </div>
           </div>
 
           <!-- 月份切换与总计 -->
-          <div class="pt-3 border-t border-slate-800/60 flex justify-between items-center">
-            <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-xs rounded px-2 py-1 text-slate-300">
+          <div class="pt-2 border-t border-slate-800/60 flex justify-between items-center">
+            <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-[10px] rounded px-1.5 py-0.5 text-slate-300">
             <div class="text-right">
-              <span class="text-xs text-indigo-300">{{ t('thisMonthTotal') }}:</span>
-              <p class="text-base font-bold text-indigo-200 font-mono">S$ {{ totalMonth }}</p>
+              <span class="text-[10px] text-indigo-300">{{ t('thisMonthTotal') }}:</span>
+              <p class="text-sm font-bold text-indigo-200 font-mono">S$ {{ totalMonth }}</p>
             </div>
           </div>
         </div>
       </main>
 
       <!-- 右侧明细与PC对比面板 -->
-      <section class="lg:col-span-7 space-y-5">
+      <section class="lg:col-span-7 space-y-4">
         <!-- PC 专属：多维度品类对比统计看板（内含高级星环对比图表） -->
-        <div class="hidden md:block glass-card rounded-2xl p-5 space-y-5">
-          <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-slate-800/80 pb-3">
-            <h2 class="text-base font-semibold text-slate-200 flex items-center gap-2">
+        <div class="hidden md:block glass-card rounded-2xl p-4 space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-800/80 pb-2">
+            <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
               <i class="fa-solid fa-chart-column text-indigo-400"></i> {{ t('pcCategoryTitle') }}
             </h2>
             
-            <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex items-center gap-2 flex-wrap">
               <!-- 成员视角切换器 -->
-              <div class="flex gap-1.5 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
-                <button @click="chartMember = 'all'" :class="chartMember === 'all' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'text-slate-500'" class="text-xs px-2.5 py-1 rounded-lg transition font-medium">{{ t('viewAll') }}</button>
-                <button @click="chartMember = 'm1'" :class="chartMember === 'm1' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-500'" class="text-xs px-2.5 py-1 rounded-lg transition font-medium">{{ member1 }}</button>
-                <button @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-amber-600/30 border-amber-500 text-amber-300' : 'text-slate-500'" class="text-xs px-2.5 py-1 rounded-lg transition font-medium">{{ member2 }}</button>
+              <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
+                <button @click="chartMember = 'all'" :class="chartMember === 'all' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ t('viewAll') }}</button>
+                <button @click="chartMember = 'm1'" :class="chartMember === 'm1' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ member1 }}</button>
+                <button @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-amber-600/30 border-amber-500 text-amber-300' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ member2 }}</button>
               </div>
 
               <!-- 时间维度筛选控制器 -->
-              <div class="flex gap-1.5 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
-                <button @click="categoryRange = 'today'" :class="categoryRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-lg transition">{{ t('rangeToday') }}</button>
-                <button @click="categoryRange = 'week'" :class="categoryRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-lg transition">{{ t('rangeWeek') }}</button>
-                <button @click="categoryRange = 'month'" :class="categoryRange === 'month' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-xs px-2.5 py-1 rounded-lg transition">{{ t('rangeMonth') }}</button>
+              <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
+                <button @click="categoryRange = 'today'" :class="categoryRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeToday') }}</button>
+                <button @click="categoryRange = 'week'" :class="categoryRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
+                <button @click="categoryRange = 'month'" :class="categoryRange === 'month' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeMonth') }}</button>
               </div>
             </div>
           </div>
 
-          <!-- 调整 2：放大星环图区域 (星环宽高度由 150px 放大至 180px, r 改为 68) -->
-          <div class="grid grid-cols-12 gap-5 items-center bg-slate-950/20 p-5 rounded-xl border border-slate-800/50">
-            <!-- 左侧：星环图 -->
+          <!-- 星轨圆环分布图表区 (Donut Chart Panel) -->
+          <div class="grid grid-cols-12 gap-4 items-center bg-slate-950/20 p-4 rounded-xl border border-slate-800/50">
+            <!-- 左侧：星环图（修正为：只渲染各部分比例大小，并按比例段落接力分布） -->
             <div class="col-span-5 flex justify-center relative">
-              <svg width="180" height="180" viewBox="0 0 180 180" class="transform -rotate-90">
-                <!-- 背景圆圈 (半径增大) -->
-                <circle cx="90" cy="90" r="68" fill="transparent" stroke="#1e293b" stroke-width="14" />
-                <!-- 动态环形切片 -->
+              <svg width="150" height="150" viewBox="0 0 150 150" class="transform -rotate-90">
+                <!-- 背景圆圈 -->
+                <circle cx="75" cy="75" r="55" fill="transparent" stroke="#1e293b" stroke-width="12" />
+                <!-- 动态环形切片 (修复了重叠和计算错误的问题) -->
                 <circle v-for="(slice, index) in chartSlices" :key="index"
-                  cx="90" cy="90" r="68" fill="transparent" 
+                  cx="75" cy="75" r="55" fill="transparent" 
                   :stroke="slice.color" 
-                  stroke-width="14" 
+                  stroke-width="12" 
                   :stroke-dasharray="slice.dashArray" 
                   :stroke-dashoffset="slice.offset"
                   class="chart-ring" />
               </svg>
-              <!-- 环心文本：调大字体 -->
+              <!-- 环心文本 -->
               <div class="absolute inset-0 flex flex-col justify-center items-center text-center">
-                <span class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">
+                <span class="text-[8px] text-slate-500 uppercase tracking-widest">
                   {{ chartMember === 'all' ? t('tableTotal') : (chartMember === 'm1' ? member1 : member2) }}
                 </span>
-                <span class="text-sm sm:text-base font-bold text-slate-200 font-mono mt-1">S$ {{ chartTotalSum }}</span>
+                <span class="text-xs font-bold text-slate-200 font-mono mt-0.5">S$ {{ chartTotalSum }}</span>
               </div>
             </div>
 
-            <!-- 右侧：动态图例分布：增大字体大小、间距和最大高度限制 -->
-            <div class="col-span-7 space-y-2.5 max-h-[170px] overflow-y-auto pr-1">
-              <div v-if="chartSlices.length === 0" class="text-center text-slate-600 text-xs py-8">
+            <!-- 右侧：动态图例分布 -->
+            <div class="col-span-7 space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
+              <div v-if="chartSlices.length === 0" class="text-center text-slate-600 text-[10px] py-8">
                 {{ t('noRecords') }}
               </div>
-              <div v-else v-for="slice in chartSlices" :key="slice.id" class="flex items-center justify-between text-xs py-1 px-2 rounded hover:bg-slate-800/30 transition">
-                <div class="flex items-center gap-2 truncate w-[75%]">
-                  <span class="w-3 h-3 rounded-full flex-shrink-0" :style="{ backgroundColor: slice.color }"></span>
-                  <span class="text-slate-300 truncate font-medium">
+              <div v-else v-for="slice in chartSlices" :key="slice.id" class="flex items-center justify-between text-[10px] py-0.5 px-1.5 rounded hover:bg-slate-800/30 transition">
+                <div class="flex items-center gap-1.5 truncate w-[75%]">
+                  <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: slice.color }"></span>
+                  <span class="text-slate-300 truncate">
                     {{ slice.displayName }}
                   </span>
                 </div>
@@ -288,31 +255,31 @@
             </div>
           </div>
 
-          <!-- PC 专属：分类深度对比表 (文字大小调至 text-xs, 整体比之前更大、更清晰) -->
+          <!-- PC 专属：分类深度对比表 -->
           <div class="overflow-x-auto">
-            <table class="w-full text-xs text-slate-300">
+            <table class="w-full text-[11px] text-slate-300">
               <thead>
                 <tr class="border-b border-slate-800 text-slate-500">
-                  <th class="py-2.5 text-left font-semibold">{{ t('tableCat') }}</th>
-                  <th class="py-2.5 text-right font-semibold text-indigo-400">{{ member1 }}</th>
-                  <th class="py-2.5 text-right font-semibold text-amber-400">{{ member2 }}</th>
-                  <th class="py-2.5 text-right font-semibold text-slate-200">{{ t('tableTotal') }}</th>
-                  <th class="py-2.5 text-right font-semibold">{{ t('tableRatio') }}</th>
+                  <th class="py-1.5 text-left font-medium">{{ t('tableCat') }}</th>
+                  <th class="py-1.5 text-right font-medium text-indigo-400">{{ member1 }}</th>
+                  <th class="py-1.5 text-right font-medium text-amber-400">{{ member2 }}</th>
+                  <th class="py-1.5 text-right font-medium">{{ t('tableTotal') }}</th>
+                  <th class="py-1.5 text-right font-medium">{{ t('tableRatio') }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="categoryComparison.length === 0">
-                  <td colspan="5" class="py-8 text-center text-slate-500 text-xs">{{ t('noRecords') }}</td>
+                  <td colspan="5" class="py-6 text-center text-slate-500 text-[10px]">{{ t('noRecords') }}</td>
                 </tr>
                 <tr v-else v-for="row in categoryComparison" :key="row.cat" class="border-b border-slate-900 hover:bg-slate-800/20 transition" :class="{'opacity-50 italic': row.cat.includes('居住房租')}">
-                  <td class="py-3 text-left flex items-center gap-2">
-                    <i :class="getCategoryIconOnly(row.cat)" class="text-sm"></i>
-                    <span class="font-medium">{{ getCategoryDisplayName(row.cat) }} <span v-if="row.cat.includes('居住房租')" class="text-[10px] text-slate-500 font-normal">({{ t('excludeLabel') }})</span></span>
+                  <td class="py-2 text-left flex items-center gap-1.5">
+                    <i :class="getCategoryIconOnly(row.cat)" class="text-xs"></i>
+                    <span>{{ getCategoryDisplayName(row.cat) }} <span v-if="row.cat.includes('居住房租')" class="text-[9px] text-slate-500">({{ t('excludeLabel') }})</span></span>
                   </td>
-                  <td class="py-3 text-right font-mono text-indigo-300/90" :class="{'font-bold text-indigo-300': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
-                  <td class="py-3 text-right font-mono text-amber-300/90" :class="{'font-bold text-amber-300': chartMember === 'm2'}">S$ {{ row.m2.toFixed(2) }}</td>
-                  <td class="py-3 text-right font-mono font-bold text-slate-100">S$ {{ row.total.toFixed(2) }}</td>
-                  <td class="py-3 text-right font-mono text-slate-500 font-medium">{{ row.ratio }}%</td>
+                  <td class="py-2 text-right font-mono text-indigo-300/90" :class="{'font-bold text-indigo-300': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
+                  <td class="py-2 text-right font-mono text-amber-300/90" :class="{'font-bold text-amber-300': chartMember === 'm2'}">S$ {{ row.m2.toFixed(2) }}</td>
+                  <td class="py-2 text-right font-mono font-semibold text-slate-200">S$ {{ row.total.toFixed(2) }}</td>
+                  <td class="py-2 text-right font-mono text-[10px] text-slate-500">{{ row.ratio }}%</td>
                 </tr>
               </tbody>
             </table>
@@ -320,46 +287,46 @@
         </div>
 
         <!-- 账目明细 -->
-        <div class="glass-card rounded-2xl p-5">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-            <h2 class="text-base sm:text-lg font-semibold text-slate-200 flex items-center gap-2"><i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}</h2>
+        <div class="glass-card rounded-2xl p-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <h2 class="text-base font-semibold text-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}</h2>
             
-            <div class="flex items-center gap-3 justify-between sm:justify-end">
+            <div class="flex items-center gap-2 justify-between sm:justify-end">
               <!-- 导出按钮 -->
-              <button @click="exportToCSV" class="text-xs bg-emerald-950/40 border border-emerald-900/60 text-emerald-300 px-3 py-1.5 rounded-xl hover:bg-emerald-900/30 transition flex items-center gap-1.5 font-medium">
+              <button @click="exportToCSV" class="text-[10px] bg-emerald-950/40 border border-emerald-900/60 text-emerald-300 px-2.5 py-1 rounded-xl hover:bg-emerald-900/30 transition flex items-center gap-1">
                 <i class="fa-solid fa-file-export"></i>{{ t('exportBtn') }}
               </button>
               
               <!-- 筛选区间 -->
-              <div class="flex gap-1.5 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
-                <button @click="filterRange = 'today'" :class="filterRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-xs px-3 py-1.5 rounded-lg transition font-medium">{{ t('rangeToday') }}</button>
-                <button @click="filterRange = 'week'" :class="filterRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-xs px-3 py-1.5 rounded-lg transition font-medium">{{ t('rangeWeek') }}</button>
-                <button @click="filterRange = 'month'" :class="filterRange === 'month' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-xs px-3 py-1.5 rounded-lg transition font-medium">{{ t('rangeMonth') }}</button>
+              <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
+                <button @click="filterRange = 'today'" :class="filterRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2.5 py-1 rounded-lg transition">{{ t('rangeToday') }}</button>
+                <button @click="filterRange = 'week'" :class="filterRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2.5 py-1 rounded-lg transition">{{ t('rangeWeek') }}</button>
+                <button @click="filterRange = 'month'" :class="filterRange === 'month' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2.5 py-1 rounded-lg transition">{{ t('rangeMonth') }}</button>
               </div>
             </div>
           </div>
 
-          <div class="space-y-2.5 max-h-[480px] overflow-y-auto">
-            <div v-if="loading" class="text-center py-8 text-slate-500"><i class="fa-solid fa-circle-notch animate-spin text-base mb-1.5"></i><p class="text-xs">{{ t('loading') }}...</p></div>
-            <div v-else-if="filteredRecords.length === 0" class="text-center py-10 text-slate-600 text-sm">{{ t('noRecords') }}</div>
-            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/35 border border-slate-800" :class="{'border-indigo-900/40 bg-indigo-950/10': item.category.includes('居住房租')}">
-              <div class="flex items-center gap-3">
-                <span :class="item.payer === member1 ? 'bg-indigo-500/20 text-indigo-300' : 'bg-amber-500/20 text-amber-300'" class="text-[10px] px-2 py-0.5 rounded-full font-bold">{{ item.payer }}</span>
+          <div class="space-y-2 max-h-[440px] overflow-y-auto">
+            <div v-if="loading" class="text-center py-6 text-slate-500"><i class="fa-solid fa-circle-notch animate-spin text-sm mb-1"></i><p class="text-[10px]">{{ t('loading') }}...</p></div>
+            <div v-else-if="filteredRecords.length === 0" class="text-center py-8 text-slate-600 text-xs">{{ t('noRecords') }}</div>
+            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/35 border border-slate-800" :class="{'border-indigo-900/40 bg-indigo-950/10': item.category.includes('居住房租')}">
+              <div class="flex items-center gap-2">
+                <span :class="item.payer === member1 ? 'bg-indigo-500/20 text-indigo-300' : 'bg-amber-500/20 text-amber-300'" class="text-[9px] px-1.5 py-0.5 rounded-full font-semibold">{{ item.payer }}</span>
                 <div>
-                  <span class="text-sm font-semibold text-slate-200">{{ getCategoryDisplayName(item.category) }}</span>
-                  <span v-if="item.category.includes('居住房租')" class="text-[10px] text-slate-500 ml-1.5 font-normal">({{ t('excludeLabel') }})</span>
-                  <span v-if="item.remark" class="text-xs text-slate-500 font-sans"> ({{ item.remark }})</span>
-                  <p class="text-[10px] text-slate-500 font-mono mt-0.5">{{ item.date }}</p>
+                  <span class="text-xs font-medium text-slate-200">{{ getCategoryDisplayName(item.category) }}</span>
+                  <span v-if="item.category.includes('居住房租')" class="text-[9px] text-slate-500 ml-1">({{ t('excludeLabel') }})</span>
+                  <span v-if="item.remark" class="text-[10px] text-slate-500 font-sans"> ({{ item.remark }})</span>
+                  <p class="text-[9px] text-slate-500 font-mono">{{ item.date }}</p>
                 </div>
               </div>
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-2">
                 <div class="text-right">
-                  <p class="text-sm font-bold text-slate-200 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
-                  <p v-if="item.currency && item.currency !== 'SGD'" class="text-[10px] text-amber-400/90 font-mono font-bold mt-0.5">
+                  <p class="text-xs font-bold text-slate-200 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
+                  <p v-if="item.currency && item.currency !== 'SGD'" class="text-[9px] text-amber-400/90 font-mono font-medium">
                     ({{ item.currency === 'MYR' ? 'RM' : item.currency }} {{ Number(item.original_amount).toFixed(2) }})
                   </p>
                 </div>
-                <button @click="deleteRecord(item.id)" class="text-rose-500 p-1.5 hover:text-rose-400 transition"><i class="fa-regular fa-trash-can text-sm"></i></button>
+                <button @click="deleteRecord(item.id)" class="text-rose-500 p-1 hover:text-rose-400 transition"><i class="fa-regular fa-trash-can text-xs"></i></button>
               </div>
             </div>
           </div>
@@ -432,6 +399,7 @@
           '固定月费 Subscriptions', '零星杂费 Sundries', '其他 Miscellaneous'
         ];
 
+        // 各分类专属色调
         const categoryColors = {
           '日常伙食 Daily Meal': '#f59e0b',  // 琥珀
           '餐厅聚餐 Restaurant': '#f43f5e',  // 玫瑰
@@ -463,7 +431,7 @@
         
         const filterRange = ref('today');
         const categoryRange = ref('month');
-        const chartMember = ref('all');
+        const chartMember = ref('all'); // 'all', 'm1', 'm2'
 
         const form = reactive({ payer: member1.value, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
 
@@ -503,6 +471,7 @@
           return 'text-emerald-400 font-bold'; 
         };
 
+        // 基础品类统计汇总
         const categoryComparison = computed(() => {
           let filteredBase = records.value;
           if (categoryRange.value === 'today') {
@@ -539,6 +508,7 @@
           }).filter(item => item.total > 0).sort((a, b) => b.total - a.total);
         });
 
+        // 计算当前统计面板（除房租外）的总支出
         const chartTotalSum = computed(() => {
           if (chartMember.value === 'all') {
             let filteredBase = records.value;
@@ -552,11 +522,10 @@
             .toFixed(2);
         });
 
-        // ================= ★ 炫彩星环核心渲染逻辑 ★ =================
+        // ================= ★ 炫彩星环核心渲染逻辑 (已修复重叠渲染问题) ★ =================
         const chartSlices = computed(() => {
           const totalSumVal = parseFloat(chartTotalSum.value) || 1;
-          // 调整 3：由于星环半径由 55 增加到 68，周长公式变为 2 * PI * 68 = 427.26 像素
-          const circumference = 427.26; 
+          const circumference = 345.57; // 圆周长 (2 * PI * r, r=55)
 
           let rawSlices = [];
 
@@ -564,6 +533,7 @@
           if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
           else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
           
+          // 排除居住房租
           const validRecords = filteredBase.filter(r => r.category !== '居住房租 Housing');
 
           if (chartMember.value === 'all') {
@@ -595,15 +565,20 @@
             });
           }
 
+          // 按金额从大到小排列
           rawSlices.sort((a, b) => b.total - a.total);
 
+          // 核心修复点：将前一项积累的占比正确用来累加 offset 形成无缝衔接
           let accumulatedPercent = 0;
           return rawSlices.map(slice => {
             const percent = slice.total / totalSumVal;
             const percentageText = Math.round(percent * 100);
             
+            // 每一个切片的起点是上一个结束的地方 (SVG 偏移量计算)
             const offset = circumference - (accumulatedPercent * circumference);
+            // 本切片自身的可见画笔线段长度为 (percent * circumference)
             const strokeLength = percent * circumference;
+            // dashArray 表示：[实线长度, 空白长度]
             const dashArray = `${strokeLength} ${circumference - strokeLength}`;
 
             accumulatedPercent += percent;
@@ -682,7 +657,7 @@
         const totalTodayM1 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         const totalTodayM2 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         const totalThisWeekM1 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
-        const totalThisWeekM2 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+        const totalThisWeekM2 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member2.value && r.category !== '居住房造 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 

@@ -213,7 +213,7 @@
 
           <!-- 月份切换与总计 -->
           <div class="pt-2 border-t border-slate-800/60 flex justify-between items-center">
-            <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-[10px] rounded px-1.5 py-0.5 text-slate-300">
+            <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-[10px] rounded px-1.5 py-0.5 text-slate-300 focus:outline-none">
             <div class="text-right">
               <span class="text-[10px] text-indigo-300">{{ t('thisMonthTotal') }}:</span>
               <p class="text-sm font-bold text-indigo-200 font-mono">S$ {{ totalMonth }}</p>
@@ -227,9 +227,18 @@
         <!-- PC 专属：多维度品类对比统计看板（内含高级星环对比图表） -->
         <div class="hidden md:block glass-card rounded-2xl p-4 space-y-4">
           <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-800/80 pb-2">
-            <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-chart-column text-indigo-400"></i> {{ t('pcCategoryTitle') }}
-            </h2>
+            <!-- 标题栏 + 年份月份选择器 -->
+            <div class="flex items-center gap-2">
+              <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
+                <i class="fa-solid fa-chart-column text-indigo-400"></i> {{ t('pcCategoryTitle') }}
+              </h2>
+              <!-- 快捷月度增减切换（PC专享版） -->
+              <div class="flex items-center bg-slate-950/40 border border-slate-800/80 rounded-xl px-2 py-0.5 ml-2">
+                <button @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-1 text-xs transition">◀</button>
+                <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-transparent text-[10px] text-slate-300 focus:outline-none text-center font-mono w-20">
+                <button @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 px-1 text-xs transition">▶</button>
+              </div>
+            </div>
             
             <div class="flex items-center gap-2 flex-wrap">
               <!-- 成员视角切换器 -->
@@ -249,7 +258,6 @@
           </div>
 
           <!-- 星轨圆环分布图表区 (Donut Chart Panel) -->
-          <!-- PC 端专享：对 SVG 星轨圆环及排版进行了放大 20% 的调整（150px -> 180px） -->
           <div class="grid grid-cols-12 gap-4 items-center bg-slate-950/20 p-4 rounded-xl border border-slate-800/50">
             <!-- 左侧：星环图（按比例段落接力分布） -->
             <div class="col-span-5 flex justify-center relative">
@@ -325,7 +333,15 @@
         <!-- 账目明细 -->
         <div class="glass-card rounded-2xl p-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-            <h2 class="text-base font-semibold text-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}</h2>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-semibold text-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}</h2>
+              <!-- 明细专属：年份月份筛选器与微调按钮 -->
+              <div class="flex items-center bg-slate-950/40 border border-slate-800/80 rounded-xl px-2 py-0.5 ml-1.5">
+                <button @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-1 text-xs transition">◀</button>
+                <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-transparent text-[10px] text-slate-300 focus:outline-none text-center font-mono w-20">
+                <button @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 px-1 text-xs transition">▶</button>
+              </div>
+            </div>
             
             <div class="flex items-center gap-2 justify-between sm:justify-end">
               <!-- 导出按钮 -->
@@ -396,7 +412,7 @@
             analysis: '星象数据汇总', today: '今日星度', thisWeek: '本周星行', thisMonthTotal: '当月星轨总计',
             details: '星轨账目明细', loading: '星力感应中', noRecords: '星空空空如也',
             rangeToday: '今日', rangeWeek: '本周', rangeMonth: '本月', exportBtn: '导出星轨', ratio: '星能对比',
-            pcCategoryTitle: '星纪 PC 专属：品类对比深度查询', tableCat: '消费品类', tableTotal: '总支出', tableRatio: '分类占比',
+            pcCategoryTitle: 'PC 品类对比', tableCat: '消费品类', tableTotal: '总支出', tableRatio: '分类占比',
             budgetSuffix: '月度预算', budgetLabel: '每月预算', remainingBudget: '本月剩余日常预算',
             nearBudget: '接近上限', overBudget: '超支警告', excludeHousing: '不含房租', excludeLabel: '不计入日常预算',
             viewAll: '全部'
@@ -406,7 +422,7 @@
             analysis: 'Astro Stats', today: 'Today', thisWeek: 'Weekly', thisMonthTotal: 'Monthly Total',
             details: 'Starry Trails', loading: 'Channelling...', noRecords: 'No stars in sight',
             rangeToday: 'Today', rangeWeek: 'Weekly', rangeMonth: 'Monthly', exportBtn: 'Export Trails', ratio: 'Power Ratio',
-            pcCategoryTitle: 'PC Mode: Category Analysis', tableCat: 'Category', tableTotal: 'Total', tableRatio: 'Share',
+            pcCategoryTitle: 'PC Analytics', tableCat: 'Category', tableTotal: 'Total', tableRatio: 'Share',
             budgetSuffix: ' Budget', budgetLabel: 'Budget', remainingBudget: 'Remaining Budget',
             nearBudget: 'Near Limit', overBudget: 'Over Budget', excludeHousing: 'Excl. Rent', excludeLabel: 'Excl. from Budget',
             viewAll: 'All'
@@ -454,7 +470,7 @@
           if (cat.includes('日常伙食')) return 'fa-solid fa-bowl-rice text-amber-300';
           if (cat.includes('餐厅')) return 'fa-solid fa-utensils text-rose-300';
           if (cat.includes('交通')) return 'fa-solid fa-car text-sky-300';
-          if (cat.includes('购物')) return 'fa-solid fa-bag-shopping text-purple-300';
+          if (cat.includes('购物')) return 'fa-solid fa-focus fa-bag-shopping text-purple-300';
           if (cat.includes('娱乐')) return 'fa-solid fa-gamepad text-emerald-300';
           if (cat.includes('居住房租')) return 'fa-solid fa-house-chimney text-orange-300';
           if (cat.includes('固定月费')) return 'fa-solid fa-calendar-check text-indigo-300';
@@ -479,6 +495,20 @@
             const { data } = await supabaseClient.from('starry_ledger').select('*').gte('date', start).lte('date', end).order('date', { ascending: false });
             records.value = data || [];
           } catch (err) { console.error(err); } finally { loading.value = false; }
+        };
+
+        // 月度切换微调（加/减一个月）
+        const offsetMonth = (steps) => {
+          const [yearStr, monthStr] = selectedMonth.value.split('-');
+          let year = parseInt(yearStr);
+          let month = parseInt(monthStr) - 1 + steps; // js 的月份是 0-11
+          
+          const newDate = new Date(year, month, 1);
+          const newYear = newDate.getFullYear();
+          const newMonthStr = String(newDate.getMonth() + 1).padStart(2, '0');
+          
+          selectedMonth.value = `${newYear}-${newMonthStr}`;
+          fetchRecords();
         };
 
         const filteredRecords = computed(() => {
@@ -558,10 +588,10 @@
             .toFixed(2);
         });
 
-        // ================= ★ 炫彩星环核心渲染逻辑 ★ =================
+        // SVG 星环核心渲染逻辑
         const chartSlices = computed(() => {
           const totalSumVal = parseFloat(chartTotalSum.value) || 1;
-          const circumference = 345.57; // 圆周长 (2 * PI * r, r=55)
+          const circumference = 345.57; // 圆周长
 
           let rawSlices = [];
 
@@ -569,7 +599,6 @@
           if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
           else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
           
-          // 排除居住房租
           const validRecords = filteredBase.filter(r => r.category !== '居住房租 Housing');
 
           if (chartMember.value === 'all') {
@@ -601,7 +630,6 @@
             });
           }
 
-          // 按金额从大到小排列
           rawSlices.sort((a, b) => b.total - a.total);
 
           let accumulatedPercent = 0;
@@ -609,11 +637,8 @@
             const percent = slice.total / totalSumVal;
             const percentageText = Math.round(percent * 100);
             
-            // 每一个切片的起点是上一个结束的地方 (SVG 偏移量计算)
             const offset = circumference - (accumulatedPercent * circumference);
-            // 本切片自身的可见画笔线段长度为 (percent * circumference)
             const strokeLength = percent * circumference;
-            // dashArray 表示：[实线长度, 空白长度]
             const dashArray = `${strokeLength} ${circumference - strokeLength}`;
 
             accumulatedPercent += percent;
@@ -626,7 +651,6 @@
             };
           });
         });
-        // ==========================================================
 
         const addRecord = async () => {
           if (!form.amount) return;
@@ -697,7 +721,7 @@
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
         onMounted(() => { fetchRecords(); });
-        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices };
+        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, offsetMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices };
       }
     }).mount('#app');
   </script>

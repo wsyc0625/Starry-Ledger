@@ -21,29 +21,25 @@
     .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
     .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }
 
-    /* PC 端专属：整体尺寸与字体放大约 20% (基于 Tailwind lg 响应式断点 1024px) */
+    /* PC 端专属：整体尺寸与字体放大且排版优化 */
     @media (min-width: 1024px) {
       #app {
-        font-size: 1.2rem; /* 基础字号放大 20% */
+        font-size: 1.2rem;
       }
-      /* 针对容器、卡片及格栅间距进行按比例放大 */
-      .container { max-width: 90rem !important; } /* 75rem * 1.2 = 90rem */
+      .container { max-width: 90rem !important; }
       .glass-card { padding: 1.2rem !important; border-radius: 1.5rem !important; }
       header { margin-bottom: 1.5rem !important; padding-top: 1.1rem !important; padding-bottom: 1.1rem !important; }
       
-      /* 字体尺寸微调放大 */
       .text-xs { font-size: 0.9rem !important; line-height: 1.25rem !important; }
       .text-sm { font-size: 1.05rem !important; line-height: 1.5rem !important; }
       .text-base { font-size: 1.2rem !important; line-height: 1.75rem !important; }
       .text-lg { font-size: 1.35rem !important; line-height: 2rem !important; }
       .text-xl { font-size: 1.5rem !important; line-height: 2.25rem !important; }
       
-      /* 小字号、表单、按钮和标签等细节放大 20% */
       .text-\[9px\] { font-size: 11px !important; }
       .text-\[10px\] { font-size: 12px !important; }
       .text-\[11px\] { font-size: 13.2px !important; }
       
-      /* 输入框、按钮及控件高度与内边距 */
       input, select, button { padding-top: 0.6rem !important; padding-bottom: 0.6rem !important; border-radius: 0.9rem !important; }
       header input { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
       .grid { gap: 1.2rem !important; }
@@ -52,8 +48,23 @@
       .gap-3 { gap: 0.9rem !important; }
       .gap-4 { gap: 1.2rem !important; }
       
-      /* 限制右侧明细列表的最大高度，使其在放大后比例依然协调 */
       .max-h-\[440px\] { max-height: 528px !important; }
+
+      /* PC 专属：日期选择器精致美化（消除旧的大背景边框，改用扁平化轻量设计，防折行） */
+      .pc-datepicker-container {
+        background: rgba(15, 23, 42, 0.35) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 1rem !important;
+        padding: 0.2rem 0.5rem !important;
+      }
+      .pc-datepicker-container button {
+        padding: 0.4rem 0.6rem !important;
+      }
+      .pc-datepicker-text {
+        white-space: nowrap !important;
+        min-width: 7.5rem !important; /* 确保年份+月份在一行内优雅完整显示 */
+        text-align: center;
+      }
     }
   </style>
 </head>
@@ -215,7 +226,7 @@
             </div>
           </div>
 
-          <!-- 月份选择与总计 (左侧也直接使用大按键面板触发) -->
+          <!-- 月份选择与总计 -->
           <div class="pt-2 border-t border-slate-800/60 flex justify-between items-center relative">
             <div class="relative">
               <button @click.stop="toggleDatePicker('left')" class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 hover:border-indigo-400 text-[11px] font-bold font-mono text-indigo-300 px-3 py-1.5 rounded-xl transition">
@@ -253,26 +264,33 @@
       <section class="lg:col-span-7 space-y-4">
         <!-- PC 专属：多维度品类对比统计看板（内含高级星环对比图表） -->
         <div class="hidden md:block glass-card rounded-2xl p-4 space-y-4">
-          <div class="flex flex-col xl:flex-row justify-between xl:items-center gap-2 border-b border-slate-800/80 pb-2">
-            <!-- 标题栏 + 自定义年月快捷选择器 -->
-            <div class="flex items-center gap-2">
-              <h2 class="text-xs xl:text-sm font-semibold text-slate-200 flex items-center gap-1.5">
-                <i class="fa-solid fa-chart-column text-indigo-400"></i> {{ lang === 'zh' ? '星纪 PC 专属：品类对比深度查询' : 'Starry PC Exclusive: Deep Category Inquiry' }}
+          <div class="flex flex-col xl:flex-row justify-between xl:items-start gap-2 border-b border-slate-800/80 pb-3">
+            <!-- 标题栏：PC端优雅折行展示 -->
+            <div class="flex flex-col gap-1">
+              <h2 class="text-xs xl:text-sm font-semibold text-slate-400 tracking-wide">
+                {{ lang === 'zh' ? '星纪 PC 专属：' : 'Starry PC Exclusive:' }}
               </h2>
-              
-              <!-- 升级：超大热区 & 年份直观可见的自定化月份选择器（顶部） -->
-              <div class="relative flex items-center bg-slate-950/50 border border-slate-800 rounded-2xl p-1 ml-1">
-                <!-- 左箭头：极大增加点击区与字号 -->
-                <button @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-3 py-1.5 text-base transition">◀</button>
+              <h2 class="text-sm xl:text-base font-bold text-slate-100 flex items-center gap-1.5 leading-tight">
+                <i class="fa-solid fa-chart-column text-indigo-400"></i>
+                {{ lang === 'zh' ? '品类对比深度查询' : 'Deep Category Inquiry' }}
+              </h2>
+            </div>
+            
+            <!-- 控制组合区（精致日期微调框 + 筛选按钮） -->
+            <div class="flex flex-wrap items-center gap-2 mt-1 xl:mt-0">
+              <!-- PC 专属：精致扁平化、无溢出的日期选择器 -->
+              <div class="relative flex items-center pc-datepicker-container">
+                <!-- 左箭头 -->
+                <button @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 text-sm transition">◀</button>
                 
-                <!-- 年月大按钮：直接点触发自定化选择大面板 -->
-                <button @click.stop="toggleDatePicker('top')" class="px-3 py-1.5 text-xs font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center gap-1.5">
+                <!-- 年月大按钮 -->
+                <button @click.stop="toggleDatePicker('top')" class="px-2 py-1 text-xs font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center justify-center gap-1.5 pc-datepicker-text">
                   <span>{{ selectedMonthText }}</span>
-                  <i class="fa-regular fa-calendar text-slate-400 text-xs"></i>
+                  <i class="fa-regular fa-calendar text-indigo-400 text-xs"></i>
                 </button>
                 
-                <!-- 右箭头：极大增加点击区与字号 -->
-                <button @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 px-3 py-1.5 text-base transition">▶</button>
+                <!-- 右箭头 -->
+                <button @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 text-sm transition">▶</button>
 
                 <!-- 顶部的年月自定面板 -->
                 <transition name="fade">
@@ -291,9 +309,7 @@
                   </div>
                 </transition>
               </div>
-            </div>
-            
-            <div class="flex items-center gap-2 flex-wrap">
+
               <!-- 成员视角切换器 -->
               <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
                 <button @click="chartMember = 'all'" :class="chartMember === 'all' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ t('viewAll') }}</button>
@@ -301,7 +317,7 @@
                 <button @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-amber-600/30 border-amber-500 text-amber-300' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ member2 }}</button>
               </div>
 
-              <!-- 时间维度筛选控制器：新加入「按年」查询按钮 -->
+              <!-- 时间维度筛选控制器：包含「按年」 -->
               <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80 font-medium">
                 <button @click="categoryRange = 'today'" :class="categoryRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeToday') }}</button>
                 <button @click="categoryRange = 'week'" :class="categoryRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
@@ -313,12 +329,10 @@
 
           <!-- 星轨圆环分布图表区 (Donut Chart Panel) -->
           <div class="grid grid-cols-12 gap-4 items-center bg-slate-950/20 p-4 rounded-xl border border-slate-800/50">
-            <!-- 左侧：星环图（按比例段落接力分布） -->
+            <!-- 左侧：星环图 -->
             <div class="col-span-5 flex justify-center relative">
               <svg width="180" height="180" viewBox="0 0 150 150" class="transform -rotate-90">
-                <!-- 背景圆圈 -->
                 <circle cx="75" cy="75" r="55" fill="transparent" stroke="#1e293b" stroke-width="12" />
-                <!-- 动态环形切片 -->
                 <circle v-for="(slice, index) in chartSlices" :key="index"
                   cx="75" cy="75" r="55" fill="transparent" 
                   :stroke="slice.color" 
@@ -327,7 +341,6 @@
                   :stroke-dashoffset="slice.offset"
                   class="chart-ring" />
               </svg>
-              <!-- 环心文本 -->
               <div class="absolute inset-0 flex flex-col justify-center items-center text-center">
                 <span class="text-[8px] text-slate-500 uppercase tracking-widest">
                   {{ chartMember === 'all' ? t('tableTotal') : (chartMember === 'm1' ? member1 : member2) }}
@@ -390,18 +403,13 @@
             <div class="flex items-center gap-2">
               <h2 class="text-base font-semibold text-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}</h2>
               
-              <!-- 升级：超大热区 & 年份直观可见的自定化月份选择器（明细版） -->
+              <!-- 移动端或底部显示的精致选择器 -->
               <div class="relative flex items-center bg-slate-950/50 border border-slate-800 rounded-2xl p-1 ml-1.5">
-                <!-- 左微调 -->
                 <button @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-3 py-1.5 text-base transition">◀</button>
-                
-                <!-- 中间点击大按钮 -->
                 <button @click.stop="toggleDatePicker('bottom')" class="px-3 py-1.5 text-xs font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center gap-1.5">
                   <span>{{ selectedMonthText }}</span>
                   <i class="fa-regular fa-calendar text-slate-400 text-xs"></i>
                 </button>
-                
-                <!-- 右微调 -->
                 <button @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 px-3 py-1.5 text-base transition">▶</button>
 
                 <!-- 明细底部的年月自定面板 -->
@@ -531,17 +539,16 @@
           '固定月费 Subscriptions', '零星杂费 Sundries', '其他 Miscellaneous'
         ];
 
-        // 各分类专属色调
         const categoryColors = {
-          '日常伙食 Daily Meal': '#f59e0b',  // 琥珀
-          '餐厅聚餐 Restaurant': '#f43f5e',  // 玫瑰
-          '交通出行 Transport': '#0ea5e9',   // 天空
-          '购物消费 Shopping': '#a855f7',   // 紫罗兰
-          '休闲娱乐 Fun': '#10b981',        // 翡翠
-          '居住房租 Housing': '#f97316',     // 橙
-          '固定月费 Subscriptions': '#6366f1', // 靛蓝
-          '零星杂费 Sundries': '#94a3b8',      // 蓝灰
-          '其他 Miscellaneous': '#14b8a6'    // 青
+          '日常伙食 Daily Meal': '#f59e0b',
+          '餐厅聚餐 Restaurant': '#f43f5e',
+          '交通出行 Transport': '#0ea5e9',
+          '购物消费 Shopping': '#a855f7',
+          '休闲娱乐 Fun': '#10b981',
+          '居住房租 Housing': '#f97316',
+          '固定月费 Subscriptions': '#6366f1',
+          '零星杂费 Sundries': '#94a3b8',
+          '其他 Miscellaneous': '#14b8a6'
         };
 
         const getCategoryDisplayName = (cat) => lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
@@ -561,19 +568,16 @@
         const records = ref([]); const loading = ref(false);
         const selectedMonth = ref(getLocalDateString().substring(0, 7));
         
-        // 自定义年月选择器组件相关状态
         const showDatePicker = ref(false);
-        const activePicker = ref('top'); // 'top', 'bottom', 'left' 三处位置
+        const activePicker = ref('top');
         const panelYear = ref(parseInt(selectedMonth.value.split('-')[0]));
 
-        // 点击页面其他区域关闭年月面板
         onMounted(() => {
           window.addEventListener('click', () => {
             showDatePicker.value = false;
           });
         });
 
-        // 格式化展示月份（显示年份更直观）
         const selectedMonthText = computed(() => {
           const [yr, mo] = selectedMonth.value.split('-');
           return `${yr}年 ${mo}月`;
@@ -614,23 +618,20 @@
         };
         
         const filterRange = ref('today');
-        const categoryRange = ref('month'); // 可选：'today', 'week', 'month', 'year'
-        const chartMember = ref('all'); // 'all', 'm1', 'm2'
+        const categoryRange = ref('month');
+        const chartMember = ref('all');
 
         const form = reactive({ payer: member1.value, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
 
-        // 核心：拉取 Supabase 数据。如果是“按年”统计，需要拉取整整一年的完整账目
         const fetchRecords = async () => {
           loading.value = true;
           try {
             let start, end;
             if (categoryRange.value === 'year') {
-              // 全年查询：拉取当前选择年份的1月1日至12月31日
               const currentYear = selectedMonth.value.split('-')[0];
               start = `${currentYear}-01-01`;
               end = `${currentYear}-12-31`;
             } else {
-              // 月度查询：拉取当月
               start = `${selectedMonth.value}-01`;
               end = new Date(parseInt(selectedMonth.value.split('-')[0]), parseInt(selectedMonth.value.split('-')[1]), 0).toISOString().substring(0, 10);
             }
@@ -640,23 +641,21 @@
           } catch (err) { console.error(err); } finally { loading.value = false; }
         };
 
-        // 监听 categoryRange 改变，如果是切换到了‘year’或者切换回‘month’，重新拉取数据库。
         watch(categoryRange, () => {
           fetchRecords();
         });
 
-        // 月度切换微调（加/减一个月）
         const offsetMonth = (steps) => {
           const [yearStr, monthStr] = selectedMonth.value.split('-');
           let year = parseInt(yearStr);
-          let month = parseInt(monthStr) - 1 + steps; // js 的月份是 0-11
+          let month = parseInt(monthStr) - 1 + steps;
           
           const newDate = new Date(year, month, 1);
           const newYear = newDate.getFullYear();
           const newMonthStr = String(newDate.getMonth() + 1).padStart(2, '0');
           
           selectedMonth.value = `${newYear}-${newMonthStr}`;
-          panelYear.value = newYear; // 同步修改面板初始年份
+          panelYear.value = newYear;
           fetchRecords();
         };
 
@@ -686,14 +685,13 @@
           return 'text-emerald-400 font-bold'; 
         };
 
-        // 基础品类统计汇总（包含“全年/按年”维度的联动计算）
         const categoryComparison = computed(() => {
           let filteredBase = records.value;
           if (categoryRange.value === 'today') {
             filteredBase = records.value.filter(r => r.date === getLocalDateString());
           } else if (categoryRange.value === 'week') {
             filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
-          } // 如果是 'month' 或 'year'，在 fetchRecords 时就已经把对应月份或整年的数据拉到 records.value 里面了，直接读取。
+          }
 
           let totalRangeSum = 0;
           if (chartMember.value === 'all') {
@@ -723,7 +721,6 @@
           }).filter(item => item.total > 0).sort((a, b) => b.total - a.total);
         });
 
-        // 计算当前统计面板（除房租外）的总支出
         const chartTotalSum = computed(() => {
           if (chartMember.value === 'all') {
             let filteredBase = records.value;
@@ -737,10 +734,9 @@
             .toFixed(2);
         });
 
-        // SVG 星环核心渲染逻辑
         const chartSlices = computed(() => {
           const totalSumVal = parseFloat(chartTotalSum.value) || 1;
-          const circumference = 345.57; // 圆周长
+          const circumference = 345.57;
 
           let rawSlices = [];
 

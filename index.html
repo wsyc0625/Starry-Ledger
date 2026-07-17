@@ -17,6 +17,10 @@
     [v-cloak] { display: none !important; }
     .chart-ring { transition: stroke-dashoffset 0.6s ease-in-out, stroke 0.3s; }
 
+    /* 下拉选择框动画 */
+    .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }
+
     /* PC 端专属：整体尺寸与字体放大约 20% (基于 Tailwind lg 响应式断点 1024px) */
     @media (min-width: 1024px) {
       #app {
@@ -211,9 +215,32 @@
             </div>
           </div>
 
-          <!-- 月份切换与总计 -->
-          <div class="pt-2 border-t border-slate-800/60 flex justify-between items-center">
-            <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-slate-800 border border-slate-700 text-[10px] rounded px-1.5 py-0.5 text-slate-300 focus:outline-none">
+          <!-- 月份选择与总计 (左侧也直接使用大按键面板触发) -->
+          <div class="pt-2 border-t border-slate-800/60 flex justify-between items-center relative">
+            <div class="relative">
+              <button @click.stop="toggleDatePicker('left')" class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 hover:border-indigo-400 text-[11px] font-bold font-mono text-indigo-300 px-3 py-1.5 rounded-xl transition">
+                <span>{{ selectedMonthText }}</span>
+                <i class="fa-regular fa-calendar-days text-indigo-400"></i>
+              </button>
+              
+              <!-- 左侧弹出的年月自定面板 -->
+              <transition name="fade">
+                <div v-if="showDatePicker && activePicker === 'left'" @click.stop class="absolute left-0 bottom-full mb-2 z-50 w-72 glass-card rounded-2xl p-4 shadow-2xl border border-slate-700/80 bg-slate-950/95">
+                  <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
+                    <button @click="changePanelYear(-1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-left"></i></button>
+                    <span class="text-sm font-bold text-slate-200 font-mono">{{ panelYear }} 年</span>
+                    <button @click="changePanelYear(1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-right"></i></button>
+                  </div>
+                  <div class="grid grid-cols-4 gap-2">
+                    <button v-for="m in 12" :key="m" @click="selectPanelMonth(m)" :class="isCurrentSelected(m) ? 'bg-indigo-600 text-white font-bold' : 'bg-slate-900/60 hover:bg-slate-800 text-slate-300'" class="py-2 text-xs font-mono rounded-xl transition">
+                      {{ String(m).padStart(2, '0') }}月
+                    </button>
+                  </div>
+                  <button @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-medium py-1.5 text-[11px] rounded-xl transition">回到本月</button>
+                </div>
+              </transition>
+            </div>
+            
             <div class="text-right">
               <span class="text-[10px] text-indigo-300">{{ t('thisMonthTotal') }}:</span>
               <p class="text-sm font-bold text-indigo-200 font-mono">S$ {{ totalMonth }}</p>
@@ -227,16 +254,42 @@
         <!-- PC 专属：多维度品类对比统计看板（内含高级星环对比图表） -->
         <div class="hidden md:block glass-card rounded-2xl p-4 space-y-4">
           <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-800/80 pb-2">
-            <!-- 标题栏 + 年份月份选择器 -->
+            <!-- 标题栏 + 自定义年月快捷选择器 -->
             <div class="flex items-center gap-2">
               <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
                 <i class="fa-solid fa-chart-column text-indigo-400"></i> {{ t('pcCategoryTitle') }}
               </h2>
-              <!-- 快捷月度增减切换（PC专享版） -->
-              <div class="flex items-center bg-slate-950/40 border border-slate-800/80 rounded-xl px-2 py-0.5 ml-2">
-                <button @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-1 text-xs transition">◀</button>
-                <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-transparent text-[10px] text-slate-300 focus:outline-none text-center font-mono w-20">
-                <button @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 px-1 text-xs transition">▶</button>
+              
+              <!-- 升级：超大热区 & 年份直观可见的自定化月份选择器（顶部） -->
+              <div class="relative flex items-center bg-slate-950/50 border border-slate-800 rounded-2xl p-1 ml-2">
+                <!-- 左箭头：极大增加点击区与字号 -->
+                <button @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-3 py-1.5 text-base transition">◀</button>
+                
+                <!-- 年月大按钮：直接点触发自定化选择大面板 -->
+                <button @click.stop="toggleDatePicker('top')" class="px-3 py-1.5 text-xs font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center gap-1.5">
+                  <span>{{ selectedMonthText }}</span>
+                  <i class="fa-regular fa-calendar text-slate-400 text-xs"></i>
+                </button>
+                
+                <!-- 右箭头：极大增加点击区与字号 -->
+                <button @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 px-3 py-1.5 text-base transition">▶</button>
+
+                <!-- 顶部的年月自定面板 -->
+                <transition name="fade">
+                  <div v-if="showDatePicker && activePicker === 'top'" @click.stop class="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-72 glass-card rounded-2xl p-4 shadow-2xl border border-slate-700/80 bg-slate-950/95">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
+                      <button @click="changePanelYear(-1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-left"></i></button>
+                      <span class="text-sm font-bold text-slate-200 font-mono">{{ panelYear }} 年</span>
+                      <button @click="changePanelYear(1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-right"></i></button>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2">
+                      <button v-for="m in 12" :key="m" @click="selectPanelMonth(m)" :class="isCurrentSelected(m) ? 'bg-indigo-600 text-white font-bold' : 'bg-slate-900/60 hover:bg-slate-800 text-slate-300'" class="py-2 text-xs font-mono rounded-xl transition">
+                        {{ String(m).padStart(2, '0') }}月
+                      </button>
+                    </div>
+                    <button @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-medium py-1.5 text-[11px] rounded-xl transition">回到本月</button>
+                  </div>
+                </transition>
               </div>
             </div>
             
@@ -335,11 +388,37 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-2">
               <h2 class="text-base font-semibold text-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}</h2>
-              <!-- 明细专属：年份月份筛选器与微调按钮 -->
-              <div class="flex items-center bg-slate-950/40 border border-slate-800/80 rounded-xl px-2 py-0.5 ml-1.5">
-                <button @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-1 text-xs transition">◀</button>
-                <input type="month" v-model="selectedMonth" @change="fetchRecords" class="bg-transparent text-[10px] text-slate-300 focus:outline-none text-center font-mono w-20">
-                <button @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 px-1 text-xs transition">▶</button>
+              
+              <!-- 升级：超大热区 & 年份直观可见的自定化月份选择器（明细版） -->
+              <div class="relative flex items-center bg-slate-950/50 border border-slate-800 rounded-2xl p-1 ml-1.5">
+                <!-- 左微调 -->
+                <button @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-3 py-1.5 text-base transition">◀</button>
+                
+                <!-- 中间点击大按钮 -->
+                <button @click.stop="toggleDatePicker('bottom')" class="px-3 py-1.5 text-xs font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center gap-1.5">
+                  <span>{{ selectedMonthText }}</span>
+                  <i class="fa-regular fa-calendar text-slate-400 text-xs"></i>
+                </button>
+                
+                <!-- 右微调 -->
+                <button @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 px-3 py-1.5 text-base transition">▶</button>
+
+                <!-- 明细底部的年月自定面板 -->
+                <transition name="fade">
+                  <div v-if="showDatePicker && activePicker === 'bottom'" @click.stop class="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-72 glass-card rounded-2xl p-4 shadow-2xl border border-slate-700/80 bg-slate-950/95">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
+                      <button @click="changePanelYear(-1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-left"></i></button>
+                      <span class="text-sm font-bold text-slate-200 font-mono">{{ panelYear }} 年</span>
+                      <button @click="changePanelYear(1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-right"></i></button>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2">
+                      <button v-for="m in 12" :key="m" @click="selectPanelMonth(m)" :class="isCurrentSelected(m) ? 'bg-indigo-600 text-white font-bold' : 'bg-slate-900/60 hover:bg-slate-800 text-slate-300'" class="py-2 text-xs font-mono rounded-xl transition">
+                        {{ String(m).padStart(2, '0') }}月
+                      </button>
+                    </div>
+                    <button @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-medium py-1.5 text-[11px] rounded-xl transition">回到本月</button>
+                  </div>
+                </transition>
               </div>
             </div>
             
@@ -481,6 +560,58 @@
         const records = ref([]); const loading = ref(false);
         const selectedMonth = ref(getLocalDateString().substring(0, 7));
         
+        // 自定义年月选择器组件相关状态
+        const showDatePicker = ref(false);
+        const activePicker = ref('top'); // 'top', 'bottom', 'left' 三处位置
+        const panelYear = ref(parseInt(selectedMonth.value.split('-')[0]));
+
+        // 点击页面其他区域关闭年月面板
+        onMounted(() => {
+          window.addEventListener('click', () => {
+            showDatePicker.value = false;
+          });
+        });
+
+        // 格式化展示月份（显示年份更直观）
+        const selectedMonthText = computed(() => {
+          const [yr, mo] = selectedMonth.value.split('-');
+          return `${yr}年 ${mo}月`;
+        });
+
+        const toggleDatePicker = (position) => {
+          if (activePicker.value === position && showDatePicker.value) {
+            showDatePicker.value = false;
+          } else {
+            activePicker.value = position;
+            panelYear.value = parseInt(selectedMonth.value.split('-')[0]);
+            showDatePicker.value = true;
+          }
+        };
+
+        const changePanelYear = (offset) => {
+          panelYear.value += offset;
+        };
+
+        const selectPanelMonth = (month) => {
+          const formattedMonth = String(month).padStart(2, '0');
+          selectedMonth.value = `${panelYear.value}-${formattedMonth}`;
+          showDatePicker.value = false;
+          fetchRecords();
+        };
+
+        const selectCurrentMonth = () => {
+          const current = getLocalDateString().substring(0, 7);
+          selectedMonth.value = current;
+          panelYear.value = parseInt(current.split('-')[0]);
+          showDatePicker.value = false;
+          fetchRecords();
+        };
+
+        const isCurrentSelected = (month) => {
+          const [yr, mo] = selectedMonth.value.split('-');
+          return parseInt(yr) === panelYear.value && parseInt(mo) === month;
+        };
+        
         const filterRange = ref('today');
         const categoryRange = ref('month');
         const chartMember = ref('all'); // 'all', 'm1', 'm2'
@@ -508,6 +639,7 @@
           const newMonthStr = String(newDate.getMonth() + 1).padStart(2, '0');
           
           selectedMonth.value = `${newYear}-${newMonthStr}`;
+          panelYear.value = newYear; // 同步修改面板初始年份
           fetchRecords();
         };
 
@@ -721,7 +853,7 @@
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
         onMounted(() => { fetchRecords(); });
-        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, offsetMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices };
+        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, offsetMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices, showDatePicker, activePicker, panelYear, selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected };
       }
     }).mount('#app');
   </script>

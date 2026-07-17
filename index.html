@@ -366,7 +366,7 @@
             </div>
           </div>
 
-          <!-- PC 专属：分类深度对比表（在日常伙食下方添加动态总合，房租添加不计入日常预算小提示） -->
+          <!-- PC 专属：分类深度对比表（已将“日常总支出”完美沉底并隐藏占比列） -->
           <div class="overflow-x-auto">
             <table class="w-full text-[11px] text-slate-300">
               <thead>
@@ -382,9 +382,9 @@
                 <tr v-if="categoryComparison.length === 0">
                   <td colspan="5" class="py-6 text-center text-slate-500 text-[10px]">{{ t('noRecords') }}</td>
                 </tr>
-                <template v-else v-for="(row, idx) in categoryComparison" :key="row.cat">
-                  <!-- 常规品类行（如果为居住房租则呈现弱化状态且展示小提示） -->
-                  <tr class="border-b border-slate-900 hover:bg-slate-800/20 transition" :class="{'opacity-60 italic bg-slate-950/20': row.cat.includes('居住房租')}">
+                <template v-else>
+                  <!-- 1. 动态生成所有基础品类明细行 -->
+                  <tr v-for="row in categoryComparison" :key="row.cat" class="border-b border-slate-900 hover:bg-slate-800/20 transition" :class="{'opacity-60 italic bg-slate-950/20': row.cat.includes('居住房租')}">
                     <td class="py-2 text-left flex items-center gap-1.5 flex-wrap">
                       <i :class="getCategoryIconOnly(row.cat)" class="text-xs"></i>
                       <span class="font-medium text-slate-200">{{ getCategoryDisplayName(row.cat) }}</span>
@@ -399,9 +399,8 @@
                     <td class="py-2 text-right font-mono text-[10px] text-slate-500">{{ row.ratio }}%</td>
                   </tr>
 
-                  <!-- 🌟 伙食下方添加动态日常总合行：当当前行为“日常伙食”或处于倒数第一位（若列表无日常伙食）时，计算不含房租的纯日常总和 -->
-                  <tr v-if="row.cat.includes('日常伙食') || (idx === categoryComparison.length - 1 && !categoryComparison.some(r => r.cat.includes('日常伙食')))" 
-                      class="border-y-2 border-dashed border-indigo-500/30 bg-indigo-950/30 transition-all font-semibold">
+                  <!-- 2. 🌟 精致沉底：日常总支出行时刻在最下方，且隐藏右侧占比（置空） -->
+                  <tr class="border-t-2 border-dashed border-indigo-500/30 bg-indigo-950/30 transition-all font-semibold">
                     <td class="py-2.5 text-left flex items-center gap-1.5">
                       <i class="fa-solid fa-calculator text-indigo-400 text-xs"></i>
                       <span class="text-white">{{ lang === 'zh' ? '日常总支出' : 'Daily Subtotal' }}</span>
@@ -412,7 +411,7 @@
                     <td class="py-2.5 text-right font-mono text-indigo-300">S$ {{ dailyM1Sum.toFixed(2) }}</td>
                     <td class="py-2.5 text-right font-mono text-amber-300">S$ {{ dailyM2Sum.toFixed(2) }}</td>
                     <td class="py-2.5 text-right font-mono text-indigo-200 font-bold">S$ {{ dailyTotalSum.toFixed(2) }}</td>
-                    <td class="py-2.5 text-right font-mono text-indigo-400 font-bold">100%</td>
+                    <td class="py-2.5 text-right font-mono"></td> <!-- 留空，隐藏占比列 -->
                   </tr>
                 </template>
               </tbody>
@@ -744,7 +743,7 @@
           }).filter(item => item.total > 0).sort((a, b) => b.total - a.total);
         });
 
-        // 🌟 新增：动态纯日常（扣除房租）总额逻辑，自动适配选定的范围和视角成员
+        // 动态纯日常（扣除房租）总额逻辑
         const dailyM1Sum = computed(() => {
           let filteredBase = records.value;
           if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());

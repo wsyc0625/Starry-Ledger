@@ -215,7 +215,7 @@
 
           <!-- 星轨圆环分布图表区 (Donut Chart Panel) -->
           <div class="grid grid-cols-12 gap-4 items-center bg-slate-950/20 p-4 rounded-xl border border-slate-800/50">
-            <!-- 左侧：星环图 -->
+            <!-- 左侧：星环图（始终根据品类颜色呈现） -->
             <div class="col-span-5 flex justify-center relative">
               <svg width="150" height="150" viewBox="0 0 150 150" class="transform -rotate-90">
                 <!-- 背景圆圈 -->
@@ -239,20 +239,19 @@
               </div>
             </div>
 
-            <!-- 右侧：动态图例分布（全部视角显示成员色，个人视角显示品类色） -->
+            <!-- 右侧：动态图例分布（始终以品类色进行区分显示） -->
             <div class="col-span-7 space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
               <div v-if="chartSlices.length === 0" class="text-center text-slate-600 text-[10px] py-8">
                 {{ t('noRecords') }}
               </div>
               <div v-else v-for="slice in chartSlices" :key="slice.id" class="flex items-center justify-between text-[10px] py-0.5 px-1.5 rounded hover:bg-slate-800/30 transition">
-                <div class="flex items-center gap-1.5 truncate">
-                  <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: slice.color }"></span>
+                <div class="flex items-center gap-1.5 truncate w-[75%]">
+                  <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: slice.color }"></span>
                   <span class="text-slate-300 truncate">
                     {{ slice.displayName }}
-                    <span v-if="chartMember === 'all'" class="text-[8px] text-slate-500 ml-1">({{ slice.payer }})</span>
                   </span>
                 </div>
-                <span class="font-mono text-slate-400 font-semibold pl-2">{{ slice.percentage }}%</span>
+                <span class="font-mono text-slate-400 font-semibold w-[25%] text-right">{{ slice.percentage }}%</span>
               </div>
             </div>
           </div>
@@ -401,7 +400,7 @@
           '固定月费 Subscriptions', '零星杂费 Sundries', '其他 Miscellaneous'
         ];
 
-        // 各分类专属色调 (用于单人视角的炫彩环形图)
+        // 各分类专属色调（无论是谁的账单，品类对应色调始终完全统一）
         const categoryColors = {
           '日常伙食 Daily Meal': '#f59e0b',  // 琥珀
           '餐厅聚餐 Restaurant': '#f43f5e',  // 玫瑰
@@ -412,12 +411,6 @@
           '固定月费 Subscriptions': '#6366f1', // 靛蓝
           '零星杂费 Sundries': '#94a3b8',      // 蓝灰
           '其他 Miscellaneous': '#14b8a6'    // 青
-        };
-
-        // 成员视角颜色
-        const memberColors = {
-          m1: '#6366f1', // 小星：星空靛蓝 (Indigo)
-          m2: '#f59e0b'  // 小辰：落日暖琥珀 (Amber)
         };
 
         const getCategoryDisplayName = (cat) => lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
@@ -545,30 +538,20 @@
           const validRecords = filteredBase.filter(r => r.category !== '居住房租 Housing');
 
           if (chartMember.value === 'all') {
-            // 1. 全部视图：以“成员归属”区分星轨颜色（小星 vs 小辰）
-            const m1Sum = validRecords.filter(r => r.payer === member1.value).reduce((sum, r) => sum + Number(r.amount), 0);
-            const m2Sum = validRecords.filter(r => r.payer === member2.value).reduce((sum, r) => sum + Number(r.amount), 0);
-
-            if (m1Sum > 0) {
-              rawSlices.push({
-                id: 'm1',
-                displayName: member1.value,
-                payer: member1.value,
-                total: m1Sum,
-                color: memberColors.m1
-              });
-            }
-            if (m2Sum > 0) {
-              rawSlices.push({
-                id: 'm2',
-                displayName: member2.value,
-                payer: member2.value,
-                total: m2Sum,
-                color: memberColors.m2
-              });
-            }
+            // 1. 全部视图：同样按“消费品类”区分星轨颜色（小星和小辰花在同品类上的钱会被合并计算）
+            categories.filter(c => c !== '居住房租 Housing').forEach(cat => {
+              const catSum = validRecords.filter(r => r.category === cat).reduce((sum, r) => sum + Number(r.amount), 0);
+              if (catSum > 0) {
+                rawSlices.push({
+                  id: cat,
+                  displayName: getCategoryDisplayName(cat),
+                  total: catSum,
+                  color: categoryColors[cat] || '#ffffff'
+                });
+              }
+            });
           } else {
-            // 2. 个人视图：按“消费品类”区分炫彩颜色
+            // 2. 个人视图：同样按“消费品类”区分炫彩颜色
             const activeMember = chartMember.value === 'm1' ? member1.value : member2.value;
             const memberRecords = validRecords.filter(r => r.payer === activeMember);
             
@@ -578,7 +561,6 @@
                 rawSlices.push({
                   id: cat,
                   displayName: getCategoryDisplayName(cat),
-                  payer: activeMember,
                   total: catSum,
                   color: categoryColors[cat] || '#ffffff'
                 });

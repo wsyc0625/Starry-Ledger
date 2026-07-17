@@ -17,15 +17,11 @@
     [v-cloak] { display: none !important; }
     .chart-ring { transition: stroke-dashoffset 0.6s ease-in-out, stroke 0.3s; }
 
-    /* 下拉选择框动画 */
     .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
     .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }
 
-    /* PC 端专属：整体尺寸与字体放大且排版优化 */
     @media (min-width: 1024px) {
-      #app {
-        font-size: 1.2rem;
-      }
+      #app { font-size: 1.2rem; }
       .container { max-width: 90rem !important; }
       .glass-card { padding: 1.2rem !important; border-radius: 1.5rem !important; }
       header { margin-bottom: 1.5rem !important; padding-top: 1.1rem !important; padding-bottom: 1.1rem !important; }
@@ -50,21 +46,14 @@
       
       .max-h-\[440px\] { max-height: 528px !important; }
 
-      /* PC 专属：日期选择器精致美化（消除旧的大背景边框，改用扁平化轻量设计，防折行） */
       .pc-datepicker-container {
         background: rgba(15, 23, 42, 0.35) !important;
         border: 1px solid rgba(255, 255, 255, 0.05) !important;
         border-radius: 1rem !important;
         padding: 0.2rem 0.5rem !important;
       }
-      .pc-datepicker-container button {
-        padding: 0.4rem 0.6rem !important;
-      }
-      .pc-datepicker-text {
-        white-space: nowrap !important;
-        min-width: 7.5rem !important; /* 确保年份+月份在一行内优雅完整显示 */
-        text-align: center;
-      }
+      .pc-datepicker-container button { padding: 0.4rem 0.6rem !important; }
+      .pc-datepicker-text { white-space: nowrap !important; min-width: 7.5rem !important; text-align: center; }
     }
   </style>
 </head>
@@ -150,7 +139,7 @@
           </form>
         </div>
 
-        <!-- 数据汇总与预算看板 -->
+        <!-- 数据汇总与云预算看板 -->
         <div class="glass-card rounded-2xl p-4 space-y-3">
           <h3 class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
             <i class="fa-solid fa-chart-pie text-indigo-400"></i>{{ t('analysis') }}
@@ -164,10 +153,10 @@
                 <span class="text-xs font-semibold text-indigo-300">{{ member1 }}</span>
                 <div class="text-[10px] text-slate-400 flex items-center gap-1">
                   <span>{{ t('budgetLabel') }}:</span>
-                  <span class="md:hidden font-mono text-indigo-200 font-bold">S$ {{ budgetM1 || 0 }}</span>
-                  <div class="hidden md:flex items-center gap-0.5 font-mono text-indigo-200 font-bold bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-900/50">
+                  <!-- 移动端与PC统一使用输入框，且绑定失焦事件自动保存到云端 -->
+                  <div class="flex items-center gap-0.5 font-mono text-indigo-200 font-bold bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-900/50">
                     <span>S$</span>
-                    <input type="number" v-model.number="budgetM1" placeholder="未设" class="w-12 bg-transparent text-indigo-200 font-bold focus:outline-none border-b border-transparent focus:border-indigo-400 text-center py-0">
+                    <input type="number" v-model.number="budgetM1" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" placeholder="未设" class="w-12 bg-transparent text-indigo-200 font-bold focus:outline-none border-b border-transparent focus:border-indigo-400 text-center py-0">
                   </div>
                 </div>
               </div>
@@ -191,10 +180,9 @@
                 <span class="text-xs font-semibold text-amber-300">{{ member2 }}</span>
                 <div class="text-[10px] text-slate-400 flex items-center gap-1">
                   <span>{{ t('budgetLabel') }}:</span>
-                  <span class="md:hidden font-mono text-amber-200 font-bold">S$ {{ budgetM2 || 0 }}</span>
-                  <div class="hidden md:flex items-center gap-0.5 font-mono text-amber-200 font-bold bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-900/50">
+                  <div class="flex items-center gap-0.5 font-mono text-amber-200 font-bold bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-900/50">
                     <span>S$</span>
-                    <input type="number" v-model.number="budgetM2" placeholder="未设" class="w-12 bg-transparent text-amber-200 font-bold focus:outline-none border-b border-transparent focus:border-amber-400 text-center py-0">
+                    <input type="number" v-model.number="budgetM2" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" placeholder="未设" class="w-12 bg-transparent text-amber-200 font-bold focus:outline-none border-b border-transparent focus:border-amber-400 text-center py-0">
                   </div>
                 </div>
               </div>
@@ -234,7 +222,6 @@
                 <i class="fa-regular fa-calendar-days text-indigo-400"></i>
               </button>
               
-              <!-- 左侧弹出的年月自定面板 -->
               <transition name="fade">
                 <div v-if="showDatePicker && activePicker === 'left'" @click.stop class="absolute left-0 bottom-full mb-2 z-50 w-72 glass-card rounded-2xl p-4 shadow-2xl border border-slate-700/80 bg-slate-950/95">
                   <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
@@ -262,37 +249,25 @@
 
       <!-- 右侧明细与PC对比面板 -->
       <section class="lg:col-span-7 space-y-4">
-        <!-- PC 专属：多维度品类对比统计看板（内含高级星环对比图表） -->
+        <!-- 品类对比统计看板 -->
         <div class="hidden md:block glass-card rounded-2xl p-4 space-y-4">
           <div class="flex flex-col xl:flex-row justify-between xl:items-start gap-2 border-b border-slate-800/80 pb-3">
-            <!-- 标题栏：PC端优雅折行展示 -->
             <div class="flex flex-col gap-1">
-              <h2 class="text-xs xl:text-sm font-semibold text-slate-400 tracking-wide">
-                {{ lang === 'zh' ? '星纪 PC 专属：' : 'Starry PC Exclusive:' }}
-              </h2>
+              <h2 class="text-xs xl:text-sm font-semibold text-slate-400 tracking-wide">Starry PC Exclusive:</h2>
               <h2 class="text-sm xl:text-base font-bold text-slate-100 flex items-center gap-1.5 leading-tight">
-                <i class="fa-solid fa-chart-column text-indigo-400"></i>
-                {{ lang === 'zh' ? '品类对比深度查询' : 'Deep Category Inquiry' }}
+                <i class="fa-solid fa-chart-column text-indigo-400"></i>{{ lang === 'zh' ? '品类对比深度查询' : 'Deep Category Inquiry' }}
               </h2>
             </div>
             
-            <!-- 控制组合区（精致日期微调框 + 筛选按钮） -->
             <div class="flex flex-wrap items-center gap-2 mt-1 xl:mt-0">
-              <!-- PC 专属：精致扁平化、无溢出的日期选择器 -->
               <div class="relative flex items-center pc-datepicker-container">
-                <!-- 左箭头 -->
                 <button @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 text-sm transition">◀</button>
-                
-                <!-- 年月大按钮 -->
                 <button @click.stop="toggleDatePicker('top')" class="px-2 py-1 text-xs font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center justify-center gap-1.5 pc-datepicker-text">
                   <span>{{ selectedMonthText }}</span>
                   <i class="fa-regular fa-calendar text-indigo-400 text-xs"></i>
                 </button>
-                
-                <!-- 右箭头 -->
                 <button @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 text-sm transition">▶</button>
 
-                <!-- 顶部的年月自定面板 -->
                 <transition name="fade">
                   <div v-if="showDatePicker && activePicker === 'top'" @click.stop class="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-72 glass-card rounded-2xl p-4 shadow-2xl border border-slate-700/80 bg-slate-950/95">
                     <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
@@ -310,14 +285,12 @@
                 </transition>
               </div>
 
-              <!-- 成员视角切换器 -->
               <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
                 <button @click="chartMember = 'all'" :class="chartMember === 'all' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ t('viewAll') }}</button>
                 <button @click="chartMember = 'm1'" :class="chartMember === 'm1' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ member1 }}</button>
                 <button @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-amber-600/30 border-amber-500 text-amber-300' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ member2 }}</button>
               </div>
 
-              <!-- 时间维度筛选控制器：包含「按年」 -->
               <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80 font-medium">
                 <button @click="categoryRange = 'today'" :class="categoryRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeToday') }}</button>
                 <button @click="categoryRange = 'week'" :class="categoryRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
@@ -327,46 +300,33 @@
             </div>
           </div>
 
-          <!-- 星轨圆环分布图表区 (Donut Chart Panel) -->
+          <!-- 星轨圆环分布图表区 -->
           <div class="grid grid-cols-12 gap-4 items-center bg-slate-950/20 p-4 rounded-xl border border-slate-800/50">
-            <!-- 左侧：星环图 -->
             <div class="col-span-5 flex justify-center relative">
               <svg width="180" height="180" viewBox="0 0 150 150" class="transform -rotate-90">
                 <circle cx="75" cy="75" r="55" fill="transparent" stroke="#1e293b" stroke-width="12" />
                 <circle v-for="(slice, index) in chartSlices" :key="index"
-                  cx="75" cy="75" r="55" fill="transparent" 
-                  :stroke="slice.color" 
-                  stroke-width="12" 
-                  :stroke-dasharray="slice.dashArray" 
-                  :stroke-dashoffset="slice.offset"
-                  class="chart-ring" />
+                  cx="75" cy="75" r="55" fill="transparent" :stroke="slice.color" stroke-width="12" :stroke-dasharray="slice.dashArray" :stroke-dashoffset="slice.offset" class="chart-ring" />
               </svg>
               <div class="absolute inset-0 flex flex-col justify-center items-center text-center">
-                <span class="text-[8px] text-slate-500 uppercase tracking-widest">
-                  {{ chartMember === 'all' ? t('tableTotal') : (chartMember === 'm1' ? member1 : member2) }}
-                </span>
+                <span class="text-[8px] text-slate-500 uppercase tracking-widest">{{ chartMember === 'all' ? t('tableTotal') : (chartMember === 'm1' ? member1 : member2) }}</span>
                 <span class="text-xs font-bold text-slate-200 font-mono mt-0.5">S$ {{ chartTotalSum }}</span>
               </div>
             </div>
 
-            <!-- 右侧：动态图例分布 -->
             <div class="col-span-7 space-y-1.5 max-h-[168px] overflow-y-auto pr-1">
-              <div v-if="chartSlices.length === 0" class="text-center text-slate-600 text-[10px] py-8">
-                {{ t('noRecords') }}
-              </div>
+              <div v-if="chartSlices.length === 0" class="text-center text-slate-600 text-[10px] py-8">{{ t('noRecords') }}</div>
               <div v-else v-for="slice in chartSlices" :key="slice.id" class="flex items-center justify-between text-[10px] py-0.5 px-1.5 rounded hover:bg-slate-800/30 transition">
                 <div class="flex items-center gap-1.5 truncate w-[75%]">
                   <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: slice.color }"></span>
-                  <span class="text-slate-300 truncate">
-                    {{ slice.displayName }}
-                  </span>
+                  <span class="text-slate-300 truncate">{{ slice.displayName }}</span>
                 </div>
                 <span class="font-mono text-slate-400 font-semibold w-[25%] text-right">{{ slice.percentage }}%</span>
               </div>
             </div>
           </div>
 
-          <!-- PC 专属：分类深度对比表 -->
+          <!-- 分类深度对比表 -->
           <div class="overflow-x-auto">
             <table class="w-full text-[11px] text-slate-300">
               <thead>
@@ -383,15 +343,11 @@
                   <td colspan="5" class="py-6 text-center text-slate-500 text-[10px]">{{ t('noRecords') }}</td>
                 </tr>
                 <template v-else>
-                  <!-- 1. 动态生成所有基础品类明细行 -->
                   <tr v-for="row in categoryComparison" :key="row.cat" class="border-b border-slate-900 hover:bg-slate-800/20 transition" :class="{'opacity-60 italic bg-slate-950/20': row.cat.includes('居住房租')}">
                     <td class="py-2 text-left flex items-center gap-1.5 flex-wrap">
                       <i :class="getCategoryIconOnly(row.cat)" class="text-xs"></i>
                       <span class="font-medium text-slate-200">{{ getCategoryDisplayName(row.cat) }}</span>
-                      <!-- 🏠 居住房租右侧精致提示 -->
-                      <span v-if="row.cat.includes('居住房租')" class="ml-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[9px] text-amber-400/90 font-sans tracking-tight">
-                        {{ t('excludeLabel') }}
-                      </span>
+                      <span v-if="row.cat.includes('居住房租')" class="ml-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[9px] text-amber-400/90 font-sans tracking-tight">{{ t('excludeLabel') }}</span>
                     </td>
                     <td class="py-2 text-right font-mono text-indigo-300/90" :class="{'font-bold text-indigo-300': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
                     <td class="py-2 text-right font-mono text-amber-300/90" :class="{'font-bold text-amber-300': chartMember === 'm2'}">S$ {{ row.m2.toFixed(2) }}</td>
@@ -399,14 +355,11 @@
                     <td class="py-2 text-right font-mono text-[10px] text-slate-500">{{ row.ratio }}%</td>
                   </tr>
 
-                  <!-- 2. 🌟 完美沉底：日常总支出行，且添加小星和小辰占日常合计的各自占比百分比 -->
                   <tr class="border-t-2 border-dashed border-indigo-500/30 bg-indigo-950/30 transition-all font-semibold">
                     <td class="py-2.5 text-left flex items-center gap-1.5">
                       <i class="fa-solid fa-calculator text-indigo-400 text-xs"></i>
                       <span class="text-white">{{ lang === 'zh' ? '日常总支出' : 'Daily Subtotal' }}</span>
-                      <span class="ml-1 px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[9px] text-indigo-300 font-sans tracking-tight">
-                        {{ lang === 'zh' ? '不含房租合计' : 'Excl. Rent' }}
-                      </span>
+                      <span class="ml-1 px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[9px] text-indigo-300 font-sans tracking-tight">{{ lang === 'zh' ? '不含房租合计' : 'Excl. Rent' }}</span>
                     </td>
                     <td class="py-2.5 text-right font-mono text-indigo-300">S$ {{ dailyM1Sum.toFixed(2) }} <span class="text-[10px] text-slate-400 ml-0.5">({{ dailyM1Percent }}%)</span></td>
                     <td class="py-2.5 text-right font-mono text-amber-300">S$ {{ dailyM2Sum.toFixed(2) }} <span class="text-[10px] text-slate-400 ml-0.5">({{ dailyM2Percent }}%)</span></td>
@@ -425,7 +378,6 @@
             <div class="flex items-center gap-2">
               <h2 class="text-base font-semibold text-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-list-ul text-amber-400"></i> {{ t('details') }}</h2>
               
-              <!-- 移动端或底部显示的精致选择器 -->
               <div class="relative flex items-center bg-slate-950/50 border border-slate-800 rounded-2xl p-1 ml-1.5">
                 <button @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-3 py-1.5 text-base transition">◀</button>
                 <button @click.stop="toggleDatePicker('bottom')" class="px-3 py-1.5 text-xs font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center gap-1.5">
@@ -434,7 +386,6 @@
                 </button>
                 <button @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 px-3 py-1.5 text-base transition">▶</button>
 
-                <!-- 明细底部的年月自定面板 -->
                 <transition name="fade">
                   <div v-if="showDatePicker && activePicker === 'bottom'" @click.stop class="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-72 glass-card rounded-2xl p-4 shadow-2xl border border-slate-700/80 bg-slate-950/95">
                     <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
@@ -454,12 +405,10 @@
             </div>
             
             <div class="flex items-center gap-2 justify-between sm:justify-end">
-              <!-- 导出按钮 -->
               <button @click="exportToCSV" class="text-[10px] bg-emerald-950/40 border border-emerald-900/60 text-emerald-300 px-2.5 py-1 rounded-xl hover:bg-emerald-900/30 transition flex items-center gap-1">
                 <i class="fa-solid fa-file-export"></i>{{ t('exportBtn') }}
               </button>
               
-              <!-- 筛选区间 -->
               <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
                 <button @click="filterRange = 'today'" :class="filterRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2.5 py-1 rounded-lg transition">{{ t('rangeToday') }}</button>
                 <button @click="filterRange = 'week'" :class="filterRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2.5 py-1 rounded-lg transition">{{ t('rangeWeek') }}</button>
@@ -546,14 +495,13 @@
         const member2 = ref(localStorage.getItem('member2') || '小辰');
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
         
-        const budgetM1 = ref(localStorage.getItem('budget_m1') ? parseFloat(localStorage.getItem('budget_m1')) : null);
-        const budgetM2 = ref(localStorage.getItem('budget_m2') ? parseFloat(localStorage.getItem('budget_m2')) : null);
+        // 核心改动：预算定义为可空响应式变量，后续由云端加载覆盖
+        const budgetM1 = ref(null);
+        const budgetM2 = ref(null);
         
         watch(member1, (val) => localStorage.setItem('member1', val));
         watch(member2, (val) => localStorage.setItem('member2', val));
         watch(exchangeRate, (val) => localStorage.setItem('exchangeRate', val));
-        watch(budgetM1, (val) => localStorage.setItem('budget_m1', val !== null ? val : ''));
-        watch(budgetM2, (val) => localStorage.setItem('budget_m2', val !== null ? val : ''));
 
         const categories = [
           '日常伙食 Daily Meal', '餐厅聚餐 Restaurant', '交通出行 Transport', 
@@ -562,15 +510,9 @@
         ];
 
         const categoryColors = {
-          '日常伙食 Daily Meal': '#f59e0b',
-          '餐厅聚餐 Restaurant': '#f43f5e',
-          '交通出行 Transport': '#0ea5e9',
-          '购物消费 Shopping': '#a855f7',
-          '休闲娱乐 Fun': '#10b981',
-          '居住房租 Housing': '#f97316',
-          '固定月费 Subscriptions': '#6366f1',
-          '零星杂费 Sundries': '#94a3b8',
-          '其他 Miscellaneous': '#14b8a6'
+          '日常伙食 Daily Meal': '#f59e0b', '餐厅聚餐 Restaurant': '#f43f5e', '交通出行 Transport': '#0ea5e9',
+          '购物消费 Shopping': '#a855f7', '休闲娱乐 Fun': '#10b981', '居住房租 Housing': '#f97316',
+          '固定月费 Subscriptions': '#6366f1', '零星杂费 Sundries': '#94a3b8', '其他 Miscellaneous': '#14b8a6'
         };
 
         const getCategoryDisplayName = (cat) => lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
@@ -595,9 +537,7 @@
         const panelYear = ref(parseInt(selectedMonth.value.split('-')[0]));
 
         onMounted(() => {
-          window.addEventListener('click', () => {
-            showDatePicker.value = false;
-          });
+          window.addEventListener('click', () => { showDatePicker.value = false; });
         });
 
         const selectedMonthText = computed(() => {
@@ -615,9 +555,7 @@
           }
         };
 
-        const changePanelYear = (offset) => {
-          panelYear.value += offset;
-        };
+        const changePanelYear = (offset) => { panelYear.value += offset; };
 
         const selectPanelMonth = (month) => {
           const formattedMonth = String(month).padStart(2, '0');
@@ -645,6 +583,33 @@
 
         const form = reactive({ payer: member1.value, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
 
+        // 从云端拉取预算数据
+        const fetchCloudBudget = async () => {
+          try {
+            const { data, error } = await supabaseClient.from('starry_budget').select('*').eq('id', 'default_budget').single();
+            if (data) {
+              budgetM1.value = data.budget_m1;
+              budgetM2.value = data.budget_m2;
+            }
+          } catch (err) {
+            console.error('拉取预算失败:', err);
+          }
+        };
+
+        // 更新预算到云端
+        const updateCloudBudget = async () => {
+          try {
+            await supabaseClient.from('starry_budget').upsert({
+              id: 'default_budget',
+              budget_m1: budgetM1.value,
+              budget_m2: budgetM2.value,
+              updated_at: new Date().toISOString()
+            });
+          } catch (err) {
+            console.error('同步预算失败:', err);
+          }
+        };
+
         const fetchRecords = async () => {
           loading.value = true;
           try {
@@ -663,19 +628,14 @@
           } catch (err) { console.error(err); } finally { loading.value = false; }
         };
 
-        watch(categoryRange, () => {
-          fetchRecords();
-        });
+        watch(categoryRange, () => { fetchRecords(); });
 
         const offsetMonth = (steps) => {
           const [yearStr, monthStr] = selectedMonth.value.split('-');
-          let year = parseInt(yearStr);
-          let month = parseInt(monthStr) - 1 + steps;
-          
+          let year = parseInt(yearStr); let month = parseInt(monthStr) - 1 + steps;
           const newDate = new Date(year, month, 1);
           const newYear = newDate.getFullYear();
           const newMonthStr = String(newDate.getMonth() + 1).padStart(2, '0');
-          
           selectedMonth.value = `${newYear}-${newMonthStr}`;
           panelYear.value = newYear;
           fetchRecords();
@@ -709,41 +669,25 @@
 
         const categoryComparison = computed(() => {
           let filteredBase = records.value;
-          if (categoryRange.value === 'today') {
-            filteredBase = records.value.filter(r => r.date === getLocalDateString());
-          } else if (categoryRange.value === 'week') {
-            filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
-          }
+          if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
+          else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
 
           let totalRangeSum = 0;
-          if (chartMember.value === 'all') {
-            totalRangeSum = filteredBase.reduce((s, r) => s + Number(r.amount), 0) || 1;
-          } else if (chartMember.value === 'm1') {
-            totalRangeSum = filteredBase.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0) || 1;
-          } else if (chartMember.value === 'm2') {
-            totalRangeSum = filteredBase.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0) || 1;
-          }
+          if (chartMember.value === 'all') totalRangeSum = filteredBase.reduce((s, r) => s + Number(r.amount), 0) || 1;
+          else if (chartMember.value === 'm1') totalRangeSum = filteredBase.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0) || 1;
+          else if (chartMember.value === 'm2') totalRangeSum = filteredBase.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0) || 1;
 
           return categories.map(cat => {
             const catRecords = filteredBase.filter(r => r.category === cat);
             const m1Sum = catRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
             const m2Sum = catRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
-            
             let displayedTotal = m1Sum + m2Sum;
             if (chartMember.value === 'm1') displayedTotal = m1Sum;
             if (chartMember.value === 'm2') displayedTotal = m2Sum;
-
-            return { 
-              cat, 
-              m1: m1Sum, 
-              m2: m2Sum, 
-              total: displayedTotal, 
-              ratio: Math.round((displayedTotal / totalRangeSum) * 100) 
-            };
+            return { cat, m1: m1Sum, m2: m2Sum, total: displayedTotal, ratio: Math.round((displayedTotal / totalRangeSum) * 100) };
           }).filter(item => item.total > 0).sort((a, b) => b.total - a.total);
         });
 
-        // 动态纯日常（扣除房租）总额逻辑
         const dailyM1Sum = computed(() => {
           let filteredBase = records.value;
           if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
@@ -764,12 +708,10 @@
           return dailyM1Sum.value + dailyM2Sum.value;
         });
 
-        // 计算日常小星与小辰各自占日常总支出的百分比
         const dailyM1Percent = computed(() => {
           const total = dailyM1Sum.value + dailyM2Sum.value;
           return total > 0 ? Math.round((dailyM1Sum.value / total) * 100) : 0;
         });
-
         const dailyM2Percent = computed(() => {
           const total = dailyM1Sum.value + dailyM2Sum.value;
           return total > 0 ? 100 - dailyM1Percent.value : 0;
@@ -782,112 +724,64 @@
             else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
             return filteredBase.filter(r => r.category !== '居住房租 Housing').reduce((sum, r) => sum + Number(r.amount), 0).toFixed(2);
           }
-          return categoryComparison.value
-            .filter(item => item.cat !== '居住房租 Housing')
-            .reduce((sum, item) => sum + item.total, 0)
-            .toFixed(2);
+          return categoryComparison.value.filter(item => item.cat !== '居住房租 Housing').reduce((sum, item) => sum + item.total, 0).toFixed(2);
         });
 
         const chartSlices = computed(() => {
-          const totalSumVal = parseFloat(chartTotalSum.value) || 1;
-          const circumference = 345.57;
-
+          const totalSumVal = parseFloat(chartTotalSum.value) || 1; const circumference = 345.57;
           let rawSlices = [];
-
           let filteredBase = records.value;
           if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
           else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
-          
           const validRecords = filteredBase.filter(r => r.category !== '居住房租 Housing');
 
           if (chartMember.value === 'all') {
             categories.filter(c => c !== '居住房租 Housing').forEach(cat => {
               const catSum = validRecords.filter(r => r.category === cat).reduce((sum, r) => sum + Number(r.amount), 0);
-              if (catSum > 0) {
-                rawSlices.push({
-                  id: cat,
-                  displayName: getCategoryDisplayName(cat),
-                  total: catSum,
-                  color: categoryColors[cat] || '#ffffff'
-                });
-              }
+              if (catSum > 0) rawSlices.push({ id: cat, displayName: getCategoryDisplayName(cat), total: catSum, color: categoryColors[cat] || '#ffffff' });
             });
           } else {
             const activeMember = chartMember.value === 'm1' ? member1.value : member2.value;
             const memberRecords = validRecords.filter(r => r.payer === activeMember);
-            
             categories.filter(c => c !== '居住房租 Housing').forEach(cat => {
               const catSum = memberRecords.filter(r => r.category === cat).reduce((sum, r) => sum + Number(r.amount), 0);
-              if (catSum > 0) {
-                rawSlices.push({
-                  id: cat,
-                  displayName: getCategoryDisplayName(cat),
-                  total: catSum,
-                  color: categoryColors[cat] || '#ffffff'
-                });
-              }
+              if (catSum > 0) rawSlices.push({ id: cat, displayName: getCategoryDisplayName(cat), total: catSum, color: categoryColors[cat] || '#ffffff' });
             });
           }
 
           rawSlices.sort((a, b) => b.total - a.total);
-
           let accumulatedPercent = 0;
           return rawSlices.map(slice => {
-            const percent = slice.total / totalSumVal;
-            const percentageText = Math.round(percent * 100);
-            
+            const percent = slice.total / totalSumVal; const percentageText = Math.round(percent * 100);
             const offset = circumference - (accumulatedPercent * circumference);
             const strokeLength = percent * circumference;
             const dashArray = `${strokeLength} ${circumference - strokeLength}`;
-
             accumulatedPercent += percent;
-
-            return {
-              ...slice,
-              percentage: percentageText,
-              dashArray: dashArray,
-              offset: offset
-            };
+            return { ...slice, percentage: percentageText, dashArray: dashArray, offset: offset };
           });
         });
 
         const addRecord = async () => {
           if (!form.amount) return;
           let finalSGD = form.currency === 'MYR' ? parseFloat((form.amount / exchangeRate.value).toFixed(2)) : form.amount;
-          
-          const priorM1Total = m1TotalNum.value;
-          const priorM2Total = m2TotalNum.value;
+          const priorM1Total = m1TotalNum.value; const priorM2Total = m2TotalNum.value;
 
           try {
             await supabaseClient.from('starry_ledger').insert([{ date: form.date, amount: finalSGD, original_amount: form.amount, currency: form.currency, category: form.category, payer: form.payer, remark: form.remark, exchange_rate: exchangeRate.value }]);
             form.amount = null; form.remark = ''; form.date = getLocalDateString();
-            
             await fetchRecords();
 
             setTimeout(() => {
               if (form.payer === member1.value && budgetM1.value) {
-                const newTotal = m1TotalNum.value;
-                const percent = (newTotal / budgetM1.value) * 100;
-                const priorPercent = (priorM1Total / budgetM1.value) * 100;
-                
-                if (percent >= 100 && priorPercent < 100) {
-                  alert(`🚨 星轨溢出警告：\n${member1.value} 的本月日常账目已超出预算上限！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM1.value})`);
-                } else if (percent >= 80 && percent < 100 && priorPercent < 80) {
-                  alert(`⚠️ 星轨接近饱和：\n${member1.value} 的本月日常预算使用已超过 80%！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM1.value})`);
-                }
+                const newTotal = m1TotalNum.value; const percent = (newTotal / budgetM1.value) * 100; const priorPercent = (priorM1Total / budgetM1.value) * 100;
+                if (percent >= 100 && priorPercent < 100) alert(`🚨 星轨溢出警告：\n${member1.value} 的本月日常账目已超出预算上限！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM1.value})`);
+                else if (percent >= 80 && percent < 100 && priorPercent < 80) alert(`⚠️ 星轨接近饱和：\n${member1.value} 的本月日常预算使用已超过 80%！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM1.value})`);
               } else if (form.payer === member2.value && budgetM2.value) {
-                const newTotal = m2TotalNum.value;
-                const percent = (newTotal / budgetM2.value) * 100;
-                const priorPercent = (priorM2Total / budgetM2.value) * 100;
-
-                if (percent >= 100 && priorPercent < 100) {
-                  alert(`🚨 星轨溢出警告：\n${member2.value} 的本月日常账目已超出预算上限！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM2.value})`);
-                } else if (percent >= 80 && percent < 100 && priorPercent < 80) {
-                  alert(`⚠️ 星轨接近饱和：\n${member2.value} 的本月日常预算使用已超过 80%！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM2.value})`);
-                }
+                const newTotal = m2TotalNum.value; const percent = (newTotal / budgetM2.value) * 100; const priorPercent = (priorM2Total / budgetM2.value) * 100;
+                if (percent >= 100 && priorPercent < 100) alert(`🚨 星轨溢出警告：\n${member2.value} 的本月日常账目已超出预算上限！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM2.value})`);
+                else if (percent >= 80 && percent < 100 && priorPercent < 80) alert(`⚠️ 星轨接近饱和：\n${member2.value} 的本月日常预算使用已超过 80%！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM2.value})`);
               }
             }, 100);
-
           } catch (e) { alert(e.message); }
         };
 
@@ -903,24 +797,24 @@
           const rows = records.value.map(r => [r.date, r.payer, r.category, r.amount, r.original_amount, r.currency, r.exchange_rate, r.remark || '']);
           const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.map(val => `"${val}"`).join(','))].join('\n');
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.setAttribute("href", url);
-          link.setAttribute("download", `Starry_Ledger_${selectedMonth.value}.csv`);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+          const url = URL.createObjectURL(blob); const link = document.createElement("a");
+          link.setAttribute("href", url); link.setAttribute("download", `Starry_Ledger_${selectedMonth.value}.csv`);
+          document.body.appendChild(link); link.click(); document.body.removeChild(link);
         };
 
         const totalTodayM1 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         const totalTodayM2 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         const totalThisWeekM1 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         const totalThisWeekM2 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
-        
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
-        onMounted(() => { fetchRecords(); });
-        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, offsetMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices, showDatePicker, activePicker, panelYear, selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected, dailyM1Sum, dailyM2Sum, dailyTotalSum, dailyM1Percent, dailyM2Percent };
+        // 页面初始化同时拉取账目和云端预算
+        onMounted(() => { 
+          fetchCloudBudget();
+          fetchRecords(); 
+        });
+
+        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, offsetMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices, showDatePicker, activePicker, panelYear, selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected, dailyM1Sum, dailyM2Sum, dailyTotalSum, dailyM1Percent, dailyM2Percent, updateCloudBudget };
       }
     }).mount('#app');
   </script>

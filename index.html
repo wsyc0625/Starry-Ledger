@@ -207,16 +207,25 @@
       <section class="lg:col-span-7 space-y-4">
         <!-- PC 专属：多维度品类对比统计看板（内含高级星环对比图表） -->
         <div class="hidden md:block glass-card rounded-2xl p-4 space-y-4">
-          <div class="flex justify-between items-center border-b border-slate-800/80 pb-2">
+          <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-800/80 pb-2">
             <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
               <i class="fa-solid fa-chart-column text-indigo-400"></i> {{ t('pcCategoryTitle') }}
             </h2>
             
-            <!-- 时间维度筛选控制器（完美支持每日、每周、每月） -->
-            <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
-              <button @click="categoryRange = 'today'" :class="categoryRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2.5 py-1 rounded-lg transition">{{ t('rangeToday') }}</button>
-              <button @click="categoryRange = 'week'" :class="categoryRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2.5 py-1 rounded-lg transition">{{ t('rangeWeek') }}</button>
-              <button @click="categoryRange = 'month'" :class="categoryRange === 'month' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2.5 py-1 rounded-lg transition">{{ t('rangeMonth') }}</button>
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- 新增：成员视角切换器（支持 全部 / 小星 / 小辰） -->
+              <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
+                <button @click="chartMember = 'all'" :class="chartMember === 'all' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ t('viewAll') }}</button>
+                <button @click="chartMember = 'm1'" :class="chartMember === 'm1' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ member1 }}</button>
+                <button @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-amber-600/30 border-amber-500 text-amber-300' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ member2 }}</button>
+              </div>
+
+              <!-- 时间维度筛选控制器（完美支持每日、每周、每月） -->
+              <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
+                <button @click="categoryRange = 'today'" :class="categoryRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeToday') }}</button>
+                <button @click="categoryRange = 'week'" :class="categoryRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
+                <button @click="categoryRange = 'month'" :class="categoryRange === 'month' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeMonth') }}</button>
+              </div>
             </div>
           </div>
 
@@ -239,7 +248,9 @@
               </svg>
               <!-- 环心文本：当前区间内总花费（已排除房租） -->
               <div class="absolute inset-0 flex flex-col justify-center items-center text-center">
-                <span class="text-[8px] text-slate-500 uppercase tracking-widest">{{ t('tableTotal') }}</span>
+                <span class="text-[8px] text-slate-500 uppercase tracking-widest">
+                  {{ chartMember === 'all' ? t('tableTotal') : (chartMember === 'm1' ? member1 : member2) }}
+                </span>
                 <span class="text-xs font-bold text-slate-200 font-mono mt-0.5">S$ {{ chartTotalSum }}</span>
               </div>
             </div>
@@ -280,8 +291,8 @@
                     <i :class="getCategoryIconOnly(row.cat)" class="text-xs"></i>
                     <span>{{ getCategoryDisplayName(row.cat) }} <span v-if="row.cat.includes('居住房租')" class="text-[9px] text-slate-500">({{ t('excludeLabel') }})</span></span>
                   </td>
-                  <td class="py-2 text-right font-mono text-indigo-300/90">S$ {{ row.m1.toFixed(2) }}</td>
-                  <td class="py-2 text-right font-mono text-amber-300/90">S$ {{ row.m2.toFixed(2) }}</td>
+                  <td class="py-2 text-right font-mono text-indigo-300/90" :class="{'font-bold text-indigo-300': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
+                  <td class="py-2 text-right font-mono text-amber-300/90" :class="{'font-bold text-amber-300': chartMember === 'm2'}">S$ {{ row.m2.toFixed(2) }}</td>
                   <td class="py-2 text-right font-mono font-semibold text-slate-200">S$ {{ row.total.toFixed(2) }}</td>
                   <td class="py-2 text-right font-mono text-[10px] text-slate-500">{{ row.ratio }}%</td>
                 </tr>
@@ -368,7 +379,8 @@
             rangeToday: '今日', rangeWeek: '本周', rangeMonth: '本月', exportBtn: '导出星轨', ratio: '星能对比',
             pcCategoryTitle: '星纪 PC 专属：品类对比深度查询', tableCat: '消费品类', tableTotal: '总支出', tableRatio: '分类占比',
             budgetSuffix: '月度预算', budgetLabel: '每月预算', remainingBudget: '本月剩余日常预算',
-            nearBudget: '接近上限', overBudget: '超支警告', excludeHousing: '不含房租', excludeLabel: '不计入日常预算'
+            nearBudget: '接近上限', overBudget: '超支警告', excludeHousing: '不含房租', excludeLabel: '不计入日常预算',
+            viewAll: '全部'
           },
           en: {
             members: 'Astrogang', addRecord: 'Star Trace', payer: 'Payer', amount: 'Amount', category: 'Category', date: 'Date', remark: 'Remark', save: 'Save to Starry',
@@ -377,7 +389,8 @@
             rangeToday: 'Today', rangeWeek: 'Weekly', rangeMonth: 'Monthly', exportBtn: 'Export Trails', ratio: 'Power Ratio',
             pcCategoryTitle: 'PC Mode: Category Analysis', tableCat: 'Category', tableTotal: 'Total', tableRatio: 'Share',
             budgetSuffix: ' Budget', budgetLabel: 'Budget', remainingBudget: 'Remaining Budget',
-            nearBudget: 'Near Limit', overBudget: 'Over Budget', excludeHousing: 'Excl. Rent', excludeLabel: 'Excl. from Budget'
+            nearBudget: 'Near Limit', overBudget: 'Over Budget', excludeHousing: 'Excl. Rent', excludeLabel: 'Excl. from Budget',
+            viewAll: 'All'
           }
         };
 
@@ -435,6 +448,8 @@
         
         const filterRange = ref('today');
         const categoryRange = ref('month');
+        // PC 专属图表视角：'all', 'm1' (小星), 'm2' (小辰)
+        const chartMember = ref('all');
 
         const form = reactive({ payer: member1.value, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
 
@@ -474,6 +489,7 @@
           return 'text-emerald-400 font-bold'; 
         };
 
+        // 计算深度对比表（在过滤时间区间的同时，也会响应成员切换高亮或单独过滤计算）
         const categoryComparison = computed(() => {
           let filteredBase = records.value;
           if (categoryRange.value === 'today') {
@@ -482,19 +498,38 @@
             filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
           }
 
-          const totalRangeSum = filteredBase.reduce((s, r) => s + Number(r.amount), 0) || 1;
+          // 如果切换到了个人视角，总基数只计算个人的消费以得出准确的个人品类占比
+          let totalRangeSum = 0;
+          if (chartMember.value === 'all') {
+            totalRangeSum = filteredBase.reduce((s, r) => s + Number(r.amount), 0) || 1;
+          } else if (chartMember.value === 'm1') {
+            totalRangeSum = filteredBase.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0) || 1;
+          } else if (chartMember.value === 'm2') {
+            totalRangeSum = filteredBase.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0) || 1;
+          }
 
           return categories.map(cat => {
             const catRecords = filteredBase.filter(r => r.category === cat);
             const m1Sum = catRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
             const m2Sum = catRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
-            const catTotal = m1Sum + m2Sum;
-            return { cat, m1: m1Sum, m2: m2Sum, total: catTotal, ratio: Math.round((catTotal / totalRangeSum) * 100) };
+            
+            // 根据不同筛选，显示不同的最终数值与分类比例
+            let displayedTotal = m1Sum + m2Sum;
+            if (chartMember.value === 'm1') displayedTotal = m1Sum;
+            if (chartMember.value === 'm2') displayedTotal = m2Sum;
+
+            return { 
+              cat, 
+              m1: m1Sum, 
+              m2: m2Sum, 
+              total: displayedTotal, 
+              ratio: Math.round((displayedTotal / totalRangeSum) * 100) 
+            };
           }).filter(item => item.total > 0).sort((a, b) => b.total - a.total);
         });
 
         // ================= 星环图动态渲染逻辑 (Donut Rendering Logic) =================
-        // 计算当前范围内的总支出（排除房租，让图表与日常预算完全对齐）
+        // 计算当前筛选范围+筛选成员下的总支出（排除房租，让图表与日常预算完全对齐）
         const chartTotalSum = computed(() => {
           return categoryComparison.value
             .filter(item => item.cat !== '居住房租 Housing')
@@ -595,7 +630,7 @@
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
         onMounted(() => { fetchRecords(); });
-        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, form, filterRange, categoryRange, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices };
+        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices };
       }
     }).mount('#app');
   </script>

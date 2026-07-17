@@ -366,7 +366,7 @@
             </div>
           </div>
 
-          <!-- PC 专属：分类深度对比表 -->
+          <!-- PC 专属：分类深度对比表（在日常伙食下方添加动态总合，房租添加不计入日常预算小提示） -->
           <div class="overflow-x-auto">
             <table class="w-full text-[11px] text-slate-300">
               <thead>
@@ -382,16 +382,39 @@
                 <tr v-if="categoryComparison.length === 0">
                   <td colspan="5" class="py-6 text-center text-slate-500 text-[10px]">{{ t('noRecords') }}</td>
                 </tr>
-                <tr v-else v-for="row in categoryComparison" :key="row.cat" class="border-b border-slate-900 hover:bg-slate-800/20 transition" :class="{'opacity-50 italic': row.cat.includes('居住房租')}">
-                  <td class="py-2 text-left flex items-center gap-1.5">
-                    <i :class="getCategoryIconOnly(row.cat)" class="text-xs"></i>
-                    <span>{{ getCategoryDisplayName(row.cat) }} <span v-if="row.cat.includes('居住房租')" class="text-[9px] text-slate-500">({{ t('excludeLabel') }})</span></span>
-                  </td>
-                  <td class="py-2 text-right font-mono text-indigo-300/90" :class="{'font-bold text-indigo-300': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
-                  <td class="py-2 text-right font-mono text-amber-300/90" :class="{'font-bold text-amber-300': chartMember === 'm2'}">S$ {{ row.m2.toFixed(2) }}</td>
-                  <td class="py-2 text-right font-mono font-semibold text-slate-200">S$ {{ row.total.toFixed(2) }}</td>
-                  <td class="py-2 text-right font-mono text-[10px] text-slate-500">{{ row.ratio }}%</td>
-                </tr>
+                <template v-else v-for="(row, idx) in categoryComparison" :key="row.cat">
+                  <!-- 常规品类行（如果为居住房租则呈现弱化状态且展示小提示） -->
+                  <tr class="border-b border-slate-900 hover:bg-slate-800/20 transition" :class="{'opacity-60 italic bg-slate-950/20': row.cat.includes('居住房租')}">
+                    <td class="py-2 text-left flex items-center gap-1.5 flex-wrap">
+                      <i :class="getCategoryIconOnly(row.cat)" class="text-xs"></i>
+                      <span class="font-medium text-slate-200">{{ getCategoryDisplayName(row.cat) }}</span>
+                      <!-- 🏠 居住房租右侧精致提示 -->
+                      <span v-if="row.cat.includes('居住房租')" class="ml-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[9px] text-amber-400/90 font-sans tracking-tight">
+                        {{ t('excludeLabel') }}
+                      </span>
+                    </td>
+                    <td class="py-2 text-right font-mono text-indigo-300/90" :class="{'font-bold text-indigo-300': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
+                    <td class="py-2 text-right font-mono text-amber-300/90" :class="{'font-bold text-amber-300': chartMember === 'm2'}">S$ {{ row.m2.toFixed(2) }}</td>
+                    <td class="py-2 text-right font-mono font-semibold text-slate-200">S$ {{ row.total.toFixed(2) }}</td>
+                    <td class="py-2 text-right font-mono text-[10px] text-slate-500">{{ row.ratio }}%</td>
+                  </tr>
+
+                  <!-- 🌟 伙食下方添加动态日常总合行：当当前行为“日常伙食”或处于倒数第一位（若列表无日常伙食）时，计算不含房租的纯日常总和 -->
+                  <tr v-if="row.cat.includes('日常伙食') || (idx === categoryComparison.length - 1 && !categoryComparison.some(r => r.cat.includes('日常伙食')))" 
+                      class="border-y-2 border-dashed border-indigo-500/30 bg-indigo-950/30 transition-all font-semibold">
+                    <td class="py-2.5 text-left flex items-center gap-1.5">
+                      <i class="fa-solid fa-calculator text-indigo-400 text-xs"></i>
+                      <span class="text-white">{{ lang === 'zh' ? '日常总支出' : 'Daily Subtotal' }}</span>
+                      <span class="ml-1 px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[9px] text-indigo-300 font-sans tracking-tight">
+                        {{ lang === 'zh' ? '不含房租合计' : 'Excl. Rent' }}
+                      </span>
+                    </td>
+                    <td class="py-2.5 text-right font-mono text-indigo-300">S$ {{ dailyM1Sum.toFixed(2) }}</td>
+                    <td class="py-2.5 text-right font-mono text-amber-300">S$ {{ dailyM2Sum.toFixed(2) }}</td>
+                    <td class="py-2.5 text-right font-mono text-indigo-200 font-bold">S$ {{ dailyTotalSum.toFixed(2) }}</td>
+                    <td class="py-2.5 text-right font-mono text-indigo-400 font-bold">100%</td>
+                  </tr>
+                </template>
               </tbody>
             </table>
           </div>
@@ -721,6 +744,27 @@
           }).filter(item => item.total > 0).sort((a, b) => b.total - a.total);
         });
 
+        // 🌟 新增：动态纯日常（扣除房租）总额逻辑，自动适配选定的范围和视角成员
+        const dailyM1Sum = computed(() => {
+          let filteredBase = records.value;
+          if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
+          else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
+          return filteredBase.filter(r => r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0);
+        });
+
+        const dailyM2Sum = computed(() => {
+          let filteredBase = records.value;
+          if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
+          else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
+          return filteredBase.filter(r => r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0);
+        });
+
+        const dailyTotalSum = computed(() => {
+          if (chartMember.value === 'm1') return dailyM1Sum.value;
+          if (chartMember.value === 'm2') return dailyM2Sum.value;
+          return dailyM1Sum.value + dailyM2Sum.value;
+        });
+
         const chartTotalSum = computed(() => {
           if (chartMember.value === 'all') {
             let filteredBase = records.value;
@@ -866,7 +910,7 @@
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
         onMounted(() => { fetchRecords(); });
-        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, offsetMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices, showDatePicker, activePicker, panelYear, selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected };
+        return { lang, t, toggleLang, member1, member2, exchangeRate, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, offsetMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices, showDatePicker, activePicker, panelYear, selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected, dailyM1Sum, dailyM2Sum, dailyTotalSum };
       }
     }).mount('#app');
   </script>

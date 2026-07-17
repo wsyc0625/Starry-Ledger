@@ -37,7 +37,7 @@
       </div>
     </header>
 
-    <!-- 成员管理（仅PC端可修改成员名字） -->
+    <!-- 成员管理 -->
     <section class="hidden md:flex glass-card rounded-2xl p-3 mb-4 items-center gap-4">
       <span class="text-xs font-semibold text-slate-300"><i class="fa-solid fa-user-friends text-indigo-400 mr-1.5"></i>{{ t('members') }}:</span>
       <input type="text" v-model="member1" class="bg-indigo-950/40 text-xs font-semibold text-indigo-200 w-24 text-center py-1 rounded-xl border border-indigo-900/60 focus:outline-none">
@@ -112,15 +112,9 @@
             <div class="bg-indigo-950/15 p-2.5 rounded-xl border border-indigo-900/20 space-y-2">
               <div class="flex justify-between items-center">
                 <span class="text-xs font-semibold text-indigo-300">{{ member1 }}</span>
-                
-                <!-- 预算编辑与展示区 -->
                 <div class="text-[10px] text-slate-400 flex items-center gap-1">
                   <span>{{ t('budgetLabel') }}:</span>
-                  
-                  <!-- 手机端：纯文本只读 -->
                   <span class="md:hidden font-mono text-indigo-200 font-bold">S$ {{ budgetM1 || 0 }}</span>
-                  
-                  <!-- PC端：可直接修改预算 -->
                   <div class="hidden md:flex items-center gap-0.5 font-mono text-indigo-200 font-bold bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-900/50">
                     <span>S$</span>
                     <input type="number" v-model.number="budgetM1" placeholder="未设" class="w-12 bg-transparent text-indigo-200 font-bold focus:outline-none border-b border-transparent focus:border-indigo-400 text-center py-0">
@@ -133,11 +127,9 @@
                 <div class="border-l border-slate-800/60 pl-2 text-right">
                   <p class="text-[9px] text-slate-500">
                     {{ t('remainingBudget') }}
-                    <!-- 动态高亮标签 -->
                     <span v-if="budgetM1 && m1PercentOfBudget >= 100" class="text-[8px] text-rose-500 font-bold block">🚨 {{ t('overBudget') }}</span>
                     <span v-else-if="budgetM1 && m1PercentOfBudget >= 80" class="text-[8px] text-amber-500 font-bold block">⚠️ {{ t('nearBudget') }}</span>
                   </p>
-                  <!-- 根据不同状态应用 绿、黄、红 颜色反馈 -->
                   <p :class="getBudgetColorClass(m1PercentOfBudget, budgetM1)" class="text-xs font-bold font-mono">S$ {{ remainM1 }}</p>
                 </div>
               </div>
@@ -147,15 +139,9 @@
             <div class="bg-amber-950/15 p-2.5 rounded-xl border border-amber-900/20 space-y-2">
               <div class="flex justify-between items-center">
                 <span class="text-xs font-semibold text-amber-300">{{ member2 }}</span>
-                
-                <!-- 预算编辑与展示区 -->
                 <div class="text-[10px] text-slate-400 flex items-center gap-1">
                   <span>{{ t('budgetLabel') }}:</span>
-                  
-                  <!-- 手机端：纯文本只读 -->
                   <span class="md:hidden font-mono text-amber-200 font-bold">S$ {{ budgetM2 || 0 }}</span>
-                  
-                  <!-- PC端：可直接修改预算 -->
                   <div class="hidden md:flex items-center gap-0.5 font-mono text-amber-200 font-bold bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-900/50">
                     <span>S$</span>
                     <input type="number" v-model.number="budgetM2" placeholder="未设" class="w-12 bg-transparent text-amber-200 font-bold focus:outline-none border-b border-transparent focus:border-amber-400 text-center py-0">
@@ -168,11 +154,9 @@
                 <div class="border-l border-slate-800/60 pl-2 text-right">
                   <p class="text-[9px] text-slate-500">
                     {{ t('remainingBudget') }}
-                    <!-- 动态高亮标签 -->
                     <span v-if="budgetM2 && m2PercentOfBudget >= 100" class="text-[8px] text-rose-500 font-bold block">🚨 {{ t('overBudget') }}</span>
                     <span v-else-if="budgetM2 && m2PercentOfBudget >= 80" class="text-[8px] text-amber-500 font-bold block">⚠️ {{ t('nearBudget') }}</span>
                   </p>
-                  <!-- 根据不同状态应用 绿、黄、红 颜色反馈 -->
                   <p :class="getBudgetColorClass(m2PercentOfBudget, budgetM2)" class="text-xs font-bold font-mono">S$ {{ remainM2 }}</p>
                 </div>
               </div>
@@ -213,14 +197,14 @@
             </h2>
             
             <div class="flex items-center gap-2 flex-wrap">
-              <!-- 新增：成员视角切换器（支持 全部 / 小星 / 小辰） -->
+              <!-- 成员视角切换器（支持 全部 / 小星 / 小辰） -->
               <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
                 <button @click="chartMember = 'all'" :class="chartMember === 'all' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ t('viewAll') }}</button>
                 <button @click="chartMember = 'm1'" :class="chartMember === 'm1' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ member1 }}</button>
                 <button @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-amber-600/30 border-amber-500 text-amber-300' : 'text-slate-500'" class="text-[10px] px-2 py-0.5 rounded-lg transition font-medium">{{ member2 }}</button>
               </div>
 
-              <!-- 时间维度筛选控制器（完美支持每日、每周、每月） -->
+              <!-- 时间维度筛选控制器 -->
               <div class="flex gap-1 bg-slate-950/40 p-1 rounded-xl border border-slate-800/80">
                 <button @click="categoryRange = 'today'" :class="categoryRange === 'today' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeToday') }}</button>
                 <button @click="categoryRange = 'week'" :class="categoryRange === 'week' ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300' : 'text-slate-400'" class="text-[10px] px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
@@ -231,7 +215,7 @@
 
           <!-- 星轨圆环分布图表区 (Donut Chart Panel) -->
           <div class="grid grid-cols-12 gap-4 items-center bg-slate-950/20 p-4 rounded-xl border border-slate-800/50">
-            <!-- 左侧：星环图 (Donut Shape Rendered by SVG) -->
+            <!-- 左侧：星环图 -->
             <div class="col-span-5 flex justify-center relative">
               <svg width="150" height="150" viewBox="0 0 150 150" class="transform -rotate-90">
                 <!-- 背景圆圈 -->
@@ -246,7 +230,7 @@
                   class="chart-ring"
                   stroke-linecap="round" />
               </svg>
-              <!-- 环心文本：当前区间内总花费（已排除房租） -->
+              <!-- 环心文本 -->
               <div class="absolute inset-0 flex flex-col justify-center items-center text-center">
                 <span class="text-[8px] text-slate-500 uppercase tracking-widest">
                   {{ chartMember === 'all' ? t('tableTotal') : (chartMember === 'm1' ? member1 : member2) }}
@@ -255,15 +239,18 @@
               </div>
             </div>
 
-            <!-- 右侧：动态图例分布 -->
+            <!-- 右侧：动态图例分布（全部视角显示成员色，个人视角显示品类色） -->
             <div class="col-span-7 space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
               <div v-if="chartSlices.length === 0" class="text-center text-slate-600 text-[10px] py-8">
                 {{ t('noRecords') }}
               </div>
-              <div v-else v-for="slice in chartSlices" :key="slice.cat" class="flex items-center justify-between text-[10px] py-0.5 px-1.5 rounded hover:bg-slate-800/30 transition">
+              <div v-else v-for="slice in chartSlices" :key="slice.id" class="flex items-center justify-between text-[10px] py-0.5 px-1.5 rounded hover:bg-slate-800/30 transition">
                 <div class="flex items-center gap-1.5 truncate">
                   <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: slice.color }"></span>
-                  <span class="text-slate-300 truncate">{{ getCategoryDisplayName(slice.cat) }}</span>
+                  <span class="text-slate-300 truncate">
+                    {{ slice.displayName }}
+                    <span v-if="chartMember === 'all'" class="text-[8px] text-slate-500 ml-1">({{ slice.payer }})</span>
+                  </span>
                 </div>
                 <span class="font-mono text-slate-400 font-semibold pl-2">{{ slice.percentage }}%</span>
               </div>
@@ -336,9 +323,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <div class="text-right">
-                  <!-- 主金额（始终折算为新币展示） -->
                   <p class="text-xs font-bold text-slate-200 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
-                  <!-- 外币提示：如果是用外币（如马币 MYR）记账，会在下方展示原始金额，新币记账则不显示 -->
                   <p v-if="item.currency && item.currency !== 'SGD'" class="text-[9px] text-amber-400/90 font-mono font-medium">
                     ({{ item.currency === 'MYR' ? 'RM' : item.currency }} {{ Number(item.original_amount).toFixed(2) }})
                   </p>
@@ -416,7 +401,7 @@
           '固定月费 Subscriptions', '零星杂费 Sundries', '其他 Miscellaneous'
         ];
 
-        // 各分类专属色调（用于 SVG 环形渲染）
+        // 各分类专属色调 (用于单人视角的炫彩环形图)
         const categoryColors = {
           '日常伙食 Daily Meal': '#f59e0b',  // 琥珀
           '餐厅聚餐 Restaurant': '#f43f5e',  // 玫瑰
@@ -427,6 +412,12 @@
           '固定月费 Subscriptions': '#6366f1', // 靛蓝
           '零星杂费 Sundries': '#94a3b8',      // 蓝灰
           '其他 Miscellaneous': '#14b8a6'    // 青
+        };
+
+        // 成员视角颜色
+        const memberColors = {
+          m1: '#6366f1', // 小星：星空靛蓝 (Indigo)
+          m2: '#f59e0b'  // 小辰：落日暖琥珀 (Amber)
         };
 
         const getCategoryDisplayName = (cat) => lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
@@ -448,8 +439,7 @@
         
         const filterRange = ref('today');
         const categoryRange = ref('month');
-        // PC 专属图表视角：'all', 'm1' (小星), 'm2' (小辰)
-        const chartMember = ref('all');
+        const chartMember = ref('all'); // 'all', 'm1', 'm2'
 
         const form = reactive({ payer: member1.value, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
 
@@ -489,7 +479,7 @@
           return 'text-emerald-400 font-bold'; 
         };
 
-        // 计算深度对比表（在过滤时间区间的同时，也会响应成员切换高亮或单独过滤计算）
+        // 基础品类统计汇总
         const categoryComparison = computed(() => {
           let filteredBase = records.value;
           if (categoryRange.value === 'today') {
@@ -498,7 +488,6 @@
             filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
           }
 
-          // 如果切换到了个人视角，总基数只计算个人的消费以得出准确的个人品类占比
           let totalRangeSum = 0;
           if (chartMember.value === 'all') {
             totalRangeSum = filteredBase.reduce((s, r) => s + Number(r.amount), 0) || 1;
@@ -513,7 +502,6 @@
             const m1Sum = catRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
             const m2Sum = catRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
             
-            // 根据不同筛选，显示不同的最终数值与分类比例
             let displayedTotal = m1Sum + m2Sum;
             if (chartMember.value === 'm1') displayedTotal = m1Sum;
             if (chartMember.value === 'm2') displayedTotal = m2Sum;
@@ -528,38 +516,95 @@
           }).filter(item => item.total > 0).sort((a, b) => b.total - a.total);
         });
 
-        // ================= 星环图动态渲染逻辑 (Donut Rendering Logic) =================
-        // 计算当前筛选范围+筛选成员下的总支出（排除房租，让图表与日常预算完全对齐）
+        // 计算当前统计面板（除房租外）的总支出
         const chartTotalSum = computed(() => {
+          if (chartMember.value === 'all') {
+            let filteredBase = records.value;
+            if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
+            else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
+            return filteredBase.filter(r => r.category !== '居住房租 Housing').reduce((sum, r) => sum + Number(r.amount), 0).toFixed(2);
+          }
           return categoryComparison.value
             .filter(item => item.cat !== '居住房租 Housing')
             .reduce((sum, item) => sum + item.total, 0)
             .toFixed(2);
         });
 
-        // 动态将品类比例转化为 SVG 环绕角度 dashoffset
+        // ================= ★ 炫彩星环核心渲染逻辑 ★ =================
         const chartSlices = computed(() => {
-          const validItems = categoryComparison.value.filter(item => item.cat !== '居住房租 Housing');
           const totalSumVal = parseFloat(chartTotalSum.value) || 1;
           const circumference = 345.57; // 2 * PI * r (r=55)
 
+          let rawSlices = [];
+
+          let filteredBase = records.value;
+          if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
+          else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
+          
+          // 排除居住房租
+          const validRecords = filteredBase.filter(r => r.category !== '居住房租 Housing');
+
+          if (chartMember.value === 'all') {
+            // 1. 全部视图：以“成员归属”区分星轨颜色（小星 vs 小辰）
+            const m1Sum = validRecords.filter(r => r.payer === member1.value).reduce((sum, r) => sum + Number(r.amount), 0);
+            const m2Sum = validRecords.filter(r => r.payer === member2.value).reduce((sum, r) => sum + Number(r.amount), 0);
+
+            if (m1Sum > 0) {
+              rawSlices.push({
+                id: 'm1',
+                displayName: member1.value,
+                payer: member1.value,
+                total: m1Sum,
+                color: memberColors.m1
+              });
+            }
+            if (m2Sum > 0) {
+              rawSlices.push({
+                id: 'm2',
+                displayName: member2.value,
+                payer: member2.value,
+                total: m2Sum,
+                color: memberColors.m2
+              });
+            }
+          } else {
+            // 2. 个人视图：按“消费品类”区分炫彩颜色
+            const activeMember = chartMember.value === 'm1' ? member1.value : member2.value;
+            const memberRecords = validRecords.filter(r => r.payer === activeMember);
+            
+            categories.filter(c => c !== '居住房租 Housing').forEach(cat => {
+              const catSum = memberRecords.filter(r => r.category === cat).reduce((sum, r) => sum + Number(r.amount), 0);
+              if (catSum > 0) {
+                rawSlices.push({
+                  id: cat,
+                  displayName: getCategoryDisplayName(cat),
+                  payer: activeMember,
+                  total: catSum,
+                  color: categoryColors[cat] || '#ffffff'
+                });
+              }
+            });
+          }
+
+          // 排序：按金额从大到小排列
+          rawSlices.sort((a, b) => b.total - a.total);
+
+          // 转换为 SVG 环形所需的偏移量 (Dashoffset)
           let accumulatedPercent = 0;
-          return validItems.map(item => {
-            const percent = item.total / totalSumVal;
+          return rawSlices.map(slice => {
+            const percent = slice.total / totalSumVal;
             const percentageText = Math.round(percent * 100);
-            // 每一个切片的起点偏移量
             const offset = circumference - (percent * circumference) - (accumulatedPercent * circumference);
             accumulatedPercent += percent;
 
             return {
-              cat: item.cat,
-              color: categoryColors[item.cat] || '#ffffff',
+              ...slice,
               percentage: percentageText,
               offset: offset
             };
           });
         });
-        // =========================================================================
+        // ==========================================================
 
         const addRecord = async () => {
           if (!form.amount) return;

@@ -3,26 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>星辰小账 | Starry Ledger - Minimalist</title>
-  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 180%22><rect width=%22100%%22 height=%22100%%22 rx=%2240%22 fill=%22%23000000%22/><text x=%2250%%22 y=%2255%%22 font-size=%2290%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%23ffffff%22>⚡</text></svg>">
+  <title>星辰小账 | Starry Ledger - Cyberpunk</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 180%22><rect width=%22100%%22 height=%22100%%22 rx=%2240%22 fill=%22%23020617%22/><text x=%2250%%22 y=%2255%%22 font-size=%2290%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>🛸</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #000000; color: #a3a3a3; min-height: 100vh; }
-    .glass-card { background: #0a0a0a; border: 1px solid #171717; }
+    body { font-family: 'Courier New', Courier, monospace, sans-serif; background: #02040a; color: #00ffcc; min-height: 100vh; }
+    .star-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(0,255,204,0.02) 0%, transparent 100%); z-index: -1; }
+    .glass-card { background: rgba(5, 10, 20, 0.85); border: 1px solid #00ffcc; box-shadow: 0 0 15px rgba(0, 255, 204, 0.15); position: relative; }
+    .glass-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 4px; background: #00ffcc; }
+    .glass-card::after { content: ''; position: absolute; bottom: 0; right: 0; width: 4px; height: 4px; background: #ff007f; }
     [v-cloak] { display: none !important; }
-    .chart-ring { transition: stroke-dashoffset 0.5s ease; }
-    .fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
-    .fade-enter-from, .fade-leave-to { opacity: 0; }
-    input, select, button { transition: all 0.2s ease; }
+    .chart-ring { transition: stroke-dashoffset 0.4s ease-out; stroke-linecap: square; }
     
     @media (min-width: 1024px) {
       #app { font-size: 1.2rem; }
-      .container { max-width: 90rem !important; }
-      .glass-card { padding: 1.2rem !important; border-radius: 0.75rem !important; }
-      header { margin-bottom: 2rem !important; }
+      .container { max-width: 95rem !important; }
+      .glass-card { padding: 1.2rem !important; }
       .text-xs { font-size: 1.05rem !important; }
       .text-sm { font-size: 1.2rem !important; }
       .text-base { font-size: 1.35rem !important; }
@@ -30,206 +29,225 @@
       .text-\[9px\] { font-size: 11px !important; }
       .text-\[10px\] { font-size: 12px !important; }
       .text-\[11px\] { font-size: 13.2px !important; }
-      input, select, button { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; border-radius: 0.37rem !important; }
+      input, select, button { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
       .grid { gap: 1.5rem !important; }
       .max-h-\[440px\] { max-height: 528px !important; }
     }
   </style>
 </head>
 <body>
+  <div class="star-bg"></div>
   <div id="app" v-cloak class="container mx-auto p-3 md:p-4 max-w-7xl">
     
-    <header class="flex justify-between items-center mb-6 py-3 border-b border-neutral-900">
-      <h1 class="text-xs font-mono tracking-[0.3em] text-white uppercase">{{ lang === 'zh' ? 'STARRY LEDGER' : 'STARRY LEDGER' }}</h1>
-      <div class="flex items-center gap-3 font-mono text-[9px]">
-        <div class="text-neutral-600 space-x-2">
-          <span>SGD:1</span>
-          <span>MYR:{{ exchangeRate.toFixed(2) }}</span>
-          <span>CNY:{{ exchangeRateCny.toFixed(2) }}</span>
+    <header class="flex justify-between items-center mb-4 py-2 border-b-2 border-dashed border-[#00ffcc]">
+      <div class="flex items-center gap-2">
+        <h1 class="text-sm md:text-lg font-black tracking-widest text-[#00ffcc] shadow-cyan-500">
+          SYSTEM_CORE // <span class="text-[#ff007f]">STARRY_LEDGER_v4.0</span>
+        </h1>
+      </div>
+      <div class="flex items-center gap-2 font-mono text-[9px]">
+        <div class="bg-black px-2 py-0.5 border border-[#ff007f] text-[#ff007f]">
+          SGD/1 :: MYR/{{ exchangeRate.toFixed(2) }} :: CNY/{{ exchangeRateCny.toFixed(2) }}
         </div>
-        <button @click="toggleLang" class="text-neutral-400 hover:text-white uppercase font-bold">{{ lang === 'zh' ? 'ZH' : 'EN' }}</button>
+        <button @click="toggleLang" class="bg-[#00ffcc] text-black px-2 font-bold">
+          {{ lang === 'zh' ? 'ZH' : 'EN' }}
+        </button>
       </div>
     </header>
 
-    <section class="glass-card rounded-md p-2 mb-4 flex items-center gap-3 overflow-x-auto whitespace-nowrap">
-      <span class="text-[10px] uppercase font-mono tracking-widest text-neutral-500">{{ t('members') }}:</span>
-      <input type="text" v-model="member1" class="bg-transparent border-b border-neutral-800 text-xs font-mono text-center text-white w-20 focus:outline-none focus:border-neutral-500">
-      <input type="text" v-model="member2" class="bg-transparent border-b border-neutral-800 text-xs font-mono text-center text-white w-20 focus:outline-none focus:border-neutral-500">
+    <section class="glass-card p-2 mb-4 flex items-center gap-3 overflow-x-auto">
+      <span class="text-xs font-bold text-[#ff007f] flex-shrink-0">&gt; PILOTS:</span>
+      <input type="text" v-model="member1" class="bg-black text-xs text-[#00ffcc] border border-[#00ffcc] w-20 text-center py-0.5">
+      <input type="text" v-model="member2" class="bg-black text-xs text-[#00ffcc] border border-[#00ffcc] w-20 text-center py-0.5">
     </section>
 
+    <!-- 四象限大面板 -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
       
-      <!-- 控制中心 -->
+      <!-- 控制舱 -->
       <main class="lg:col-span-5 space-y-4">
-        <div class="glass-card rounded-md p-3 md:p-4">
-          <form @submit.prevent="addRecord" class="space-y-4">
+        <div class="glass-card p-3 md:p-4">
+          <h2 class="text-xs md:text-sm font-bold mb-3 text-[#ff007f]">&gt;_ LOAD_TRANSACTION</h2>
+          <form @submit.prevent="addRecord" class="space-y-3">
             <div class="grid grid-cols-2 gap-2">
-              <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-neutral-800 text-white font-mono' : 'bg-transparent text-neutral-600'" class="py-1 border border-neutral-800 text-xs">{{ member1 }}</button>
-              <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-neutral-800 text-white font-mono' : 'bg-transparent text-neutral-600'" class="py-1 border border-neutral-800 text-xs">{{ member2 }}</button>
+              <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-[#00ffcc] text-black font-bold' : 'bg-transparent text-[#00ffcc] border border-[#00ffcc]'" class="py-1.5 text-xs">{{ member1 }}</button>
+              <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-[#ff007f] text-white font-bold' : 'bg-transparent text-[#ff007f] border border-[#ff007f]'" class="py-1.5 text-xs">{{ member2 }}</button>
             </div>
 
-            <div class="flex border border-neutral-800 rounded-sm overflow-hidden bg-transparent">
-              <span class="px-3 py-1.5 text-neutral-500 font-mono text-xs bg-neutral-900/40">{{ form.currency }}</span>
-              <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-transparent py-1 px-2 text-white font-mono text-sm focus:outline-none">
-              <select v-model="form.currency" class="bg-black text-xs text-neutral-400 px-2 focus:outline-none">
+            <div class="flex gap-2 bg-black border border-[#00ffcc] p-1">
+              <span class="text-[#ff007f] font-mono text-xs font-bold self-center px-1">{{ form.currency }}</span>
+              <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-black text-[#00ffcc] py-1 text-sm focus:outline-none font-mono">
+              <select v-model="form.currency" class="bg-black text-xs text-[#00ffcc] focus:outline-none">
                 <option value="SGD">SGD</option><option value="MYR">MYR</option><option value="CNY">CNY</option>
               </select>
             </div>
 
             <div class="grid grid-cols-3 gap-1">
               <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
-                :class="form.category === cat ? 'border-neutral-400 text-white bg-neutral-900' : 'border-neutral-900 text-neutral-600'" class="py-1 text-[10px] border transition text-center truncate">
+                :class="form.category === cat ? 'bg-[#ff007f] text-white font-bold' : 'bg-black text-[#00ffcc] border border-[#00ffcc]/30'" class="py-1.5 text-[9px] truncate transition">
                 {{ getCategoryDisplayName(cat) }}
               </button>
             </div>
 
             <div class="grid grid-cols-12 gap-2">
-              <input type="date" v-model="form.date" required class="col-span-5 bg-transparent border border-neutral-800 p-1 text-xs text-neutral-400 focus:outline-none">
-              <input type="text" v-model="form.remark" placeholder="..." class="col-span-7 bg-transparent border border-neutral-800 p-1 text-xs text-neutral-300 focus:outline-none">
+              <input type="date" v-model="form.date" required class="col-span-5 bg-black border border-[#00ffcc] text-xs text-[#00ffcc] p-1">
+              <input type="text" v-model="form.remark" placeholder="REMARK..." class="col-span-7 bg-black border border-[#00ffcc] text-xs text-[#00ffcc] p-1 focus:outline-none">
             </div>
 
-            <button type="submit" class="w-full bg-neutral-200 hover:bg-white text-black font-mono font-bold py-2 text-xs uppercase tracking-widest">{{ t('save') }}</button>
+            <button type="submit" class="w-full bg-[#00ffcc] hover:bg-cyan-400 text-black font-black py-2 text-xs tracking-widest">[ INJECT TO NET ]</button>
           </form>
         </div>
 
-        <!-- 数据静默面板 -->
-        <div class="glass-card rounded-md p-3 md:p-4 space-y-4 font-mono text-[11px]">
-          <div class="space-y-3">
-            <div class="border-b border-neutral-900 pb-2 flex justify-between items-center">
-              <span class="text-white font-bold">{{ member1 }}</span>
-              <div class="text-neutral-600 text-[10px]">
-                <span>LIMIT: </span>
-                <input type="number" v-model.number="budgetM1" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" class="w-10 bg-transparent text-neutral-400 text-center border-b border-neutral-800 focus:outline-none">
-              </div>
-            </div>
-            <div class="grid grid-cols-3 gap-1 text-neutral-500 text-[10px]">
-              <div>DAY: <span class="text-neutral-300">S$ {{ totalTodayM1 }}</span></div>
-              <div>WK: <span class="text-neutral-300">S$ {{ totalThisWeekM1 }}</span></div>
-              <div class="text-right">REM: <span :class="getBudgetColorClass(m1PercentOfBudget, budgetM1)">S$ {{ remainM1 }}</span></div>
-            </div>
-
-            <div class="border-b border-neutral-900 pb-2 flex justify-between items-center pt-2">
-              <span class="text-white font-bold">{{ member2 }}</span>
-              <div class="text-neutral-600 text-[10px]">
-                <span>LIMIT: </span>
-                <input type="number" v-model.number="budgetM2" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" class="w-10 bg-transparent text-neutral-400 text-center border-b border-neutral-800 focus:outline-none">
-              </div>
-            </div>
-            <div class="grid grid-cols-3 gap-1 text-neutral-500 text-[10px]">
-              <div>DAY: <span class="text-neutral-300">S$ {{ totalTodayM2 }}</span></div>
-              <div>WK: <span class="text-neutral-300">S$ {{ totalThisWeekM2 }}</span></div>
-              <div class="text-right">REM: <span :class="getBudgetColorClass(m2PercentOfBudget, budgetM2)">S$ {{ remainM2 }}</span></div>
-            </div>
-          </div>
-
-          <div v-if="totalRatioSum > 0" class="w-full bg-neutral-900 h-[1px] flex">
-            <div class="bg-neutral-400 h-full" :style="{ width: m1Percent + '%' }"></div>
-            <div class="bg-neutral-600 h-full" :style="{ width: m2Percent + '%' }"></div>
-          </div>
-
-          <div class="flex justify-between items-center text-[10px] pt-1">
-            <button @click.stop="toggleDatePicker('left')" class="text-neutral-500 hover:text-white">
-              [{{ selectedMonthText }}]
-            </button>
-            <transition name="fade">
-              <div v-if="showDatePicker && activePicker === 'left'" @click.stop class="absolute bg-black border border-neutral-800 p-2 z-50">
-                <div class="grid grid-cols-3 gap-1">
-                  <button type="button" v-for="m in 12" :key="m" @click="selectPanelMonth(m)" class="text-[10px] p-1 text-neutral-400 hover:text-white">
-                    {{ String(m).padStart(2, '0') }}M
-                  </button>
+        <!-- 矩阵吞吐量仪表 -->
+        <div class="glass-card p-3 md:p-4 space-y-3 font-mono text-[11px]">
+          <h3 class="text-xs font-bold text-[#ff007f]">&gt;_ NET_CAPACITY</h3>
+          
+          <div class="space-y-2">
+            <!-- 成员1 -->
+            <div class="bg-black/60 p-2 border border-[#00ffcc]/40">
+              <div class="flex justify-between items-center text-[#00ffcc]">
+                <span>PILOT_01 // {{ member1 }}</span>
+                <div class="flex items-center gap-1 text-[9px]">
+                  <span>LIMIT:</span>
+                  <input type="number" v-model.number="budgetM1" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" class="w-12 bg-black text-[#00ffcc] border border-[#00ffcc] text-center h-4">
                 </div>
               </div>
+              <div class="grid grid-cols-3 gap-1 mt-1.5 text-[10px] text-white">
+                <div>DAY: S$ {{ totalTodayM1 }}</div>
+                <div>WK: S$ {{ totalThisWeekM1 }}</div>
+                <div class="text-right text-[#00ffcc]">REM: S$ {{ remainM1 }}</div>
+              </div>
+            </div>
+
+            <!-- 成员2 -->
+            <div class="bg-black/60 p-2 border border-[#ff007f]/40">
+              <div class="flex justify-between items-center text-[#ff007f]">
+                <span>PILOT_02 // {{ member2 }}</span>
+                <div class="flex items-center gap-1 text-[9px]">
+                  <span>LIMIT:</span>
+                  <input type="number" v-model.number="budgetM2" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" class="w-12 bg-black text-[#ff007f] border border-[#ff007f] text-center h-4">
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-1 mt-1.5 text-[10px] text-white">
+                <div>DAY: S$ {{ totalTodayM2 }}</div>
+                <div>WK: S$ {{ totalThisWeekM2 }}</div>
+                <div class="text-right text-[#ff007f]">REM: S$ {{ remainM2 }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="totalRatioSum > 0" class="w-full bg-neutral-900 h-2 flex border border-white/20">
+            <div class="bg-[#00ffcc] h-full" :style="{ width: m1Percent + '%' }"></div>
+            <div class="bg-[#ff007f] h-full" :style="{ width: m2Percent + '%' }"></div>
+          </div>
+
+          <div class="flex justify-between items-center text-[10px] text-white pt-1">
+            <button @click.stop="toggleDatePicker('left')" class="text-[#00ffcc] underline">
+              [{ selectedMonthText }]
+            </button>
+            <transition name="fade">
+              <div v-if="showDatePicker && activePicker === 'left'" @click.stop class="absolute bg-black border border-[#00ffcc] p-2 z-50 grid grid-cols-4 gap-1">
+                <button type="button" v-for="m in 12" :key="m" @click="selectPanelMonth(m)" class="text-[9px] text-[#00ffcc] p-1 border border-[#00ffcc]/30">
+                  {{ m }}M
+                </button>
+              </div>
             </transition>
-            <span class="text-neutral-400">TOTAL: <span class="text-white font-bold">S$ {{ totalMonth }}</span></span>
+            <span class="text-[#ff007f]">NET_SUM: S$ {{ totalMonth }}</span>
           </div>
         </div>
       </main>
 
-      <!-- 列表与PC静默大屏 -->
+      <!-- 全景图表与核心矩阵 -->
       <section class="lg:col-span-7 space-y-4">
         
-        <!-- PC大屏品类深度面板 -->
-        <div class="hidden lg:block glass-card rounded-md p-4 space-y-4 font-mono text-[11px]">
-          <div class="flex justify-between items-center border-b border-neutral-900 pb-2">
-            <span class="text-white tracking-widest text-[10px]">DIAGNOSTICS</span>
-            <div class="flex gap-2 text-[9px] text-neutral-600">
-              <button @click="chartMember = 'all'" :class="{'text-white': chartMember==='all'}">ALL</button>
-              <button @click="chartMember = 'm1'" :class="{'text-white': chartMember==='m1'}">M1</button>
-              <button @click="chartMember = 'm2'" :class="{'text-white': chartMember==='m2'}">M2</button>
+        <!-- PC深度全景象限 -->
+        <div class="hidden lg:block glass-card p-4 space-y-3 font-mono text-[11px]">
+          <div class="flex justify-between items-center border-b border-[#00ffcc] pb-2">
+            <span class="font-black text-[#ff007f]">&gt;_ QUANTUM_VISUALIZER</span>
+            <div class="flex gap-2 text-[9px]">
+              <button @click="chartMember = 'all'" :class="{'bg-[#00ffcc] text-black px-1': chartMember==='all'}">ALL</button>
+              <button @click="chartMember = 'm1'" :class="{'bg-[#00ffcc] text-black px-1': chartMember==='m1'}">M1</button>
+              <button @click="chartMember = 'm2'" :class="{'bg-[#ff007f] text-white px-1': chartMember==='m2'}">M2</button>
               <span>|</span>
-              <button @click="categoryRange = 'month'" :class="{'text-white': categoryRange==='month'}">MONTH</button>
-              <button @click="categoryRange = 'year'" :class="{'text-white': categoryRange==='year'}">YEAR</button>
+              <button @click="categoryRange = 'month'" :class="{'bg-white text-black px-1': categoryRange==='month'}">MONTH</button>
+              <button @click="categoryRange = 'year'" :class="{'bg-white text-black px-1': categoryRange==='year'}">YEAR</button>
             </div>
           </div>
 
-          <div class="flex items-center gap-4 py-2">
-            <div class="w-1/4 flex justify-center relative">
-              <svg width="100" height="100" viewBox="0 0 150 150" class="transform -rotate-90">
-                <circle cx="75" cy="75" r="60" fill="transparent" stroke="#171717" stroke-width="4" />
+          <div class="grid grid-cols-12 gap-4 items-center bg-black/50 p-3 border border-[#00ffcc]/30">
+            <div class="col-span-4 flex justify-center relative">
+              <svg width="110" height="110" viewBox="0 0 150 150" class="transform -rotate-90">
+                <circle cx="75" cy="75" r="55" fill="transparent" stroke="#112233" stroke-width="12" />
                 <circle v-for="(slice, index) in chartSlices" :key="index"
-                  cx="75" cy="75" r="60" fill="transparent" stroke="#ffffff" stroke-width="4" :stroke-dasharray="slice.dashArray" :stroke-dashoffset="slice.offset" class="chart-ring" :style="{opacity: 1 - (index*0.1)}" />
+                  cx="75" cy="75" r="55" fill="transparent" :stroke="index % 2 === 0 ? '#00ffcc' : '#ff007f'" stroke-width="12" :stroke-dasharray="slice.dashArray" :stroke-dashoffset="slice.offset" class="chart-ring" />
               </svg>
+              <div class="absolute inset-0 flex flex-col justify-center items-center text-center">
+                <span class="text-[12px] font-black text-white">S$ {{ chartTotalSum }}</span>
+              </div>
             </div>
-            <div class="w-3/4 grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
-              <div v-for="slice in chartSlices" :key="slice.id" class="flex justify-between border-b border-neutral-950 text-neutral-500">
-                <span class="truncate">{{ slice.displayName }}</span>
-                <span class="text-neutral-300">{{ slice.percentage }}%</span>
+
+            <div class="col-span-8 max-h-[110px] overflow-y-auto space-y-1 text-[10px]">
+              <div v-for="slice in chartSlices" :key="slice.id" class="flex justify-between text-[#00ffcc]">
+                <span>&gt; {{ slice.displayName }}</span>
+                <span class="text-white font-bold">{{ slice.percentage }}%</span>
               </div>
             </div>
           </div>
 
-          <table class="w-full text-left text-neutral-500 text-[10px]">
-            <thead>
-              <tr class="border-b border-neutral-900 text-neutral-400">
-                <th class="py-1">CAT</th><th class="py-1 text-right">M1</th><th class="py-1 text-right">M2</th><th class="py-1 text-right text-white">SUM</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in categoryComparison" :key="row.cat" class="border-b border-neutral-950 hover:text-white" :class="{'opacity-30': row.cat.includes('居住房租')}">
-                <td class="py-1 text-neutral-300">{{ getCategoryDisplayName(row.cat) }}</td>
-                <td class="py-1 text-right">S$ {{ row.m1.toFixed(2) }}</td>
-                <td class="py-1 text-right">S$ {{ row.m2.toFixed(2) }}</td>
-                <td class="py-1 text-right text-neutral-200">S$ {{ row.total.toFixed(2) }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-[10px] text-white">
+              <thead>
+                <tr class="border-b border-[#00ffcc]/40 text-[#00ffcc]">
+                  <th>MATRIX_NODE</th><th class="text-right">M1_FLOW</th><th class="text-right">M2_FLOW</th><th class="text-right text-[#ff007f]">SUM</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in categoryComparison" :key="row.cat" class="border-b border-neutral-900 hover:bg-[#00ffcc]/10" :class="{'opacity-30 italic': row.cat.includes('居住房租')}">
+                  <td class="py-1 text-[#00ffcc] font-bold">// {{ getCategoryDisplayName(row.cat) }}</td>
+                  <td class="py-1 text-right">S$ {{ row.m1.toFixed(2) }}</td>
+                  <td class="py-1 text-right">S$ {{ row.m2.toFixed(2) }}</td>
+                  <td class="py-1 text-right text-[#ff007f] font-bold">S$ {{ row.total.toFixed(2) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- PC订阅项 -->
-        <div class="hidden lg:block glass-card rounded-md p-3 font-mono text-[10px] text-neutral-600">
-          <div class="flex justify-between mb-2 text-neutral-400"><span>SUBSCRIPTIONS</span><span>COUNT: {{ allSubscriptions.length }}</span></div>
-          <div class="space-y-1 max-h-[100px] overflow-y-auto">
-            <div v-for="sub in allSubscriptions" :key="sub.id" class="flex justify-between py-0.5 border-b border-neutral-950">
-              <span class="text-neutral-400 truncate max-w-[150px]">{{ sub.remark || 'Recurring' }} ({{sub.payer}})</span>
-              <span class="text-white font-bold">S$ {{ Number(sub.amount).toFixed(2) }}</span>
+        <div class="hidden lg:block glass-card p-3 font-mono text-[10px] border border-[#ff007f]/50">
+          <div class="text-[#ff007f] font-bold mb-1">&gt; DAEMON_SUBSCRIPTIONS ({{ allSubscriptions.length }})</div>
+          <div class="grid grid-cols-2 gap-2 max-h-[100px] overflow-y-auto">
+            <div v-for="sub in allSubscriptions" :key="sub.id" class="bg-black p-1 border border-neutral-800 flex justify-between">
+              <span class="text-white truncate max-w-[120px]">{{ sub.remark || 'Daemon' }}</span>
+              <span class="text-[#00ffcc]">S$ {{ Number(sub.amount).toFixed(2) }}</span>
             </div>
           </div>
         </div>
 
-        <!-- 历史流水明细 -->
-        <div class="glass-card rounded-md p-3 md:p-4">
-          <div class="flex justify-between items-center border-b border-neutral-900 pb-2 mb-3 font-mono text-[10px]">
-            <span class="text-neutral-400 tracking-wider">LEDGER TRAILS</span>
-            <div class="flex gap-3">
-              <button @click="exportToCSV" class="text-neutral-500 hover:text-white">CSV</button>
-              <button @click="filterRange = 'today'" :class="{'text-white font-bold': filterRange==='today'}">DAY</button>
-              <button @click="filterRange = 'month'" :class="{'text-white font-bold': filterRange==='month'}">MONTH</button>
+        <!-- 流水终端 -->
+        <div class="glass-card p-3 md:p-4">
+          <div class="flex justify-between items-center mb-3 font-mono text-[10px] border-b border-[#ff007f]/40 pb-2">
+            <h2 class="font-bold text-[#00ffcc]">&gt;_ DATA_STREAM_OUTPUT</h2>
+            <div class="flex gap-2">
+              <button @click="exportToCSV" class="text-[#ff007f] underline">DUMP_CSV</button>
+              <button @click="filterRange = 'today'" :class="{'text-black bg-[#00ffcc] px-1': filterRange==='today'}">TODAY</button>
+              <button @click="filterRange = 'month'" :class="{'text-black bg-[#00ffcc] px-1': filterRange==='month'}">MONTH</button>
             </div>
           </div>
 
-          <div class="space-y-1 max-h-[400px] overflow-y-auto pr-1 font-mono text-xs">
-            <div v-if="loading" class="text-center py-4 text-neutral-700">SYNCING...</div>
-            <div v-else-if="filteredRecords.length === 0" class="text-center py-4 text-neutral-700">NO TRAIL</div>
+          <div class="space-y-1 max-h-[350px] md:max-h-[440px] overflow-y-auto font-mono text-xs">
+            <div v-if="loading" class="text-center text-[#ff007f] py-4 animate-pulse">DOWNLOADING CORE DATA...</div>
+            <div v-else-if="filteredRecords.length === 0" class="text-center text-neutral-600 py-4">STREAM EMPTY</div>
             
-            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex justify-between items-center py-1.5 border-b border-neutral-950 hover:bg-neutral-900/40 px-1 transition-all" :class="{'opacity-40': item.category.includes('居住房租')}">
+            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex justify-between items-center py-1 bg-black border border-neutral-900 hover:border-[#00ffcc] px-2" :class="{'border-[#ff007f]/30': item.category.includes('居住房租')}">
               <div class="flex items-center gap-2 truncate">
-                <span class="text-[9px] text-neutral-600 uppercase">[{{ item.payer }}]</span>
-                <span class="text-neutral-200 truncate">{{ getCategoryDisplayName(item.category) }}</span>
-                <span v-if="item.remark" class="text-[10px] text-neutral-600 truncate">({{ item.remark }})</span>
+                <span :class="item.payer === member1 ? 'text-[#00ffcc]' : 'text-[#ff007f]'" class="font-bold text-[10px]">[SIG_{{ item.payer === member1 ? '01' : '02' }}]</span>
+                <span class="text-white truncate">{{ getCategoryDisplayName(item.category) }}</span>
+                <span v-if="item.remark" class="text-[10px] text-neutral-500 truncate">#{{ item.remark }}</span>
               </div>
               <div class="flex items-center gap-3 flex-shrink-0">
-                <span class="text-white font-bold">S$ {{ Number(item.amount).toFixed(2) }}</span>
-                <button type="button" @click="deleteRecord(item.id)" class="text-neutral-700 hover:text-neutral-400 font-sans text-[10px]">×</button>
+                <span class="text-[#00ffcc] font-black">S$ {{ Number(item.amount).toFixed(2) }}</span>
+                <button type="button" @click="deleteRecord(item.id)" class="text-[#ff007f] hover:text-red-400 text-[10px]">[DEL]</button>
               </div>
             </div>
           </div>
@@ -258,7 +276,7 @@
       setup() {
         const lang = ref('zh'); const exchangeSyncing = ref(false);
         const translations = {
-          zh: { members: '星员', addRecord: '记账', payer: '支付', amount: '金额', category: '分类', date: '日期', remark: '备注', save: '存入', analysis: '汇总', today: '今日', thisWeek: '本周', thisMonthTotal: '当月星轨总计', details: '明细', loading: '加载', noRecords: '无记录', rangeToday: '今日', rangeWeek: '本周', rangeMonth: '本月', exportBtn: '导出', ratio: '比例', tableCat: '品类', tableTotal: '总支出', tableRatio: '占比', budgetSuffix: '预算', budgetLabel: '预算', remainingBudget: '剩余日常预算', nearBudget: '临界', overBudget: '超支', excludeHousing: '不含房租', excludeLabel: '排除', viewAll: '全' },
+          zh: { members: '星员', addRecord: '核心存入', payer: '支付', amount: '金额', category: '分类', date: '日期', remark: '备注', save: '保存', analysis: '汇总', today: '今日', thisWeek: '本周', thisMonthTotal: '当月星轨总计', details: '数据流明细', loading: '加载', noRecords: '无记录', rangeToday: '今日', rangeWeek: '本周', rangeMonth: '本月', exportBtn: '导出', ratio: '比例', tableCat: '品类', tableTotal: '总支出', tableRatio: '占比', budgetSuffix: '预算', budgetLabel: '预算', remainingBudget: '剩余日常预算', nearBudget: '临界', overBudget: '超支', excludeHousing: '不含房租', excludeLabel: '排除', viewAll: '全' },
           en: { members: 'Gang', addRecord: 'Log', payer: 'Payer', amount: 'Amt', category: 'Cat', date: 'Date', remark: 'Rem', save: 'Save', analysis: 'Stats', today: 'Today', thisWeek: 'Week', thisMonthTotal: 'Total', details: 'Trails', loading: 'Load', noRecords: 'Empty', rangeToday: 'Today', rangeWeek: 'Week', rangeMonth: 'Month', exportBtn: 'Exp', ratio: 'Ratio', tableCat: 'Cat', tableTotal: 'Total', tableRatio: 'Share', budgetSuffix: 'Bud', budgetLabel: 'Bud', remainingBudget: 'Remain', nearBudget: 'Near', overBudget: 'Over', excludeHousing: 'Excl. Rent', excludeLabel: 'Excl', viewAll: 'All' }
         };
 
@@ -344,7 +362,7 @@
         const m2PercentOfBudget = computed(() => budgetM2.value ? Math.round((m2TotalNum.value / budgetM2.value) * 100) : 0);
 
         const getBudgetColorClass = (p, b) => {
-          if (!b) return 'text-neutral-500'; if (p >= 100) return 'text-white underline'; return 'text-neutral-300';
+          if (!b) return 'text-neutral-500'; if (p >= 100) return 'text-red-500 font-bold'; return 'text-[#00ffcc]';
         };
 
         const categoryComparison = computed(() => {
@@ -359,7 +377,7 @@
 
         const chartTotalSum = computed(() => categoryComparison.value.filter(i => i.cat !== '居住房租 Housing').reduce((s, i) => s + i.total, 0).toFixed(2));
         const chartSlices = computed(() => {
-          const total = parseFloat(chartTotalSum.value) || 1; const circ = 376.99; let acc = 0;
+          const total = parseFloat(chartTotalSum.value) || 1; const circ = 345.57; let acc = 0;
           return categoryComparison.value.filter(i => i.cat !== '居住房租 Housing').map(item => {
             const p = item.total / total; const offset = circ - (acc * circ); const len = p * circ;
             acc += p; return { id: item.cat, displayName: getCategoryDisplayName(item.cat), percentage: Math.round(p*100), dashArray: `${len} ${circ-len}`, offset };

@@ -55,7 +55,6 @@
       .pc-datepicker-container button { padding: 0.4rem 0.6rem !important; }
       .pc-datepicker-text { white-space: nowrap !important; min-width: 7.5rem !important; text-align: center; }
       
-      /* PC 端顶部汇率缩放与对齐微调 */
       .pc-exchange-tag { font-size: 10.5px !important; padding: 0.2rem 0.5rem !important; }
       .pc-exchange-input { font-size: 10.5px !important; width: 2.5rem !important; }
     }
@@ -73,14 +72,14 @@
       <div class="flex items-center gap-1.5 flex-wrap md:flex-nowrap justify-end">
         <button @click="toggleLang" class="text-[9px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded-full border border-slate-700 transition self-center h-[22px] flex items-center justify-center">{{ lang === 'zh' ? 'English' : '中文' }}</button>
         
-        <!-- 马币汇率显示（精致缩小化） -->
+        <!-- 马币汇率 -->
         <div class="pc-exchange-tag text-[9px] text-amber-200 bg-amber-950/30 border border-amber-900/40 px-2 py-0.5 rounded-full flex items-center gap-0.5 font-mono h-[22px]">
           <span>1 SGD=</span>
           <input type="number" step="0.0001" v-model.number="exchangeRate" class="pc-exchange-input w-10 bg-transparent text-center border-b border-amber-400/30 focus:outline-none focus:border-amber-400 font-bold p-0 text-[9px] h-full leading-none">
           <span>MYR</span>
         </div>
 
-        <!-- 人民币汇率显示（精致缩小化） -->
+        <!-- 人民币汇率 -->
         <div class="pc-exchange-tag text-[9px] text-rose-200 bg-rose-950/30 border border-rose-900/40 px-2 py-0.5 rounded-full flex items-center gap-0.5 font-mono h-[22px]">
           <span>1 SGD=</span>
           <input type="number" step="0.0001" v-model.number="exchangeRateCny" class="pc-exchange-input w-10 bg-transparent text-center border-b border-rose-400/30 focus:outline-none focus:border-rose-400 font-bold p-0 text-[9px] h-full leading-none">
@@ -313,7 +312,7 @@
             </div>
           </div>
 
-          <!-- 星轨圆环分布图表区 -->
+          <!-- 星轨圆环图表 -->
           <div class="grid grid-cols-12 gap-4 items-center bg-slate-950/20 p-4 rounded-xl border border-slate-800/50">
             <div class="col-span-5 flex justify-center relative">
               <svg width="180" height="180" viewBox="0 0 150 150" class="transform -rotate-90">
@@ -363,7 +362,7 @@
                       <span v-if="row.cat.includes('居住房租')" class="ml-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[9px] text-amber-400/90 font-sans tracking-tight">{{ t('excludeLabel') }}</span>
                     </td>
                     <td class="py-2 text-right font-mono text-indigo-300/90" :class="{'font-bold text-indigo-300': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
-                    <td class="py-2 text-right font-mono text-amber-300/90" :class="{'font-bold text-amber-300': chartMember === 'm2'}">S$ {{ row.total.toFixed(2) }}</td>
+                    <td class="py-2 text-right font-mono text-amber-300/90" :class="{'font-bold text-amber-300': chartMember === 'm2'}">S$ {{ row.m2.toFixed(2) }}</td>
                     <td class="py-2 text-right font-mono font-semibold text-slate-200">S$ {{ row.total.toFixed(2) }}</td>
                     <td class="py-2 text-right font-mono text-[10px] text-slate-500">{{ row.ratio }}%</td>
                   </tr>
@@ -775,6 +774,7 @@
           });
         });
 
+        // 记账逻辑核心拦截触发点
         const addRecord = async () => {
           if (!form.amount) return;
           
@@ -789,7 +789,10 @@
             activeRate = exchangeRateCny.value;
           }
 
-          const priorM1Total = m1TotalNum.value; const priorM2Total = m2TotalNum.value;
+          // 记录下发请求前的快照数值
+          const priorM1Total = m1TotalNum.value; 
+          const priorM2Total = m2TotalNum.value;
+          const currentPayer = form.payer;
 
           try {
             await supabaseClient.from('starry_ledger').insert([{ 
@@ -802,18 +805,37 @@
               remark: form.remark, 
               exchange_rate: activeRate 
             }]);
-            form.amount = null; form.remark = ''; form.date = getLocalDateString();
+            
+            // 重置表单
+            form.amount = null; 
+            form.remark = ''; 
+            form.date = getLocalDateString();
+            
+            // 重新调取最新云端账单库
             await fetchRecords();
 
+            // 数据彻底回归后，延时触发防越界警告窗
             setTimeout(() => {
-              if (form.payer === member1.value && budgetM1.value) {
-                const newTotal = m1TotalNum.value; const percent = (newTotal / budgetM1.value) * 100; const priorPercent = (priorM1Total / budgetM1.value) * 100;
-                if (percent >= 100 && priorPercent < 100) alert(`🚨 星轨溢出警告：\n${member1.value} 的本月日常账目已超出预算上限！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM1.value})`);
-                else if (percent >= 80 && percent < 100 && priorPercent < 80) alert(`⚠️ 星轨接近饱和：\n${member1.value} 的本月日常预算使用已超过 80%！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM1.value})`);
-              } else if (form.payer === member2.value && budgetM2.value) {
-                const newTotal = m2TotalNum.value; const percent = (newTotal / budgetM2.value) * 100; const priorPercent = (priorM2Total / budgetM2.value) * 100;
-                if (percent >= 100 && priorPercent < 100) alert(`🚨 星轨溢出警告：\n${member2.value} 的本月日常账目已超出预算上限！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM2.value})`);
-                else if (percent >= 80 && percent < 100 && priorPercent < 80) alert(`⚠️ 星轨接近饱和：\n${member2.value} 的本月日常预算使用已超过 80%！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM2.value})`);
+              if (currentPayer === member1.value && budgetM1.value) {
+                const newTotal = m1TotalNum.value; 
+                const percent = (newTotal / budgetM1.value) * 100; 
+                const priorPercent = (priorM1Total / budgetM1.value) * 100;
+                
+                if (percent >= 100 && priorPercent < 100) {
+                  alert(`🚨 星轨溢出警告：\n${member1.value} 的本月日常账目已超出预算上限！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM1.value})`);
+                } else if (percent >= 80 && percent < 100 && priorPercent < 80) {
+                  alert(`⚠️ 星轨接近饱和：\n${member1.value} 的本月日常预算使用已超过 80%！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM1.value})`);
+                }
+              } else if (currentPayer === member2.value && budgetM2.value) {
+                const newTotal = m2TotalNum.value; 
+                const percent = (newTotal / budgetM2.value) * 100; 
+                const priorPercent = (priorM2Total / budgetM2.value) * 100;
+                
+                if (percent >= 100 && priorPercent < 100) {
+                  alert(`🚨 星轨溢出警告：\n${member2.value} 的本月日常账目已超出预算上限！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM2.value})`);
+                } else if (percent >= 80 && percent < 100 && priorPercent < 80) {
+                  alert(`⚠️ 星轨接近饱和：\n${member2.value} 的本月日常预算使用已超过 80%！\n(日常已消费: S$ ${newTotal.toFixed(2)} / 预算: S$ ${budgetM2.value})`);
+                }
               }
             }, 100);
           } catch (e) { alert(e.message); }

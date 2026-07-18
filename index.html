@@ -3,105 +3,104 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>星辰小账 | Minimalist Studio</title>
+  <title>星辰小账 | Cyber Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/vue@3.3.4/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: -apple-system, sans-serif; background: #000000; color: #71717a; min-height: 100vh; }
-    .glass-card { background: #09090b; border: 1px solid #18181b; }
+    body { font-family: 'Courier New', Courier, monospace, sans-serif; background: #020205; color: #00ffcc; min-height: 100vh; }
+    .cyber-card { background: rgba(5, 10, 20, 0.85); border: 1px solid #005544; box-shadow: 0 0 10px rgba(0,255,200,0.05); }
     [v-cloak] { display: none !important; }
-    .chart-ring { transition: stroke-dashoffset 0.5s ease; }
-    
-    @media (min-width: 1024px) {
-      .glass-card { padding: 1.5rem !important; }
-      input, select, button { border-radius: 4px !important; }
-    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #005544; }
   </style>
 </head>
-<body class="p-2 md:p-6">
-  <div id="app" v-cloak class="max-w-6xl mx-auto space-y-6">
+<body class="p-3 md:p-6">
+  <div id="app" v-cloak class="max-w-7xl mx-auto space-y-4">
     
-    <!-- 极简无缝头 -->
-    <header class="flex justify-between items-center py-4 border-b border-zinc-800">
-      <h1 class="text-xs tracking-[0.3em] font-bold text-zinc-100 uppercase">{{ lang === 'zh' ? '星辰小账' : 'STARRY LEDGER' }}</h1>
-      <div class="flex items-center gap-4 text-[9px] font-mono text-zinc-500">
-        <span>EX-RATES: SGD/MYR={{ exchangeRate.toFixed(2) }}</span>
-        <button @click="toggleLang" class="text-zinc-300 uppercase hover:text-white">[{{ lang }}]</button>
+    <!-- 赛博流表头 -->
+    <header class="flex justify-between items-center border-b-2 border-emerald-500 pb-2">
+      <div>
+        <h1 class="text-sm md:text-lg font-bold tracking-tighter text-emerald-400">⚡ STARRY_CORE_SYS_v4.0</h1>
+      </div>
+      <div class="text-[9px] font-mono bg-emerald-950 px-2 py-0.5 border border-emerald-500 text-emerald-300">
+        SGD/MYR: {{ exchangeRate.toFixed(2) }} // LANG: <button @click="toggleLang" class="underline font-bold">{{ lang.toUpperCase() }}</button>
       </div>
     </header>
 
-    <!-- 成员锁定显示栏[cite: 5] -->
-    <section class="glass-card p-3 flex items-center justify-between text-xs text-zinc-400">
-      <div class="flex items-center gap-4">
-        <span class="text-zinc-600 font-mono">NODE_USERS:</span>
+    <!-- 动态锁定状态栏[cite: 5] -->
+    <section class="cyber-card p-2 text-xs flex justify-between items-center border-l-4 border-l-emerald-400">
+      <div class="flex items-center gap-3">
+        <span class="text-emerald-600 font-bold">[OPERATORS]::</span>
         <!-- 手机模式纯文本[cite: 5] -->
-        <span class="block lg:hidden font-medium text-zinc-200">{{ member1 }} & {{ member2 }}</span>
+        <span class="block lg:hidden font-mono text-emerald-200">{{ member1 }} / {{ member2 }}</span>
         <!-- PC 模式输入框[cite: 5] -->
         <div class="hidden lg:flex gap-2">
-          <input type="text" v-model="member1" class="bg-zinc-900 px-2 py-0.5 text-zinc-200 text-center w-20 focus:outline-none">
-          <input type="text" v-model="member2" class="bg-zinc-900 px-2 py-0.5 text-zinc-200 text-center w-20 focus:outline-none">
+          <input type="text" v-model="member1" class="bg-black border border-emerald-900 px-2 py-0.5 text-emerald-300 w-24 text-center">
+          <input type="text" v-model="member2" class="bg-black border border-emerald-900 px-2 py-0.5 text-emerald-300 w-24 text-center">
         </div>
       </div>
     </section>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- 全景四象限核心 -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
       
-      <!-- 表单组件 -->
-      <div class="glass-card p-4 space-y-4">
-        <h2 class="text-[10px] tracking-widest text-zinc-500 uppercase font-mono">// ENTRY WORKBENCH</h2>
+      <!-- 控制台输入端 -->
+      <div class="lg:col-span-4 cyber-card p-4 space-y-3">
+        <div class="text-xs text-emerald-400 font-bold border-b border-emerald-900 pb-1">>> RECORD_INPUT_PANEL</div>
         <form @submit.prevent="addRecord" class="space-y-3 text-xs">
-          <div class="flex gap-2">
-            <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-zinc-100 text-black':'bg-zinc-900 text-zinc-400'" class="flex-1 py-1.5 transition">{{ member1 }}</button>
-            <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-zinc-100 text-black':'bg-zinc-900 text-zinc-400'" class="flex-1 py-1.5 transition">{{ member2 }}</button>
+          <div class="flex gap-1">
+            <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-emerald-500 text-black font-bold':'bg-emerald-950 text-emerald-400'" class="flex-1 py-1">{{ member1 }}</button>
+            <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-emerald-500 text-black font-bold':'bg-emerald-950 text-emerald-400'" class="flex-1 py-1">{{ member2 }}</button>
           </div>
-          
-          <div class="flex gap-2 bg-zinc-900 p-1">
-            <input type="number" step="0.01" v-model.number="form.amount" required placeholder="0.00" class="w-full bg-transparent px-2 py-1 text-white focus:outline-none font-mono">
-            <select v-model="form.currency" class="bg-black border border-zinc-800 text-zinc-400 p-1">
-              <option value="SGD">SGD</option><option value="MYR">MYR</option><option value="CNY">CNY</option>
+
+          <div class="bg-black border border-emerald-800 p-1 flex">
+            <input type="number" step="0.01" v-model.number="form.amount" required class="bg-transparent w-full text-white font-mono focus:outline-none">
+            <select v-model="form.currency" class="bg-emerald-950 text-emerald-300 border-none outline-none text-[10px]">
+              <option value="SGD">SGD</option><option value="MYR">MYR</option>
             </select>
           </div>
 
           <div class="grid grid-cols-3 gap-1">
-            <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" :class="form.category === cat ? 'bg-zinc-800 text-white' : 'bg-transparent text-zinc-600'" class="py-1 text-[9px] border border-zinc-900 truncate">
+            <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" :class="form.category === cat ? 'border-emerald-400 text-white bg-emerald-950/40':'border-emerald-900 text-emerald-600'" class="py-1 text-[9px] border truncate text-center">
               {{ getCategoryDisplayName(cat) }}
             </button>
           </div>
 
-          <div class="flex gap-2">
-            <input type="date" v-model="form.date" class="w-1/2 bg-zinc-900 p-1 text-zinc-400">
-            <input type="text" v-model="form.remark" placeholder="Memo" class="w-1/2 bg-zinc-900 p-1 text-zinc-400 placeholder-zinc-700">
+          <div class="grid grid-cols-2 gap-2">
+            <input type="date" v-model="form.date" class="bg-black border border-emerald-900 text-emerald-400 p-1 text-[10px]">
+            <input type="text" v-model="form.remark" placeholder="REMARK" class="bg-black border border-emerald-900 text-emerald-400 p-1 text-[10px] placeholder-emerald-800">
           </div>
 
-          <button type="submit" class="w-full bg-zinc-200 hover:bg-white text-black py-2 font-mono uppercase tracking-wider transition">Commit</button>
+          <button type="submit" class="w-full bg-emerald-400 text-black font-bold py-2 hover:bg-emerald-300 transition uppercase tracking-tighter">Execute Commits</button>
         </form>
       </div>
 
-      <!-- 数据与看板 -->
-      <div class="lg:col-span-2 glass-card p-4 space-y-6">
-        <div class="flex justify-between items-baseline border-b border-zinc-900 pb-2">
-          <h2 class="text-[10px] tracking-widest text-zinc-500 font-mono">// DISPLAYS & OVERVIEW</h2>
-          <span class="text-xs font-mono text-zinc-200">Total: S$ {{ totalMonth }}</span>
+      <!-- 四象限主中央监控台 -->
+      <div class="lg:col-span-8 cyber-card p-4 space-y-4">
+        <div class="flex justify-between items-center border-b border-emerald-900 pb-1 text-xs">
+          <span class="text-emerald-400 font-bold">>> LIVE_MONITOR_FLOW</span>
+          <span class="font-mono text-emerald-300">AGGREGATE: S$ {{ totalMonth }}</span>
         </div>
-        
-        <div class="grid grid-cols-2 gap-4 text-xs font-mono">
-          <div class="bg-zinc-950 p-3 border border-zinc-900">
-            <p class="text-zinc-600 mb-1">{{ member1 }} (Weekly)</p>
-            <p class="text-lg text-zinc-300">S$ {{ totalThisWeekM1 }}</p>
+
+        <!-- 实时占比监控条 -->
+        <div class="grid grid-cols-2 gap-2 text-[10px] font-mono bg-black p-2 border border-emerald-900">
+          <div>
+            <p class="text-emerald-600">{{ member1 }} CURRENT</p>
+            <p class="text-sm font-bold text-white">S$ {{ totalThisWeekM1 }}</p>
           </div>
-          <div class="bg-zinc-950 p-3 border border-zinc-900">
-            <p class="text-zinc-600 mb-1">{{ member2 }} (Weekly)</p>
-            <p class="text-lg text-zinc-300">S$ {{ totalThisWeekM2 }}</p>
+          <div class="border-l border-emerald-900 pl-2">
+            <p class="text-emerald-600">{{ member2 }} CURRENT</p>
+            <p class="text-sm font-bold text-white">S$ {{ totalThisWeekM2 }}</p>
           </div>
         </div>
 
-        <!-- 极度克制的明细流 -->
-        <div class="space-y-2 max-h-[240px] overflow-y-auto">
-          <div v-for="item in filteredRecords" :key="item.id" class="flex justify-between text-xs py-1.5 border-b border-zinc-900 font-mono">
-            <span class="text-zinc-500">[{{ item.payer }}] {{ getCategoryDisplayName(item.category) }}</span>
-            <span class="text-zinc-200">S$ {{ Number(item.amount).toFixed(2) }}</span>
+        <!-- 极客黑客感明细日志 -->
+        <div class="space-y-1 max-h-[260px] overflow-y-auto font-mono text-[11px]">
+          <div v-for="item in filteredRecords" :key="item.id" class="flex justify-between p-1.5 bg-emerald-950/10 border border-emerald-950 hover:border-emerald-700 transition">
+            <span class="text-emerald-500">⚡ [LOG::{{ item.date }}] &lt;{{ item.payer }}&gt; {{ getCategoryDisplayName(item.category) }}</span>
+            <span class="text-white font-bold">S$ {{ Number(item.amount).toFixed(2) }}</span>
           </div>
         </div>
       </div>
@@ -120,7 +119,6 @@
       setup() {
         const lang = ref('zh'); const exchangeRate = ref(3.25); const exchangeRateCny = ref(5.25);
         const member1 = ref(localStorage.getItem('member1') || '小星'); const member2 = ref(localStorage.getItem('member2') || '小辰');
-        const budgetM1 = ref(null); const budgetM2 = ref(null);
         watch(member1, (v) => localStorage.setItem('member1', v)); watch(member2, (v) => localStorage.setItem('member2', v));
         const categories = ['日常伙食 Daily Meal', '餐厅聚餐 Restaurant', '交通出行 Transport', '购物消费 Shopping', '休闲娱乐 Fun', '居住房租 Housing', '固定月费 Subscriptions', '零星杂费 Sundries', '其他 Miscellaneous'];
         const getCategoryDisplayName = (cat) => lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
@@ -142,7 +140,7 @@
         const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
         onMounted(() => fetchRecords());
-        return { lang, member1, member2, exchangeRate, exchangeRateCny, budgetM1, budgetM2, categories, getCategoryDisplayName, records, filteredRecords, loading, form, addRecord, totalThisWeekM1, totalThisWeekM2, totalMonth, toggleLang: () => lang.value = lang.value === 'zh'?'en':'zh' };
+        return { lang, member1, member2, exchangeRate, exchangeRateCny, categories, getCategoryDisplayName, records, filteredRecords, loading, form, addRecord, totalThisWeekM1, totalThisWeekM2, totalMonth, toggleLang: () => lang.value = lang.value === 'zh'?'en':'zh' };
       }
     }).mount('#app');
   </script>

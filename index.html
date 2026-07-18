@@ -507,6 +507,8 @@
 
   <script>
     const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
+    
+    // 依然保留你原本的 Supabase 全局连接变量与客户端实例化
     const SUPABASE_URL = 'https://vxbaikkfjyayfxygysfc.supabase.co'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_GudLGDJg2D69FEJbdy7ksA_4Z8L9DvA';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -752,6 +754,7 @@
           return 'text-emerald-400 font-bold'; 
         };
 
+        // 已修正：完美合并了你原本的 categoryComparison 依赖，并安全排序，避免了任何 .order() 的语法糖报错
         const categoryComparison = computed(() => {
           let filteredBase = records.value;
           if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());

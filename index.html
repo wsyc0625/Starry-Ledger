@@ -774,7 +774,7 @@
           });
         });
 
-        // 记账逻辑核心拦截触发点
+        // 核心记账与30天自动周期性追加账单逻辑
         const addRecord = async () => {
           if (!form.amount) return;
           
@@ -789,12 +789,12 @@
             activeRate = exchangeRateCny.value;
           }
 
-          // 记录下发请求前的快照数值
           const priorM1Total = m1TotalNum.value; 
           const priorM2Total = m2TotalNum.value;
           const currentPayer = form.payer;
 
           try {
+            // 1. 先将当前选择的基础账单存入数据库
             await supabaseClient.from('starry_ledger').insert([{ 
               date: form.date, 
               amount: finalSGD, 
@@ -805,16 +805,34 @@
               remark: form.remark, 
               exchange_rate: activeRate 
             }]);
+
+            // 2. 触发条件分支：若是固定月费，自动计算 30 天后的未来时间并新增一笔周期模拟账单
+            if (form.category.includes('固定月费')) {
+              const baseDate = new Date(form.date);
+              baseDate.setDate(baseDate.getDate() + 30); // 增加30天进度
+              const autoFutureDateStr = baseDate.toISOString().split('T')[0];
+
+              await supabaseClient.from('starry_ledger').insert([{ 
+                date: autoFutureDateStr, 
+                amount: finalSGD, 
+                original_amount: form.amount, 
+                currency: form.currency, 
+                category: form.category, 
+                payer: form.payer, 
+                remark: form.remark ? `${form.remark} (30天自动续流)` : '(30天自动续流)', 
+                exchange_rate: activeRate 
+              }]);
+            }
             
-            // 重置表单
+            // 重置常规表单状态
             form.amount = null; 
             form.remark = ''; 
             form.date = getLocalDateString();
             
-            // 重新调取最新云端账单库
+            // 数据重调回载更新
             await fetchRecords();
 
-            // 数据彻底回归后，延时触发防越界警告窗
+            // 超支预警判定保持激活
             setTimeout(() => {
               if (currentPayer === member1.value && budgetM1.value) {
                 const newTotal = m1TotalNum.value; 

@@ -37,7 +37,7 @@
       .text-\[11px\] { font-size: 13.2px !important; }
       
       input, select, button { padding-top: 0.6rem !important; padding-bottom: 0.6rem !important; border-radius: 0.9rem !important; }
-      header input { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
+      header input { padding-top: 0.15rem !important; padding-bottom: 0.15rem !important; }
       .grid { gap: 1.2rem !important; }
       .gap-1\.5 { gap: 0.45rem !important; }
       .gap-2 { gap: 0.6rem !important; }
@@ -54,6 +54,10 @@
       }
       .pc-datepicker-container button { padding: 0.4rem 0.6rem !important; }
       .pc-datepicker-text { white-space: nowrap !important; min-width: 7.5rem !important; text-align: center; }
+      
+      /* PC 端顶部汇率缩放与对齐微调 */
+      .pc-exchange-tag { font-size: 10.5px !important; padding: 0.2rem 0.5rem !important; }
+      .pc-exchange-input { font-size: 10.5px !important; width: 2.5rem !important; }
     }
   </style>
 </head>
@@ -66,20 +70,20 @@
         <div class="text-amber-300 text-xl animate-pulse"><i class="fa-solid fa-star-and-crescent"></i></div>
         <h1 class="text-lg font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-amber-200">{{ lang === 'zh' ? '星辰小账' : 'Starry Ledger' }}</h1>
       </div>
-      <div class="flex items-center gap-2 flex-wrap md:flex-nowrap justify-end">
-        <button @click="toggleLang" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-full border border-slate-700 transition">{{ lang === 'zh' ? 'English' : '中文' }}</button>
+      <div class="flex items-center gap-1.5 flex-wrap md:flex-nowrap justify-end">
+        <button @click="toggleLang" class="text-[9px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded-full border border-slate-700 transition self-center h-[22px] flex items-center justify-center">{{ lang === 'zh' ? 'English' : '中文' }}</button>
         
-        <!-- 马币汇率显示 -->
-        <div class="text-[10px] text-amber-200 bg-amber-950/40 border border-amber-900/50 px-2 py-1 rounded-full flex items-center gap-1 font-mono">
-          <span>1 SGD = </span>
-          <input type="number" step="0.0001" v-model.number="exchangeRate" class="w-12 bg-transparent text-center border-b border-amber-400/50 focus:outline-none focus:border-amber-400 font-bold">
+        <!-- 马币汇率显示（精致缩小化） -->
+        <div class="pc-exchange-tag text-[9px] text-amber-200 bg-amber-950/30 border border-amber-900/40 px-2 py-0.5 rounded-full flex items-center gap-0.5 font-mono h-[22px]">
+          <span>1 SGD=</span>
+          <input type="number" step="0.0001" v-model.number="exchangeRate" class="pc-exchange-input w-10 bg-transparent text-center border-b border-amber-400/30 focus:outline-none focus:border-amber-400 font-bold p-0 text-[9px] h-full leading-none">
           <span>MYR</span>
         </div>
 
-        <!-- 😎 新增：人民币汇率显示 -->
-        <div class="text-[10px] text-rose-200 bg-rose-950/40 border border-rose-900/50 px-2 py-1 rounded-full flex items-center gap-1 font-mono">
-          <span>1 SGD = </span>
-          <input type="number" step="0.0001" v-model.number="exchangeRateCny" class="w-12 bg-transparent text-center border-b border-rose-400/50 focus:outline-none focus:border-rose-400 font-bold">
+        <!-- 人民币汇率显示（精致缩小化） -->
+        <div class="pc-exchange-tag text-[9px] text-rose-200 bg-rose-950/30 border border-rose-900/40 px-2 py-0.5 rounded-full flex items-center gap-0.5 font-mono h-[22px]">
+          <span>1 SGD=</span>
+          <input type="number" step="0.0001" v-model.number="exchangeRateCny" class="pc-exchange-input w-10 bg-transparent text-center border-b border-rose-400/30 focus:outline-none focus:border-rose-400 font-bold p-0 text-[9px] h-full leading-none">
           <span>CNY</span>
         </div>
       </div>
@@ -118,7 +122,6 @@
                 <select v-model="form.currency" class="bg-slate-800 border border-slate-700 rounded-xl px-2 text-xs text-slate-300 focus:outline-none">
                   <option value="SGD">SGD</option>
                   <option value="MYR">MYR</option>
-                  <!-- 😎 新增：人民币选择 -->
                   <option value="CNY">CNY</option>
                 </select>
               </div>
@@ -360,7 +363,7 @@
                       <span v-if="row.cat.includes('居住房租')" class="ml-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[9px] text-amber-400/90 font-sans tracking-tight">{{ t('excludeLabel') }}</span>
                     </td>
                     <td class="py-2 text-right font-mono text-indigo-300/90" :class="{'font-bold text-indigo-300': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
-                    <td class="py-2 text-right font-mono text-amber-300/90" :class="{'font-bold text-amber-300': chartMember === 'm2'}">S$ {{ row.m2.toFixed(2) }}</td>
+                    <td class="py-2 text-right font-mono text-amber-300/90" :class="{'font-bold text-amber-300': chartMember === 'm2'}">S$ {{ row.total.toFixed(2) }}</td>
                     <td class="py-2 text-right font-mono font-semibold text-slate-200">S$ {{ row.total.toFixed(2) }}</td>
                     <td class="py-2 text-right font-mono text-[10px] text-slate-500">{{ row.ratio }}%</td>
                   </tr>
@@ -444,7 +447,6 @@
                 <div class="text-right">
                   <p class="text-xs font-bold text-slate-200 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
                   
-                  <!-- 😎 修改：完美支持马币 RM 和人民币 ¥ 的双币种外币标签显示 -->
                   <p v-if="item.currency && item.currency !== 'SGD'" class="text-[9px] font-mono font-medium" :class="item.currency === 'CNY' ? 'text-rose-400/90' : 'text-amber-400/90'">
                     ({{ item.currency === 'MYR' ? 'RM' : (item.currency === 'CNY' ? '¥' : item.currency) }} {{ Number(item.original_amount).toFixed(2) }})
                   </p>
@@ -506,9 +508,7 @@
         const member1 = ref(localStorage.getItem('member1') || '小星');
         const member2 = ref(localStorage.getItem('member2') || '小辰');
         
-        // 汇率状态管理（包含马币与新增的人民币汇率）
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
-        // 😎 新增：初始化人民币实时汇率状态（默认设为常见的 5.25）
         const exchangeRateCny = ref(parseFloat(localStorage.getItem('exchangeRateCny')) || 5.25);
         
         const budgetM1 = ref(null);
@@ -517,7 +517,6 @@
         watch(member1, (val) => localStorage.setItem('member1', val));
         watch(member2, (val) => localStorage.setItem('member2', val));
         watch(exchangeRate, (val) => localStorage.setItem('exchangeRate', val));
-        // 😎 新增：对人民币汇率本地缓存的监听
         watch(exchangeRateCny, (val) => localStorage.setItem('exchangeRateCny', val));
 
         const categories = [
@@ -779,7 +778,6 @@
         const addRecord = async () => {
           if (!form.amount) return;
           
-          // 😎 修改：增加对 CNY 人民币汇率转换的动态换算判断
           let finalSGD = form.amount;
           let activeRate = 1.0;
           
@@ -849,7 +847,6 @@
           fetchRecords(); 
         });
 
-        // 😎 导出新增的人民币汇率变量，供模板双向绑定渲染
         return { lang, t, toggleLang, member1, member2, exchangeRate, exchangeRateCny, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, offsetMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices, showDatePicker, activePicker, panelYear, selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected, dailyM1Sum, dailyM2Sum, dailyTotalSum, dailyM1Percent, dailyM2Percent, updateCloudBudget };
       }
     }).mount('#app');

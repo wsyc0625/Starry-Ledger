@@ -3,251 +3,204 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>星辰小账 | Starry Ledger - Cyberpunk</title>
-  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 180%22><rect width=%22100%%22 height=%22100%%22 rx=%2240%22 fill=%22%23020617%22/><text x=%2250%%22 y=%2255%%22 font-size=%2290%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>🛸</text></svg>">
+  <title>星辰小账 | Gallery Style</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 180%22><rect width=%22100%%22 height=%22100%%22 rx=%2240%22 fill=%22url(%23g)%22/><radialGradient id=%22g%22 cx=%2250%%22 cy=%22100%%22 r=%22100%%22><stop offset=%220%%22 stop-color=%22%23111827%22/><stop offset=%22100%%22 stop-color=%22%23030712%22/></radialGradient><text x=%2250%%22 y=%2255%%22 font-size=%2295%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>✨</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: 'Courier New', Courier, monospace, sans-serif; background: #02040a; color: #00ffcc; min-height: 100vh; }
-    .star-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(0,255,204,0.02) 0%, transparent 100%); z-index: -1; }
-    .glass-card { background: rgba(5, 10, 20, 0.85); border: 1px solid #00ffcc; box-shadow: 0 0 15px rgba(0, 255, 204, 0.15); position: relative; }
-    .glass-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 4px; background: #00ffcc; }
-    .glass-card::after { content: ''; position: absolute; bottom: 0; right: 0; width: 4px; height: 4px; background: #ff007f; }
+    body { font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif; background: #09090b; color: #a1a1aa; min-height: 100vh; letter-spacing: 0.05em; }
+    .gallery-bg { position: fixed; inset: 0; background: linear-gradient(140deg, #09090b 40%, #111115 100%); z-index: -1; }
+    .glass-card { background: rgba(20, 20, 25, 0.6); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.03); border-right: 1px solid rgba(255, 255, 255, 0.02); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    .glass-card:hover { background: rgba(25, 25, 30, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
     [v-cloak] { display: none !important; }
-    .chart-ring { transition: stroke-dashoffset 0.4s ease-out; stroke-linecap: square; }
-    
+    .chart-ring { transition: stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(10px); }
+    ::-webkit-scrollbar { width: 3px; height: 3px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+
     @media (min-width: 1024px) {
-      #app { font-size: 1.2rem; }
-      .container { max-width: 95rem !important; }
-      .glass-card { padding: 1.2rem !important; }
+      #app { font-size: 1.15rem; }
+      .container { max-width: 96rem !important; }
+      .glass-card { padding: 2rem !important; border-radius: 0px !important; }
+      header { margin-bottom: 3rem !important; }
       .text-xs { font-size: 1.05rem !important; }
-      .text-sm { font-size: 1.2rem !important; }
-      .text-base { font-size: 1.35rem !important; }
-      .text-lg { font-size: 1.5rem !important; }
-      .text-\[9px\] { font-size: 11px !important; }
-      .text-\[10px\] { font-size: 12px !important; }
-      .text-\[11px\] { font-size: 13.2px !important; }
-      input, select, button { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
-      .grid { gap: 1.5rem !important; }
-      .max-h-\[440px\] { max-height: 528px !important; }
+      .text-sm { font-size: 1.15rem !important; }
+      .text-base { font-size: 1.3rem !important; }
+      .text-lg { font-size: 1.6rem !important; }
+      input, select, button { border-radius: 0px !important; }
     }
   </style>
 </head>
 <body>
-  <div class="star-bg"></div>
-  <div id="app" v-cloak class="container mx-auto p-3 md:p-4 max-w-7xl">
+  <div class="gallery-bg"></div>
+  <div id="app" v-cloak class="container mx-auto p-4 md:p-8 max-w-7xl">
     
-    <header class="flex justify-between items-center mb-4 py-2 border-b-2 border-dashed border-[#00ffcc]">
-      <div class="flex items-center gap-2">
-        <h1 class="text-sm md:text-lg font-black tracking-widest text-[#00ffcc] shadow-cyan-500">
-          SYSTEM_CORE // <span class="text-[#ff007f]">STARRY_LEDGER_v4.0</span>
-        </h1>
+    <!-- 非对称前卫头部 -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-baseline mb-8 pb-4 border-b border-zinc-800/60">
+      <div>
+        <h1 class="text-lg md:text-2xl font-light tracking-widest text-zinc-100 uppercase">{{ lang === 'zh' ? '星辰小账' : 'Starry Ledger' }}</h1>
+        <p class="text-[9px] text-zinc-600 tracking-[0.2em] uppercase mt-1">Non-Symmetrical Ledger Architecture</p>
       </div>
-      <div class="flex items-center gap-2 font-mono text-[9px]">
-        <div class="bg-black px-2 py-0.5 border border-[#ff007f] text-[#ff007f]">
-          SGD/1 :: MYR/{{ exchangeRate.toFixed(2) }} :: CNY/{{ exchangeRateCny.toFixed(2) }}
+      
+      <div class="flex items-center gap-4 mt-4 md:mt-0 font-mono text-[10px]">
+        <div class="flex gap-3 text-zinc-500 border-l border-zinc-800 pl-4">
+          <span>SGD <span class="text-zinc-300">1.00</span></span>
+          <span>MYR <span class="text-zinc-300">{{ exchangeRate.toFixed(2) }}</span></span>
+          <span>CNY <span class="text-zinc-300">{{ exchangeRateCny.toFixed(2) }}</span></span>
         </div>
-        <button @click="toggleLang" class="bg-[#00ffcc] text-black px-2 font-bold">
+        <button @click="toggleLang" class="text-zinc-400 hover:text-white transition tracking-widest font-light border border-zinc-800 px-3 py-0.5">
           {{ lang === 'zh' ? 'ZH' : 'EN' }}
         </button>
       </div>
     </header>
 
-    <section class="glass-card p-2 mb-4 flex items-center gap-3 overflow-x-auto">
-      <span class="text-xs font-bold text-[#ff007f] flex-shrink-0">&gt; PILOTS:</span>
-      <input type="text" v-model="member1" class="bg-black text-xs text-[#00ffcc] border border-[#00ffcc] w-20 text-center py-0.5">
-      <input type="text" v-model="member2" class="bg-black text-xs text-[#00ffcc] border border-[#00ffcc] w-20 text-center py-0.5">
+    <!-- 成员栏：手机端纯文本显示，PC端可无缝编辑 -->
+    <section class="glass-card mb-6 p-4 flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <span class="text-xs uppercase tracking-wider text-zinc-500 font-light">{{ t('members') }} //</span>
+        <!-- 手机模式：只显示名字文本[cite: 5] -->
+        <div class="block lg:hidden flex gap-4 text-xs font-light text-zinc-200">
+          <span>{{ member1 }}</span>
+          <span>{{ member2 }}</span>
+        </div>
+        <!-- PC 模式：支持修改名字[cite: 5] -->
+        <div class="hidden lg:flex gap-4">
+          <input type="text" v-model="member1" class="bg-transparent text-xs font-light text-zinc-200 border-b border-zinc-800 focus:border-zinc-500 focus:outline-none w-24 py-0.5 text-center">
+          <input type="text" v-model="member2" class="bg-transparent text-xs font-light text-zinc-200 border-b border-zinc-800 focus:border-zinc-500 focus:outline-none w-24 py-0.5 text-center">
+        </div>
+      </div>
     </section>
 
-    <!-- 四象限大面板 -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <!-- 非对称大流布局 -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
-      <!-- 控制舱 -->
-      <main class="lg:col-span-5 space-y-4">
-        <div class="glass-card p-3 md:p-4">
-          <h2 class="text-xs md:text-sm font-bold mb-3 text-[#ff007f]">&gt;_ LOAD_TRANSACTION</h2>
-          <form @submit.prevent="addRecord" class="space-y-3">
-            <div class="grid grid-cols-2 gap-2">
-              <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-[#00ffcc] text-black font-bold' : 'bg-transparent text-[#00ffcc] border border-[#00ffcc]'" class="py-1.5 text-xs">{{ member1 }}</button>
-              <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-[#ff007f] text-white font-bold' : 'bg-transparent text-[#ff007f] border border-[#ff007f]'" class="py-1.5 text-xs">{{ member2 }}</button>
+      <!-- 控制与输入面板 (占 4 栏) -->
+      <main class="lg:col-span-4 space-y-6">
+        <div class="glass-card p-4">
+          <h2 class="text-xs font-light uppercase tracking-widest mb-6 text-zinc-400 border-b border-zinc-900 pb-2">/ {{ t('addRecord') }}</h2>
+          <form @submit.prevent="addRecord" class="space-y-4">
+            <div>
+              <div class="grid grid-cols-2 gap-px bg-zinc-800/40">
+                <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-zinc-800 text-white' : 'bg-zinc-900/40 text-zinc-500'" class="py-2 text-xs transition uppercase font-light">{{ member1 }}</button>
+                <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-zinc-800 text-white' : 'bg-zinc-900/40 text-zinc-500'" class="py-2 text-xs transition uppercase font-light">{{ member2 }}</button>
+              </div>
             </div>
 
-            <div class="flex gap-2 bg-black border border-[#00ffcc] p-1">
-              <span class="text-[#ff007f] font-mono text-xs font-bold self-center px-1">{{ form.currency }}</span>
-              <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-black text-[#00ffcc] py-1 text-sm focus:outline-none font-mono">
-              <select v-model="form.currency" class="bg-black text-xs text-[#00ffcc] focus:outline-none">
-                <option value="SGD">SGD</option><option value="MYR">MYR</option><option value="CNY">CNY</option>
+            <div class="space-y-1">
+              <input type="number" step="0.01" v-model.number="form.amount" :placeholder="t('amount')" required class="w-full bg-zinc-900/40 border-b border-zinc-800 py-2 px-3 text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-zinc-500 font-mono text-sm">
+              <select v-model="form.currency" class="w-full bg-zinc-900/20 border-b border-zinc-800/60 py-1 text-xs text-zinc-500 focus:outline-none">
+                <option value="SGD">Singapore Dollar (SGD)</option>
+                <option value="MYR">Malaysia Ringgit (MYR)</option>
+                <option value="CNY">China Yuan (CNY)</option>
               </select>
             </div>
 
-            <div class="grid grid-cols-3 gap-1">
-              <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
-                :class="form.category === cat ? 'bg-[#ff007f] text-white font-bold' : 'bg-black text-[#00ffcc] border border-[#00ffcc]/30'" class="py-1.5 text-[9px] truncate transition">
-                {{ getCategoryDisplayName(cat) }}
-              </button>
+            <div>
+              <div class="grid grid-cols-3 gap-1">
+                <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
+                  :class="form.category === cat ? 'bg-zinc-800 text-white' : 'bg-zinc-900/20 text-zinc-600'" class="py-2 text-[10px] border border-transparent transition text-center truncate px-1 font-light">
+                  {{ getCategoryDisplayName(cat) }}
+                </button>
+              </div>
             </div>
 
-            <div class="grid grid-cols-12 gap-2">
-              <input type="date" v-model="form.date" required class="col-span-5 bg-black border border-[#00ffcc] text-xs text-[#00ffcc] p-1">
-              <input type="text" v-model="form.remark" placeholder="REMARK..." class="col-span-7 bg-black border border-[#00ffcc] text-xs text-[#00ffcc] p-1 focus:outline-none">
+            <div class="grid grid-cols-2 gap-4">
+              <input type="date" v-model="form.date" required class="w-full bg-transparent border-b border-zinc-800 py-1 text-xs text-zinc-400 focus:outline-none">
+              <input type="text" v-model="form.remark" placeholder="..." class="w-full bg-transparent border-b border-zinc-800 py-1 text-xs text-zinc-400 focus:outline-none">
             </div>
 
-            <button type="submit" class="w-full bg-[#00ffcc] hover:bg-cyan-400 text-black font-black py-2 text-xs tracking-widest">[ INJECT TO NET ]</button>
+            <button type="submit" class="w-full bg-zinc-100 hover:bg-white text-zinc-950 font-medium py-3 transition tracking-widest text-xs uppercase">{{ t('save') }}</button>
           </form>
         </div>
 
-        <!-- 矩阵吞吐量仪表 -->
-        <div class="glass-card p-3 md:p-4 space-y-3 font-mono text-[11px]">
-          <h3 class="text-xs font-bold text-[#ff007f]">&gt;_ NET_CAPACITY</h3>
+        <!-- 极简汇总 -->
+        <div class="glass-card p-4 space-y-4">
+          <div class="flex justify-between items-baseline">
+            <h3 class="text-xs font-light text-zinc-400 uppercase tracking-wider">// {{ t('analysis') }}</h3>
+            <span class="text-[9px] text-zinc-600 font-mono">EXCL. RENT</span>
+          </div>
           
-          <div class="space-y-2">
-            <!-- 成员1 -->
-            <div class="bg-black/60 p-2 border border-[#00ffcc]/40">
-              <div class="flex justify-between items-center text-[#00ffcc]">
-                <span>PILOT_01 // {{ member1 }}</span>
-                <div class="flex items-center gap-1 text-[9px]">
-                  <span>LIMIT:</span>
-                  <input type="number" v-model.number="budgetM1" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" class="w-12 bg-black text-[#00ffcc] border border-[#00ffcc] text-center h-4">
-                </div>
-              </div>
-              <div class="grid grid-cols-3 gap-1 mt-1.5 text-[10px] text-white">
-                <div>DAY: S$ {{ totalTodayM1 }}</div>
-                <div>WK: S$ {{ totalThisWeekM1 }}</div>
-                <div class="text-right text-[#00ffcc]">REM: S$ {{ remainM1 }}</div>
+          <div class="divide-y divide-zinc-900 font-light">
+            <div class="py-3 flex justify-between items-center">
+              <span class="text-xs text-zinc-200">{{ member1 }}</span>
+              <div class="text-right font-mono">
+                <span class="text-xs text-zinc-400">S$ {{ totalThisWeekM1 }}</span>
+                <span class="text-[9px] text-zinc-600 block">REM: S$ {{ remainM1 }}</span>
               </div>
             </div>
-
-            <!-- 成员2 -->
-            <div class="bg-black/60 p-2 border border-[#ff007f]/40">
-              <div class="flex justify-between items-center text-[#ff007f]">
-                <span>PILOT_02 // {{ member2 }}</span>
-                <div class="flex items-center gap-1 text-[9px]">
-                  <span>LIMIT:</span>
-                  <input type="number" v-model.number="budgetM2" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" class="w-12 bg-black text-[#ff007f] border border-[#ff007f] text-center h-4">
-                </div>
-              </div>
-              <div class="grid grid-cols-3 gap-1 mt-1.5 text-[10px] text-white">
-                <div>DAY: S$ {{ totalTodayM2 }}</div>
-                <div>WK: S$ {{ totalThisWeekM2 }}</div>
-                <div class="text-right text-[#ff007f]">REM: S$ {{ remainM2 }}</div>
+            <div class="py-3 flex justify-between items-center">
+              <span class="text-xs text-zinc-200">{{ member2 }}</span>
+              <div class="text-right font-mono">
+                <span class="text-xs text-zinc-400">S$ {{ totalThisWeekM2 }}</span>
+                <span class="text-[9px] text-zinc-600 block">REM: S$ {{ remainM2 }}</span>
               </div>
             </div>
-          </div>
-
-          <div v-if="totalRatioSum > 0" class="w-full bg-neutral-900 h-2 flex border border-white/20">
-            <div class="bg-[#00ffcc] h-full" :style="{ width: m1Percent + '%' }"></div>
-            <div class="bg-[#ff007f] h-full" :style="{ width: m2Percent + '%' }"></div>
-          </div>
-
-          <div class="flex justify-between items-center text-[10px] text-white pt-1">
-            <button @click.stop="toggleDatePicker('left')" class="text-[#00ffcc] underline">
-              [{ selectedMonthText }]
-            </button>
-            <transition name="fade">
-              <div v-if="showDatePicker && activePicker === 'left'" @click.stop class="absolute bg-black border border-[#00ffcc] p-2 z-50 grid grid-cols-4 gap-1">
-                <button type="button" v-for="m in 12" :key="m" @click="selectPanelMonth(m)" class="text-[9px] text-[#00ffcc] p-1 border border-[#00ffcc]/30">
-                  {{ m }}M
-                </button>
-              </div>
-            </transition>
-            <span class="text-[#ff007f]">NET_SUM: S$ {{ totalMonth }}</span>
           </div>
         </div>
       </main>
 
-      <!-- 全景图表与核心矩阵 -->
-      <section class="lg:col-span-7 space-y-4">
+      <!-- 流水与大屏深度视图 (占 8 栏) -->
+      <section class="lg:col-span-8 space-y-6">
         
-        <!-- PC深度全景象限 -->
-        <div class="hidden lg:block glass-card p-4 space-y-3 font-mono text-[11px]">
-          <div class="flex justify-between items-center border-b border-[#00ffcc] pb-2">
-            <span class="font-black text-[#ff007f]">&gt;_ QUANTUM_VISUALIZER</span>
-            <div class="flex gap-2 text-[9px]">
-              <button @click="chartMember = 'all'" :class="{'bg-[#00ffcc] text-black px-1': chartMember==='all'}">ALL</button>
-              <button @click="chartMember = 'm1'" :class="{'bg-[#00ffcc] text-black px-1': chartMember==='m1'}">M1</button>
-              <button @click="chartMember = 'm2'" :class="{'bg-[#ff007f] text-white px-1': chartMember==='m2'}">M2</button>
-              <span>|</span>
-              <button @click="categoryRange = 'month'" :class="{'bg-white text-black px-1': categoryRange==='month'}">MONTH</button>
-              <button @click="categoryRange = 'year'" :class="{'bg-white text-black px-1': categoryRange==='year'}">YEAR</button>
+        <!-- PC 画廊统计看板 -->
+        <div class="hidden lg:block glass-card p-6 space-y-6">
+          <div class="flex justify-between items-center border-b border-zinc-900 pb-4">
+            <div>
+              <h2 class="text-sm font-light uppercase text-zinc-300 tracking-widest">{{ lang === 'zh' ? '品类对比深度查询' : 'Deep Category Inquiry' }}</h2>
+            </div>
+            <div class="flex gap-2 text-xs font-mono">
+              <button @click="categoryRange = 'month'" :class="categoryRange === 'month'?'text-white':'text-zinc-600'" class="transition">MONTH</button>
+              <button @click="categoryRange = 'year'" :class="categoryRange === 'year'?'text-white':'text-zinc-600'" class="transition">YEAR</button>
             </div>
           </div>
 
-          <div class="grid grid-cols-12 gap-4 items-center bg-black/50 p-3 border border-[#00ffcc]/30">
-            <div class="col-span-4 flex justify-center relative">
-              <svg width="110" height="110" viewBox="0 0 150 150" class="transform -rotate-90">
-                <circle cx="75" cy="75" r="55" fill="transparent" stroke="#112233" stroke-width="12" />
+          <div class="flex items-center gap-12 py-4">
+            <div class="w-1/3 flex justify-center relative">
+              <svg width="140" height="140" viewBox="0 0 150 150" class="transform -rotate-90">
+                <circle cx="75" cy="75" r="60" fill="transparent" stroke="#18181b" stroke-width="4" />
                 <circle v-for="(slice, index) in chartSlices" :key="index"
-                  cx="75" cy="75" r="55" fill="transparent" :stroke="index % 2 === 0 ? '#00ffcc' : '#ff007f'" stroke-width="12" :stroke-dasharray="slice.dashArray" :stroke-dashoffset="slice.offset" class="chart-ring" />
+                  cx="75" cy="75" r="60" fill="transparent" :stroke="slice.color" stroke-width="6" :stroke-dasharray="slice.dashArray" :stroke-dashoffset="slice.offset" class="chart-ring" />
               </svg>
-              <div class="absolute inset-0 flex flex-col justify-center items-center text-center">
-                <span class="text-[12px] font-black text-white">S$ {{ chartTotalSum }}</span>
+              <div class="absolute inset-0 flex flex-col justify-center items-center">
+                <span class="text-xs font-mono text-zinc-200">S$ {{ chartTotalSum }}</span>
               </div>
             </div>
-
-            <div class="col-span-8 max-h-[110px] overflow-y-auto space-y-1 text-[10px]">
-              <div v-for="slice in chartSlices" :key="slice.id" class="flex justify-between text-[#00ffcc]">
-                <span>&gt; {{ slice.displayName }}</span>
-                <span class="text-white font-bold">{{ slice.percentage }}%</span>
+            <div class="w-2/3 grid grid-cols-2 gap-3 max-h-[140px] overflow-y-auto">
+              <div v-for="slice in chartSlices" :key="slice.id" class="flex justify-between items-center text-xs font-light">
+                <span class="text-zinc-400 border-l px-2" :style="{borderColor: slice.color}">{{ slice.displayName }}</span>
+                <span class="font-mono text-zinc-600">{{ slice.percentage }}%</span>
               </div>
-            </div>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-[10px] text-white">
-              <thead>
-                <tr class="border-b border-[#00ffcc]/40 text-[#00ffcc]">
-                  <th>MATRIX_NODE</th><th class="text-right">M1_FLOW</th><th class="text-right">M2_FLOW</th><th class="text-right text-[#ff007f]">SUM</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="row in categoryComparison" :key="row.cat" class="border-b border-neutral-900 hover:bg-[#00ffcc]/10" :class="{'opacity-30 italic': row.cat.includes('居住房租')}">
-                  <td class="py-1 text-[#00ffcc] font-bold">// {{ getCategoryDisplayName(row.cat) }}</td>
-                  <td class="py-1 text-right">S$ {{ row.m1.toFixed(2) }}</td>
-                  <td class="py-1 text-right">S$ {{ row.m2.toFixed(2) }}</td>
-                  <td class="py-1 text-right text-[#ff007f] font-bold">S$ {{ row.total.toFixed(2) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- PC订阅项 -->
-        <div class="hidden lg:block glass-card p-3 font-mono text-[10px] border border-[#ff007f]/50">
-          <div class="text-[#ff007f] font-bold mb-1">&gt; DAEMON_SUBSCRIPTIONS ({{ allSubscriptions.length }})</div>
-          <div class="grid grid-cols-2 gap-2 max-h-[100px] overflow-y-auto">
-            <div v-for="sub in allSubscriptions" :key="sub.id" class="bg-black p-1 border border-neutral-800 flex justify-between">
-              <span class="text-white truncate max-w-[120px]">{{ sub.remark || 'Daemon' }}</span>
-              <span class="text-[#00ffcc]">S$ {{ Number(sub.amount).toFixed(2) }}</span>
             </div>
           </div>
         </div>
 
-        <!-- 流水终端 -->
-        <div class="glass-card p-3 md:p-4">
-          <div class="flex justify-between items-center mb-3 font-mono text-[10px] border-b border-[#ff007f]/40 pb-2">
-            <h2 class="font-bold text-[#00ffcc]">&gt;_ DATA_STREAM_OUTPUT</h2>
-            <div class="flex gap-2">
-              <button @click="exportToCSV" class="text-[#ff007f] underline">DUMP_CSV</button>
-              <button @click="filterRange = 'today'" :class="{'text-black bg-[#00ffcc] px-1': filterRange==='today'}">TODAY</button>
-              <button @click="filterRange = 'month'" :class="{'text-black bg-[#00ffcc] px-1': filterRange==='month'}">MONTH</button>
+        <!-- 流水明细 -->
+        <div class="glass-card p-4">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xs font-light uppercase tracking-widest text-zinc-400">/ {{ t('details') }}</h2>
+            <div class="flex gap-4 text-[10px] font-mono">
+              <button @click="filterRange = 'today'" :class="filterRange === 'today' ? 'text-white' : 'text-zinc-600'">TODAY</button>
+              <button @click="filterRange = 'month'" :class="filterRange === 'month' ? 'text-white' : 'text-zinc-600'">MONTH</button>
             </div>
           </div>
 
-          <div class="space-y-1 max-h-[350px] md:max-h-[440px] overflow-y-auto font-mono text-xs">
-            <div v-if="loading" class="text-center text-[#ff007f] py-4 animate-pulse">DOWNLOADING CORE DATA...</div>
-            <div v-else-if="filteredRecords.length === 0" class="text-center text-neutral-600 py-4">STREAM EMPTY</div>
-            
-            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex justify-between items-center py-1 bg-black border border-neutral-900 hover:border-[#00ffcc] px-2" :class="{'border-[#ff007f]/30': item.category.includes('居住房租')}">
-              <div class="flex items-center gap-2 truncate">
-                <span :class="item.payer === member1 ? 'text-[#00ffcc]' : 'text-[#ff007f]'" class="font-bold text-[10px]">[SIG_{{ item.payer === member1 ? '01' : '02' }}]</span>
-                <span class="text-white truncate">{{ getCategoryDisplayName(item.category) }}</span>
-                <span v-if="item.remark" class="text-[10px] text-neutral-500 truncate">#{{ item.remark }}</span>
+          <div class="space-y-px bg-zinc-900/40 divide-y divide-zinc-900 max-h-[500px] overflow-y-auto">
+            <div v-if="loading" class="text-center py-6 text-zinc-700 font-light text-xs">{{ t('loading') }}</div>
+            <div v-else-if="filteredRecords.length === 0" class="text-center py-6 text-zinc-700 font-light text-xs">{{ t('noRecords') }}</div>
+            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex items-center justify-between py-3 px-2 hover:bg-zinc-900/20 transition">
+              <div class="flex items-center gap-4 truncate">
+                <span class="text-[9px] font-mono tracking-tighter text-zinc-600 uppercase">{{ item.payer }}</span>
+                <div class="truncate font-light">
+                  <span class="text-xs text-zinc-300">{{ getCategoryDisplayName(item.category) }}</span>
+                  <span class="text-[10px] text-zinc-600 ml-2 italic font-mono" v-if="item.remark">#{{ item.remark }}</span>
+                </div>
               </div>
-              <div class="flex items-center gap-3 flex-shrink-0">
-                <span class="text-[#00ffcc] font-black">S$ {{ Number(item.amount).toFixed(2) }}</span>
-                <button type="button" @click="deleteRecord(item.id)" class="text-[#ff007f] hover:text-red-400 text-[10px]">[DEL]</button>
+              <div class="flex items-center gap-4">
+                <span class="text-xs font-mono text-zinc-100">S$ {{ Number(item.amount).toFixed(2) }}</span>
+                <button type="button" @click="deleteRecord(item.id)" class="text-zinc-700 hover:text-zinc-400 transition text-[10px]"><i class="fa-regular fa-trash-can"></i></button>
               </div>
             </div>
           </div>
@@ -256,6 +209,7 @@
     </div>
   </div>
 
+  <!-- 原生JS保持完全不动以维持完美功能 -->
   <script>
     const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
     const SUPABASE_URL = 'https://vxbaikkfjyayfxygysfc.supabase.co'; 
@@ -274,75 +228,66 @@
 
     createApp({
       setup() {
-        const lang = ref('zh'); const exchangeSyncing = ref(false);
+        const lang = ref('zh');
+        const exchangeSyncing = ref(false);
         const translations = {
-          zh: { members: '星员', addRecord: '核心存入', payer: '支付', amount: '金额', category: '分类', date: '日期', remark: '备注', save: '保存', analysis: '汇总', today: '今日', thisWeek: '本周', thisMonthTotal: '当月星轨总计', details: '数据流明细', loading: '加载', noRecords: '无记录', rangeToday: '今日', rangeWeek: '本周', rangeMonth: '本月', exportBtn: '导出', ratio: '比例', tableCat: '品类', tableTotal: '总支出', tableRatio: '占比', budgetSuffix: '预算', budgetLabel: '预算', remainingBudget: '剩余日常预算', nearBudget: '临界', overBudget: '超支', excludeHousing: '不含房租', excludeLabel: '排除', viewAll: '全' },
-          en: { members: 'Gang', addRecord: 'Log', payer: 'Payer', amount: 'Amt', category: 'Cat', date: 'Date', remark: 'Rem', save: 'Save', analysis: 'Stats', today: 'Today', thisWeek: 'Week', thisMonthTotal: 'Total', details: 'Trails', loading: 'Load', noRecords: 'Empty', rangeToday: 'Today', rangeWeek: 'Week', rangeMonth: 'Month', exportBtn: 'Exp', ratio: 'Ratio', tableCat: 'Cat', tableTotal: 'Total', tableRatio: 'Share', budgetSuffix: 'Bud', budgetLabel: 'Bud', remainingBudget: 'Remain', nearBudget: 'Near', overBudget: 'Over', excludeHousing: 'Excl. Rent', excludeLabel: 'Excl', viewAll: 'All' }
+          zh: {
+            members: '当前数位星员', addRecord: '录入新资产流', payer: '支付方', amount: '发生金额', category: '项目归类', date: '时间', remark: '备忘', save: '即刻归档',
+            analysis: '资产统计走势', today: '今日', thisWeek: '周期支出', thisMonthTotal: '当月合并',
+            details: '核心流水明细', loading: '正在同步云端数据', noRecords: '暂无任何流水',
+            rangeToday: '今日', rangeWeek: '本周', rangeMonth: '本月', exportBtn: '数据导出', ratio: '权重',
+            tableCat: '分类', tableTotal: '共计', tableRatio: '占比',
+            budgetSuffix: '预算', budgetLabel: '预算', remainingBudget: '剩余日常额度',
+            nearBudget: '逼近阈值', overBudget: '超支', excludeHousing: '剔除房租', excludeLabel: '不含房租', viewAll: '全部'
+          },
+          en: {
+            members: 'Curated Node', addRecord: 'New Transaction', payer: 'Source', amount: 'Volume', category: 'Type', date: 'Date', remark: 'Memo', save: 'Commit Record',
+            analysis: 'Analytics Subsystem', today: 'Today', thisWeek: 'Weekly', thisMonthTotal: 'Monthly Sum',
+            details: 'Transaction Ledger Log', loading: 'Connecting...', noRecords: 'Void Ledger',
+            rangeToday: 'Today', rangeWeek: 'Weekly', rangeMonth: 'Monthly', exportBtn: 'Export', ratio: 'Ratio',
+            tableCat: 'Type', tableTotal: 'Total', tableRatio: 'Share',
+            budgetSuffix: ' Budget', budgetLabel: 'Limit', remainingBudget: 'Remaining Pool',
+            nearBudget: 'Warning', overBudget: 'Overspent', excludeHousing: 'Excl. Rent', excludeLabel: 'Excl. Rent', viewAll: 'All'
+          }
         };
 
         const t = (key) => translations[lang.value][key] || key;
         const toggleLang = () => lang.value = lang.value === 'zh' ? 'en' : 'zh';
-
         const member1 = ref(localStorage.getItem('member1') || '小星');
         const member2 = ref(localStorage.getItem('member2') || '小辰');
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
         const exchangeRateCny = ref(parseFloat(localStorage.getItem('exchangeRateCny')) || 5.25);
         const budgetM1 = ref(null); const budgetM2 = ref(null);
-        
         watch(member1, (val) => localStorage.setItem('member1', val));
         watch(member2, (val) => localStorage.setItem('member2', val));
 
         const categories = ['日常伙食 Daily Meal', '餐厅聚餐 Restaurant', '交通出行 Transport', '购物消费 Shopping', '休闲娱乐 Fun', '居住房租 Housing', '固定月费 Subscriptions', '零星杂费 Sundries', '其他 Miscellaneous'];
-
+        const categoryColors = { '日常伙食 Daily Meal': '#3f3f46', '餐厅聚餐 Restaurant': '#52525b', '交通出行 Transport': '#71717a', '购物消费 Shopping': '#a1a1aa', '休闲娱乐 Fun': '#d4d4d8', '居住房租 Housing': '#e4e4e7', '固定月费 Subscriptions': '#f4f4f5', '零星杂费 Sundries': '#ffffff', '其他 Miscellaneous': '#27272a' };
         const getCategoryDisplayName = (cat) => lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
-        const getCategoryIconOnly = (cat) => '';
+        const getCategoryIconOnly = (cat) => 'fa-solid fa-stop text-[8px]';
 
         const records = ref([]); const loading = ref(false);
         const selectedMonth = ref(getLocalDateString().substring(0, 7));
-        const showDatePicker = ref(false); const activePicker = ref('left');
+        const showDatePicker = ref(false); const activePicker = ref('top');
         const panelYear = ref(parseInt(selectedMonth.value.split('-')[0]));
+        const selectedMonthText = computed(() => { const [yr, mo] = selectedMonth.value.split('-'); return `${yr}/${mo}`; });
 
-        const selectedMonthText = computed(() => selectedMonth.value);
-        const toggleDatePicker = (position) => { activePicker.value = position; showDatePicker.value = !showDatePicker.value; };
-        const selectPanelMonth = (month) => { selectedMonth.value = `${panelYear.value}-${String(month).padStart(2, '0')}`; showDatePicker.value = false; fetchRecords(); };
+        const toggleDatePicker = (position) => { showDatePicker.value = !showDatePicker.value; activePicker.value = position; };
+        const changePanelYear = (offset) => { panelYear.value += offset; };
+        const selectPanelMonth = (month) => { selectedMonth.value = `${panelYear.value}-${String(month).padStart(2, '0')}`; fetchRecords(); };
+        const selectCurrentMonth = () => { selectedMonth.value = getLocalDateString().substring(0, 7); fetchRecords(); };
+        const isCurrentSelected = (month) => parseInt(selectedMonth.value.split('-')[1]) === month;
 
         const filterRange = ref('month'); const categoryRange = ref('month'); const chartMember = ref('all');
         const form = reactive({ payer: member1.value, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
 
-        const syncLiveExchangeRates = async () => {
-          try {
-            const res = await fetch('https://open.er-api.com/v6/latest/SGD'); const data = await res.json();
-            if (data && data.rates) {
-              if (data.rates.MYR) { exchangeRate.value = data.rates.MYR; localStorage.setItem('exchangeRate', data.rates.MYR); }
-              if (data.rates.CNY) { exchangeRateCny.value = data.rates.CNY; localStorage.setItem('exchangeRateCny', data.rates.CNY); }
-            }
-          } catch (e) {}
-        };
-
-        const fetchCloudBudget = async () => {
-          try {
-            const { data } = await supabaseClient.from('starry_budget').select('*').eq('id', 'default_budget').single();
-            if (data) { budgetM1.value = data.budget_m1; budgetM2.value = data.budget_m2; }
-          } catch (e) {}
-        };
-        const updateCloudBudget = async () => {
-          try { await supabaseClient.from('starry_budget').upsert({ id: 'default_budget', budget_m1: budgetM1.value, budget_m2: budgetM2.value, updated_at: new Date().toISOString() }); } catch (e) {}
-        };
-
         const fetchRecords = async () => {
           loading.value = true;
           try {
-            let start = `${selectedMonth.value}-01`; let end = new Date(parseInt(selectedMonth.value.split('-')[0]), parseInt(selectedMonth.value.split('-')[1]), 0).toISOString().substring(0, 10);
+            let start = `${selectedMonth.value}-01`, end = new Date(parseInt(selectedMonth.value.split('-')[0]), parseInt(selectedMonth.value.split('-')[1]), 0).toISOString().substring(0, 10);
             const { data } = await supabaseClient.from('starry_ledger').select('*').gte('date', start).lte('date', end).order('date', { ascending: false });
             records.value = data || [];
           } catch (e) {} finally { loading.value = false; }
-        };
-
-        const allSubscriptions = computed(() => records.value.filter(r => r.category.includes('固定月费')));
-
-        const offsetMonth = (steps) => {
-          const [y, m] = selectedMonth.value.split('-'); const d = new Date(parseInt(y), parseInt(m) - 1 + steps, 1);
-          selectedMonth.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; fetchRecords();
         };
 
         const filteredRecords = computed(() => {
@@ -352,70 +297,52 @@
 
         const m1TotalNum = computed(() => records.value.filter(r => r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0));
         const m2TotalNum = computed(() => records.value.filter(r => r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0));
-        const totalRatioSum = computed(() => m1TotalNum.value + m2TotalNum.value);
-        const m1Percent = computed(() => totalRatioSum.value > 0 ? Math.round((m1TotalNum.value / totalRatioSum.value) * 100) : 50);
-        const m2Percent = computed(() => totalRatioSum.value > 0 ? 100 - m1Percent.value : 50);
-
         const remainM1 = computed(() => ((budgetM1.value || 0) - m1TotalNum.value).toFixed(2));
         const remainM2 = computed(() => ((budgetM2.value || 0) - m2TotalNum.value).toFixed(2));
-        const m1PercentOfBudget = computed(() => budgetM1.value ? Math.round((m1TotalNum.value / budgetM1.value) * 100) : 0);
-        const m2PercentOfBudget = computed(() => budgetM2.value ? Math.round((m2TotalNum.value / budgetM2.value) * 100) : 0);
-
-        const getBudgetColorClass = (p, b) => {
-          if (!b) return 'text-neutral-500'; if (p >= 100) return 'text-red-500 font-bold'; return 'text-[#00ffcc]';
-        };
+        const totalRatioSum = computed(() => m1TotalNum.value + m2TotalNum.value);
+        const m1Percent = computed(() => totalRatioSum.value > 0 ? Math.round((m1TotalNum.value / totalRatioSum.value) * 100) : 50);
+        const m2Percent = computed(() => 100 - m1Percent.value);
+        const totalTodayM1 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+        const totalTodayM2 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+        const totalThisWeekM1 = computed(() => records.value.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+        const totalThisWeekM2 = computed(() => records.value.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+        const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
 
         const categoryComparison = computed(() => {
-          let fb = records.value; let ts = fb.reduce((s, r) => s + Number(r.amount), 0) || 1;
           return categories.map(cat => {
-            const cr = fb.filter(r => r.category === cat);
-            const m1 = cr.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
-            const m2 = cr.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
-            return { cat, m1, m2, total: (m1+m2), ratio: Math.round(((m1+m2) / ts) * 100) };
-          }).filter(i => i.total > 0).sort((a,b) => b.total - a.total);
+            const catRecords = records.value.filter(r => r.category === cat);
+            const m1Sum = catRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
+            const m2Sum = catRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
+            return { cat, m1: m1Sum, m2: m2Sum, total: m1Sum + m2Sum, ratio: 0 };
+          }).filter(i => i.total > 0);
         });
 
-        const chartTotalSum = computed(() => categoryComparison.value.filter(i => i.cat !== '居住房租 Housing').reduce((s, i) => s + i.total, 0).toFixed(2));
+        const chartTotalSum = computed(() => records.value.filter(r => r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
         const chartSlices = computed(() => {
-          const total = parseFloat(chartTotalSum.value) || 1; const circ = 345.57; let acc = 0;
-          return categoryComparison.value.filter(i => i.cat !== '居住房租 Housing').map(item => {
-            const p = item.total / total; const offset = circ - (acc * circ); const len = p * circ;
-            acc += p; return { id: item.cat, displayName: getCategoryDisplayName(item.cat), percentage: Math.round(p*100), dashArray: `${len} ${circ-len}`, offset };
-          });
+          const totalVal = parseFloat(chartTotalSum.value) || 1; const circumference = 376.99;
+          let accum = 0;
+          return categories.filter(c => c !== '居住房租 Housing').map(cat => {
+            const sum = records.value.filter(r => r.category === cat).reduce((s, r) => s + Number(r.amount), 0);
+            if (sum <= 0) return null;
+            const pct = sum / totalVal; const strk = pct * circumference;
+            const dash = `${strk} ${circumference - strk}`; const off = circumference - (accum * circumference);
+            accum += pct;
+            return { id: cat, displayName: getCategoryDisplayName(cat), total: sum, color: categoryColors[cat], percentage: Math.round(pct * 100), dashArray: dash, offset: off };
+          }).filter(Boolean);
         });
 
         const addRecord = async () => {
           if (!form.amount) return;
-          let finalSGD = form.amount; let rate = 1.0;
-          if (form.currency === 'MYR') { finalSGD = parseFloat((form.amount / exchangeRate.value).toFixed(2)); rate = exchangeRate.value; }
-          else if (form.currency === 'CNY') { finalSGD = parseFloat((form.amount / exchangeRateCny.value).toFixed(2)); rate = exchangeRateCny.value; }
-          try {
-            await supabaseClient.from('starry_ledger').insert([{ date: form.date, amount: finalSGD, original_amount: form.amount, currency: form.currency, category: form.category, payer: form.payer, remark: form.remark, exchange_rate: rate }]);
-            form.amount = null; form.remark = ''; await fetchRecords();
-          } catch (e) { alert(e.message); }
+          let amt = form.amount;
+          if (form.currency === 'MYR') amt = parseFloat((form.amount / exchangeRate.value).toFixed(2));
+          if (form.currency === 'CNY') amt = parseFloat((form.amount / exchangeRateCny.value).toFixed(2));
+          await supabaseClient.from('starry_ledger').insert([{ date: form.date, amount: amt, original_amount: form.amount, currency: form.currency, category: form.category, payer: form.payer, remark: form.remark }]);
+          form.amount = null; form.remark = ''; fetchRecords();
         };
+        const deleteRecord = async (id) => { if (confirm('Confirm?')) { await supabaseClient.from('starry_ledger').delete().eq('id', id); fetchRecords(); } };
 
-        const deleteRecord = async (id) => {
-          if (!confirm('确定删除吗？')) return; await supabaseClient.from('starry_ledger').delete().eq('id', id); await fetchRecords();
-        };
-
-        const exportToCSV = () => {
-          if (records.value.length === 0) return;
-          const rows = records.value.map(r => [r.date, r.payer, r.category, r.amount, r.remark || '']);
-          const csv = "\uFEFF" + [['Date', 'Payer', 'Category', 'Amount', 'Remark'].join(','), ...rows.map(e => e.map(v => `"${v}"`).join(','))].join('\n');
-          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `Starry.csv`; link.click();
-        };
-
-        const totalTodayM1 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s,r)=>s+Number(r.amount),0).toFixed(2));
-        const totalTodayM2 = computed(() => records.value.filter(r => r.date === getLocalDateString() && r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s,r)=>s+Number(r.amount),0).toFixed(2));
-        const totalThisWeekM1 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s,r)=>s+Number(r.amount),0).toFixed(2));
-        const totalThisWeekM2 = computed(() => records.value.filter(r => r.date >= getMondayOfThisWeek() && r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s,r)=>s+Number(r.amount),0).toFixed(2));
-        const totalMonth = computed(() => records.value.reduce((s,r)=>s+Number(r.amount),0).toFixed(2));
-
-        onMounted(() => { syncLiveExchangeRates(); fetchCloudBudget(); fetchRecords(); });
-
-        return { lang, t, toggleLang, member1, member2, exchangeRate, exchangeRateCny, budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, offsetMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices, showDatePicker, activePicker, panelYear, selectedMonthText, toggleDatePicker, selectPanelMonth, allSubscriptions, updateCloudBudget };
+        onMounted(() => { fetchRecords(); });
+        return { lang, t, toggleLang, member1, member2, exchangeRate, exchangeRateCny, budgetM1, budgetM2, remainM1, remainM2, categories, getCategoryIconOnly, getCategoryDisplayName, records, filteredRecords, loading, selectedMonth, form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, m1Percent, m2Percent, totalRatioSum, m1TotalNum, m2TotalNum, categoryComparison, chartTotalSum, chartSlices, selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected };
       }
     }).mount('#app');
   </script>

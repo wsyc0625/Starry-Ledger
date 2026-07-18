@@ -24,7 +24,6 @@
       background-position: 0 0, 20px 20px;
       opacity: 0.4; z-index: -1; 
     }
-    /* 高级荧光毛玻璃卡片 */
     .glass-card { 
       background: rgba(13, 22, 38, 0.65); 
       backdrop-filter: blur(20px); 
@@ -40,7 +39,6 @@
     .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
     .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }
 
-    /* 大屏 PC 端自适应黄金比例 */
     @media (min-width: 1024px) {
       #app { font-size: 1.2rem; }
       .container { max-width: 90rem !important; }
@@ -81,9 +79,7 @@
         </h1>
       </div>
       
-      <!-- 右上角紧凑状态组 -->
       <div class="flex items-center gap-1.5 font-mono text-[9px]">
-        <!-- 汇率缩写区域 -->
         <div class="flex items-center gap-1 bg-slate-950/80 px-2.5 py-1 rounded-full border border-indigo-950 text-slate-400">
           <span :class="exchangeSyncing ? 'text-indigo-400 animate-pulse' : 'text-emerald-400'"><i class="fa-solid fa-circle text-[5px]"></i></span>
           <span class="text-indigo-300 font-medium">SGD 1</span>
@@ -93,7 +89,6 @@
           <span class="text-rose-400 font-bold">CNY {{ exchangeRateCny.toFixed(2) }}</span>
         </div>
         
-        <!-- 语言切换 (ZH/EN) -->
         <button @click="toggleLang" class="bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-white px-2.5 py-1 rounded-full border border-slate-800 transition font-bold uppercase tracking-wider">
           {{ lang === 'zh' ? 'ZH' : 'EN' }}
         </button>
@@ -106,7 +101,7 @@
         <i class="fa-solid fa-user-astronaut text-indigo-400"></i>{{ t('members') }}:
       </span>
       
-      <!-- 手机端表现：纯文本徽章显示，不可编辑修改 -->
+      <!-- 手机端表现：纯文本徽章显示 -->
       <div class="flex lg:hidden items-center gap-2">
         <span class="bg-indigo-950/60 text-xs font-bold text-indigo-300 px-3 py-1 rounded-xl border border-indigo-900/50 shadow-inner">
           {{ member1 }}
@@ -116,14 +111,14 @@
         </span>
       </div>
 
-      <!-- PC 端表现：保留高级可编辑的 Input 输入框 -->
+      <!-- PC 端表现：保留高级可编辑输入框 -->
       <div class="hidden lg:flex items-center gap-3">
         <input type="text" v-model="member1" class="bg-indigo-950/40 text-xs font-bold text-indigo-200 w-24 text-center py-1 rounded-xl border border-indigo-900/60 focus:outline-none focus:border-indigo-500 transition shadow-inner">
         <input type="text" v-model="member2" class="bg-amber-950/40 text-xs font-bold text-amber-200 w-24 text-center py-1 rounded-xl border border-amber-900/60 focus:outline-none focus:border-amber-500 transition shadow-inner">
       </div>
     </section>
 
-    <!-- 核心响应式分栏布局 -->
+    <!-- 核心布局 -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
       
       <!-- 左侧控制面板 -->
@@ -183,7 +178,7 @@
           </form>
         </div>
 
-        <!-- 数据汇总与云预算看板 -->
+        <!-- 数据汇总看板 -->
         <div class="glass-card rounded-2xl p-3 md:p-4 space-y-3">
           <h3 class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
             <i class="fa-solid fa-chart-pie text-indigo-400"></i>{{ t('analysis') }}
@@ -207,11 +202,11 @@
                 <div><p class="text-[8px] md:text-[9px] text-slate-500 font-medium">{{ t('today') }}</p><p class="text-[11px] md:text-xs font-bold font-mono text-slate-200">S$ {{ totalTodayM1 }}</p></div>
                 <div><p class="text-[8px] md:text-[9px] text-slate-500 font-medium">{{ t('thisWeek') }}</p><p class="text-[11px] md:text-xs font-bold font-mono text-slate-200">S$ {{ totalThisWeekM1 }}</p></div>
                 <div class="border-l border-slate-800/80 pl-1 text-right">
-                  <p class="text-[8px] md:text-[9px] text-slate-500 font-medium">
+                  <div class="text-[8px] md:text-[9px] text-slate-500 font-medium">
                     {{ t('remainingBudget') }}
                     <span v-if="budgetM1 && m1PercentOfBudget >= 100" class="text-[8px] text-rose-500 font-black block">🚨 {{ t('overBudget') }}</span>
                     <span v-else-if="budgetM1 && m1PercentOfBudget >= 80" class="text-[8px] text-amber-500 font-bold block">⚠️ {{ t('nearBudget') }}</span>
-                  </p>
+                  </div>
                   <p :class="getBudgetColorClass(m1PercentOfBudget, budgetM1)" class="text-[11px] md:text-xs font-bold font-mono">S$ {{ remainM1 }}</p>
                 </div>
               </div>
@@ -233,11 +228,11 @@
                 <div><p class="text-[8px] md:text-[9px] text-slate-500 font-medium">{{ t('today') }}</p><p class="text-[11px] md:text-xs font-bold font-mono text-slate-200">S$ {{ totalTodayM2 }}</p></div>
                 <div><p class="text-[8px] md:text-[9px] text-slate-500 font-medium">{{ t('thisWeek') }}</p><p class="text-[11px] md:text-xs font-bold font-mono text-slate-200">S$ {{ totalThisWeekM2 }}</p></div>
                 <div class="border-l border-slate-800/80 pl-1 text-right">
-                  <p class="text-[8px] md:text-[9px] text-slate-500 font-medium">
+                  <div class="text-[8px] md:text-[9px] text-slate-500 font-medium">
                     {{ t('remainingBudget') }}
                     <span v-if="budgetM2 && m2PercentOfBudget >= 100" class="text-[8px] text-rose-500 font-black block">🚨 {{ t('overBudget') }}</span>
                     <span v-else-if="budgetM2 && m2PercentOfBudget >= 80" class="text-[8px] text-amber-500 font-bold block">⚠️ {{ t('nearBudget') }}</span>
-                  </p>
+                  </div>
                   <p :class="getBudgetColorClass(m2PercentOfBudget, budgetM2)" class="text-[11px] md:text-xs font-bold font-mono">S$ {{ remainM2 }}</p>
                 </div>
               </div>
@@ -290,10 +285,10 @@
         </div>
       </main>
 
-      <!-- 右侧明细与PC专属统计看板 -->
+      <!-- 右侧明细与PC统计看板 -->
       <section class="lg:col-span-7 space-y-4">
         
-        <!-- 品类对比统计看板（仅在 PC 大屏端显示，手机端彻底隐藏） -->
+        <!-- 品类对比统计看板（仅在 PC 大屏端显示） -->
         <div class="hidden lg:block glass-card rounded-2xl p-4 space-y-3">
           <div class="flex flex-col gap-2 border-b border-slate-800/80 pb-2.5">
             <div class="flex flex-col gap-0.5">
@@ -347,7 +342,7 @@
             </div>
           </div>
 
-          <!-- 星轨圆环图表区域 -->
+          <!-- 星轨圆环图表 -->
           <div class="flex items-center gap-4 bg-slate-950/30 p-3 rounded-xl border border-slate-900">
             <div class="w-2/5 flex justify-center relative flex-shrink-0">
               <svg width="150" height="150" viewBox="0 0 150 150" class="transform -rotate-90">
@@ -373,7 +368,7 @@
             </div>
           </div>
 
-          <!-- 分类深度对比表 -->
+          <!-- 分类对比表 -->
           <div class="overflow-x-auto">
             <table class="w-full text-[11px] text-slate-300 min-w-[320px]">
               <thead>
@@ -393,7 +388,7 @@
                   <tr v-for="row in categoryComparison" :key="row.cat" class="border-b border-slate-900/60 hover:bg-slate-900/40 transition" :class="{'opacity-50 italic bg-slate-950/30': row.cat.includes('居住房租')}">
                     <td class="py-2 text-left flex items-center gap-1.5">
                       <i :class="getCategoryIconOnly(row.cat)" class="text-xs"></i>
-                      <span class="font-bold text-slate-200">{{ getCategoryDisplayName(row.cat) }}</span>
+                      <span class="font-bold text-slate-200">{{ getCategoryDisplayName(cat) }}</span>
                       <span v-if="row.cat.includes('居住房租')" class="px-1.5 py-0.2 rounded bg-orange-500/10 border border-orange-500/30 text-[8px] text-orange-400 font-sans tracking-tight scale-90">{{ t('excludeLabel') }}</span>
                     </td>
                     <td class="py-2 text-right font-mono text-indigo-300" :class="{'font-black': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
@@ -419,7 +414,7 @@
           </div>
         </div>
 
-        <!-- 固定月费全时段专查卡片（仅在 PC 大屏端显示，手机端隐藏） -->
+        <!-- 固定月费全时段专查卡片（仅在 PC 大屏端显示） -->
         <div class="hidden lg:block glass-card rounded-2xl p-4 border border-indigo-500/15 bg-gradient-to-b from-indigo-950/5 to-transparent">
           <div class="flex justify-between items-center mb-2 border-b border-slate-800 pb-1.5">
             <h3 class="text-sm font-black text-slate-200 flex items-center gap-1.5">
@@ -442,7 +437,7 @@
                 </span>
                 <div class="truncate">
                   <p class="font-bold text-slate-200 truncate">{{ sub.remark || '未命名固定月费' }}</p>
-                  <p class="text-[9px] text-slate-500 font-mono">扣款锁定日: {{ sub.date }}</p>
+                  <p class="text-[9px] text-slate-500 font-mono">扣款日: {{ sub.date }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-1.5 flex-shrink-0">
@@ -675,6 +670,9 @@
         const chartMember = ref('all');
 
         const form = reactive({ payer: member1.value, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
+
+        watch(member1, (newVal) => { if(form.payer !== member2.value) form.payer = newVal; });
+        watch(member2, (newVal) => { if(form.payer === member2.value) form.payer = newVal; });
 
         const syncLiveExchangeRates = async () => {
           exchangeSyncing.value = true;

@@ -89,15 +89,15 @@
           <span class="text-rose-400 font-bold">CNY {{ exchangeRateCny.toFixed(2) }}</span>
         </div>
         
-        <!-- 语言切换按钮 (华语时显示 EN，英语时显示 ZH) -->
+        <!-- 语言切换按钮 -->
         <button @click="toggleLang" class="bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-white px-2.5 py-1 rounded-full border border-slate-800 transition font-bold uppercase tracking-wider">
           {{ lang === 'zh' ? 'EN' : 'ZH' }}
         </button>
       </div>
     </header>
 
-    <!-- 成员管理面板 -->
-    <section class="glass-card rounded-2xl p-3 mb-4 flex items-center gap-3 overflow-x-auto whitespace-nowrap">
+    <!-- 成员管理面板 (已修改：手机端完全隐藏 hidden，仅在电脑端 lg:flex 显示) -->
+    <section class="hidden lg:flex glass-card rounded-2xl p-3 mb-4 items-center gap-3 overflow-x-auto whitespace-nowrap">
       <span class="text-xs font-bold text-slate-300 flex-shrink-0 flex items-center gap-1.5">
         <i class="fa-solid fa-user-astronaut text-indigo-400"></i>{{ t('members') }}:
       </span>
@@ -931,11 +931,9 @@
           await fetchRecords();
         };
 
-        // 升级版 CSV 导出逻辑：增加外币小提示列 (CNY|或者MYR提示)
         const exportToCSV = () => {
           if (records.value.length === 0) return alert('无数据可导出');
           
-          // 表头定义
           const headers = [
             'Date/日期', 
             'Payer/支付人', 
@@ -944,12 +942,11 @@
             'Original Amount/输入金额', 
             'Currency/输入币种', 
             'Exchange Rate/汇率', 
-            'Foreign Currency Note/外币小提示', // 新增的中文/外币说明列
+            'Foreign Currency Note/外币小提示', 
             'Remark/备注'
           ];
           
           const rows = records.value.map(r => {
-            // 生成外币小提示逻辑：例如如果是 CNY，生成 "CNY | 100.00" ；如果是 SGD 则显示 "-"
             let foreignNote = '-';
             if (r.currency && r.currency !== 'SGD') {
               foreignNote = `${r.currency} | ${Number(r.original_amount).toFixed(2)}`;
@@ -963,7 +960,7 @@
               r.original_amount, 
               r.currency, 
               r.exchange_rate, 
-              foreignNote, // 填充提示数据
+              foreignNote, 
               r.remark || ''
             ];
           });

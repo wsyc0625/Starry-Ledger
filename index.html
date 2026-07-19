@@ -4,12 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>星辰小账 | Starry Ledger</title>
-  
-  <!-- 网页网址图标 (Favicon) & 苹果设备图标 -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌟</text></svg>">
   <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 180%22><rect width=%22100%%22 height=%22100%%22 rx=%2240%22 fill=%22url(%23g)%22/><radialGradient id=%22g%22 cx=%2250%%22 cy=%22100%%22 r=%22100%%22><stop offset=%220%%22 stop-color=%22%231e1b4b%22/><stop offset=%22100%%22 stop-color=%22%23020617%22/></radialGradient><text x=%2250%%22 y=%2255%%22 font-size=%2295%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>🌟</text></svg>">
   <link rel="icon" type="image/png" sizes="32x32" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
-  
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
@@ -28,7 +24,6 @@
       background-position: 0 0, 20px 20px;
       opacity: 0.4; z-index: -1; 
     }
-    /* 高级荧光毛玻璃卡片 */
     .glass-card { 
       background: rgba(13, 22, 38, 0.65); 
       backdrop-filter: blur(20px); 
@@ -44,7 +39,6 @@
     .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
     .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }
 
-    /* 大屏 PC 端自适应黄金比例 */
     @media (min-width: 1024px) {
       #app { font-size: 1.2rem; }
       .container { max-width: 90rem !important; }
@@ -85,9 +79,7 @@
         </h1>
       </div>
       
-      <!-- 右上角紧凑状态组 -->
       <div class="flex items-center gap-1.5 font-mono text-[9px]">
-        <!-- 汇率缩写区域 -->
         <div class="flex items-center gap-1 bg-slate-950/80 px-2.5 py-1 rounded-full border border-indigo-950 text-slate-400">
           <span :class="exchangeSyncing ? 'text-indigo-400 animate-pulse' : 'text-emerald-400'"><i class="fa-solid fa-circle text-[5px]"></i></span>
           <span class="text-indigo-300 font-medium">SGD 1</span>
@@ -97,27 +89,35 @@
           <span class="text-rose-400 font-bold">CNY {{ exchangeRateCny.toFixed(2) }}</span>
         </div>
         
-        <!-- 语言切换 (ZH/EN) -->
+        <!-- 语言切换按钮 (华语时显示 EN，英语时显示 ZH) -->
         <button @click="toggleLang" class="bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-white px-2.5 py-1 rounded-full border border-slate-800 transition font-bold uppercase tracking-wider">
-          {{ lang === 'zh' ? 'ZH' : 'EN' }}
+          {{ lang === 'zh' ? 'EN' : 'ZH' }}
         </button>
       </div>
     </header>
 
-    <!-- 成员管理面板（手机端隐藏，PC端显示） -->
-    <section class="hidden lg:flex glass-card rounded-2xl p-3 mb-4 items-center gap-3 overflow-x-auto whitespace-nowrap">
+    <!-- 成员管理面板 -->
+    <section class="glass-card rounded-2xl p-3 mb-4 flex items-center gap-3 overflow-x-auto whitespace-nowrap">
       <span class="text-xs font-bold text-slate-300 flex-shrink-0 flex items-center gap-1.5">
         <i class="fa-solid fa-user-astronaut text-indigo-400"></i>{{ t('members') }}:
       </span>
       
-      <!-- 保留高级可编辑的 Input 输入框 -->
-      <div class="flex items-center gap-3">
+      <div class="flex lg:hidden items-center gap-2">
+        <span class="bg-indigo-950/60 text-xs font-bold text-indigo-300 px-3 py-1 rounded-xl border border-indigo-900/50 shadow-inner">
+          {{ member1 }}
+        </span>
+        <span class="bg-amber-950/60 text-xs font-bold text-amber-300 px-3 py-1 rounded-xl border border-amber-900/50 shadow-inner">
+          {{ member2 }}
+        </span>
+      </div>
+
+      <div class="hidden lg:flex items-center gap-3">
         <input type="text" v-model="member1" class="bg-indigo-950/40 text-xs font-bold text-indigo-200 w-24 text-center py-1 rounded-xl border border-indigo-900/60 focus:outline-none focus:border-indigo-500 transition shadow-inner">
         <input type="text" v-model="member2" class="bg-amber-950/40 text-xs font-bold text-amber-200 w-24 text-center py-1 rounded-xl border border-amber-900/60 focus:outline-none focus:border-amber-500 transition shadow-inner">
       </div>
     </section>
 
-    <!-- 核心响应式分栏布局 -->
+    <!-- 核心布局 -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
       
       <!-- 左侧控制面板 -->
@@ -153,7 +153,7 @@
               <label class="block text-[10px] md:text-[11px] text-slate-400 mb-1 font-medium">{{ t('category') }}</label>
               <div class="grid grid-cols-3 gap-1.5">
                 <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
-                  :class="form.category === cat ? 'bg-indigo-950/80 border-indigo-500 text-white font-bold shadow-lg' : 'bg-slate-955/30 border-slate-900/60 text-slate-400 hover:bg-slate-950/60'" class="flex flex-col items-center justify-center py-2 rounded-xl border transition group">
+                  :class="form.category === cat ? 'bg-indigo-950/80 border-indigo-500 text-white font-bold shadow-lg' : 'bg-slate-950/30 border-slate-900/60 text-slate-400 hover:bg-slate-950/60'" class="flex flex-col items-center justify-center py-2 rounded-xl border transition group">
                   <i :class="getCategoryIconOnly(cat)" class="text-sm md:text-base mb-1 transition-transform group-hover:scale-110"></i>
                   <span class="text-[9px] truncate w-full text-center px-0.5 font-medium tracking-tight">{{ getCategoryDisplayName(cat) }}</span>
                 </button>
@@ -177,7 +177,7 @@
           </form>
         </div>
 
-        <!-- 数据汇总与云预算看板 -->
+        <!-- 数据汇总看板 -->
         <div class="glass-card rounded-2xl p-3 md:p-4 space-y-3">
           <h3 class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
             <i class="fa-solid fa-chart-pie text-indigo-400"></i>{{ t('analysis') }}
@@ -185,7 +185,6 @@
           </h3>
           
           <div class="space-y-2">
-            <!-- 成员 1 卡片 -->
             <div class="bg-indigo-950/20 p-2.5 rounded-xl border border-indigo-900/40 space-y-1.5">
               <div class="flex justify-between items-center">
                 <span class="text-xs font-bold text-indigo-300">{{ member1 }}</span>
@@ -211,7 +210,6 @@
               </div>
             </div>
 
-            <!-- 成员 2 卡片 -->
             <div class="bg-amber-950/20 p-2.5 rounded-xl border border-amber-900/40 space-y-1.5">
               <div class="flex justify-between items-center">
                 <span class="text-xs font-bold text-amber-300">{{ member2 }}</span>
@@ -238,7 +236,6 @@
             </div>
           </div>
 
-          <!-- 消费占比百分比条 -->
           <div v-if="totalRatioSum > 0" class="pt-2 border-t border-slate-800/60 space-y-1">
             <div class="flex justify-between text-[9px] text-slate-400 font-mono">
               <span class="text-indigo-300 font-medium">{{ member1 }}: {{ m1Percent }}%</span>
@@ -251,7 +248,6 @@
             </div>
           </div>
 
-          <!-- 月份选择与总计 -->
           <div class="pt-2 border-t border-slate-800/60 flex justify-between items-center relative">
             <div class="relative">
               <button @click.stop="toggleDatePicker('left')" class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 hover:border-indigo-500/80 text-[10px] md:text-[11px] font-bold font-mono text-indigo-300 px-3 py-1 rounded-xl transition shadow-inner">
@@ -284,10 +280,10 @@
         </div>
       </main>
 
-      <!-- 右侧明细与PC专属统计看板 -->
+      <!-- 右侧明细与高级统计看板 -->
       <section class="lg:col-span-7 space-y-4">
         
-        <!-- 品类对比统计看板（仅在 PC 大屏端显示，手机端彻底隐藏） -->
+        <!-- 品类对比统计看板 (PC端) -->
         <div class="hidden lg:block glass-card rounded-2xl p-4 space-y-3">
           <div class="flex flex-col gap-2 border-b border-slate-800/80 pb-2.5">
             <div class="flex flex-col gap-0.5">
@@ -298,7 +294,6 @@
             </div>
             
             <div class="flex items-center gap-1.5 text-[10px]">
-              <!-- 快捷切月 -->
               <div class="relative flex items-center bg-slate-950/60 px-1 py-0.5 rounded-xl border border-slate-800/60 h-6">
                 <button type="button" @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-1.5 transition text-xs">◀</button>
                 <button type="button" @click.stop="toggleDatePicker('top')" class="px-1.5 font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center gap-1">
@@ -324,14 +319,12 @@
                 </transition>
               </div>
 
-              <!-- 成员过滤 -->
               <div class="flex bg-slate-950/60 p-0.5 rounded-xl border border-slate-800/60 h-6 items-center">
                 <button type="button" @click="chartMember = 'all'" :class="chartMember === 'all' ? 'bg-slate-800 text-slate-200' : 'text-slate-500 hover:text-slate-400'" class="px-2 py-0.5 rounded-lg transition font-bold">{{ t('viewAll') }}</button>
                 <button type="button" @click="chartMember = 'm1'" :class="chartMember === 'm1' ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30' : 'text-slate-500 hover:text-slate-400'" class="px-2 py-0.5 rounded-lg transition font-bold truncate max-w-[55px]">{{ member1 }}</button>
                 <button type="button" @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-amber-600/30 text-amber-300 border border-amber-500/30' : 'text-slate-500 hover:text-slate-400'" class="px-2 py-0.5 rounded-lg transition font-bold truncate max-w-[55px]">{{ member2 }}</button>
               </div>
 
-              <!-- 范围选择 -->
               <div class="flex bg-slate-950/60 p-0.5 rounded-xl border border-slate-800/60 h-6 items-center font-bold">
                 <button type="button" @click="categoryRange = 'today'" :class="categoryRange === 'today' ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeToday') }}</button>
                 <button type="button" @click="categoryRange = 'week'" :class="categoryRange === 'week' ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
@@ -341,7 +334,6 @@
             </div>
           </div>
 
-          <!-- 星轨圆环图表区域 -->
           <div class="flex items-center gap-4 bg-slate-950/30 p-3 rounded-xl border border-slate-900">
             <div class="w-2/5 flex justify-center relative flex-shrink-0">
               <svg width="150" height="150" viewBox="0 0 150 150" class="transform -rotate-90">
@@ -367,7 +359,6 @@
             </div>
           </div>
 
-          <!-- 分类深度对比表 -->
           <div class="overflow-x-auto">
             <table class="w-full text-[11px] text-slate-300 min-w-[320px]">
               <thead>
@@ -413,7 +404,7 @@
           </div>
         </div>
 
-        <!-- 固定月费全时段专查卡片（仅在 PC 大屏端显示，手机端隐藏） -->
+        <!-- 固定月费看板 (PC端) -->
         <div class="hidden lg:block glass-card rounded-2xl p-4 border border-indigo-500/15 bg-gradient-to-b from-indigo-950/5 to-transparent">
           <div class="flex justify-between items-center mb-2 border-b border-slate-800 pb-1.5">
             <h3 class="text-sm font-black text-slate-200 flex items-center gap-1.5">
@@ -454,13 +445,12 @@
           </div>
         </div>
 
-        <!-- 账目明细 -->
+        <!-- 账目明细流水表 -->
         <div class="glass-card rounded-2xl p-3 md:p-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
             <div class="flex items-center gap-1">
               <h2 class="text-xs md:text-base font-bold text-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-list text-amber-400"></i> {{ t('details') }}</h2>
               
-              <!-- 快捷切月 -->
               <div class="relative flex items-center bg-slate-950/80 border border-slate-800 rounded-2xl p-0.5 ml-1">
                 <button type="button" @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-2 py-0.5 transition text-xs">◀</button>
                 <button type="button" @click.stop="toggleDatePicker('bottom')" class="px-1.5 py-0.5 text-[10px] font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center gap-1">
@@ -941,10 +931,43 @@
           await fetchRecords();
         };
 
+        // 升级版 CSV 导出逻辑：增加外币小提示列 (CNY|或者MYR提示)
         const exportToCSV = () => {
           if (records.value.length === 0) return alert('无数据可导出');
-          const headers = ['Date/日期', 'Payer/支付人', 'Category/分类', 'Amount/实扣(SGD)', 'Original Amount/输入金额', 'Currency/输入币种', 'Exchange Rate/汇率', 'Remark/备注'];
-          const rows = records.value.map(r => [r.date, r.payer, r.category, r.amount, r.original_amount, r.currency, r.exchange_rate, r.remark || '']);
+          
+          // 表头定义
+          const headers = [
+            'Date/日期', 
+            'Payer/支付人', 
+            'Category/分类', 
+            'Amount/实扣(SGD)', 
+            'Original Amount/输入金额', 
+            'Currency/输入币种', 
+            'Exchange Rate/汇率', 
+            'Foreign Currency Note/外币小提示', // 新增的中文/外币说明列
+            'Remark/备注'
+          ];
+          
+          const rows = records.value.map(r => {
+            // 生成外币小提示逻辑：例如如果是 CNY，生成 "CNY | 100.00" ；如果是 SGD 则显示 "-"
+            let foreignNote = '-';
+            if (r.currency && r.currency !== 'SGD') {
+              foreignNote = `${r.currency} | ${Number(r.original_amount).toFixed(2)}`;
+            }
+            
+            return [
+              r.date, 
+              r.payer, 
+              r.category, 
+              r.amount, 
+              r.original_amount, 
+              r.currency, 
+              r.exchange_rate, 
+              foreignNote, // 填充提示数据
+              r.remark || ''
+            ];
+          });
+          
           const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.map(val => `"${val}"`).join(','))].join('\n');
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
           const url = URL.createObjectURL(blob); const link = document.createElement("a");

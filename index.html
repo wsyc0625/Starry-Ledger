@@ -46,35 +46,25 @@
     ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
 
     @media (min-width: 1024px) {
-      #app { font-size: 1.2rem; }
-      .container { max-width: 90rem !important; }
-      .glass-card { padding: 1.5rem !important; border-radius: 1.5rem !important; }
-      header { margin-bottom: 2rem !important; padding-top: 1.2rem !important; padding-bottom: 1.2rem !important; }
+      #app { font-size: 1.05rem; }
+      .container { max-width: 96rem !important; }
+      .glass-card { padding: 1.25rem !important; border-radius: 1.25rem !important; }
+      header { margin-bottom: 1.5rem !important; padding-top: 1rem !important; padding-bottom: 1rem !important; }
       
-      .text-xs { font-size: 1.05rem !important; line-height: 1.5rem !important; }
-      .text-sm { font-size: 1.2rem !important; line-height: 1.75rem !important; }
-      .text-base { font-size: 1.35rem !important; line-height: 2rem !important; }
-      .text-lg { font-size: 1.5rem !important; line-height: 2.25rem !important; }
+      .text-xs { font-size: 0.95rem !important; line-height: 1.35rem !important; }
+      .text-sm { font-size: 1.05rem !important; line-height: 1.5rem !important; }
+      .text-base { font-size: 1.15rem !important; line-height: 1.65rem !important; }
+      .text-lg { font-size: 1.3rem !important; line-height: 1.85rem !important; }
       
-      .text-\[9px\] { font-size: 11px !important; }
-      .text-\[10px\] { font-size: 12px !important; }
-      .text-\[11px\] { font-size: 13.2px !important; }
-      
-      input, select, button { padding-top: 0.65rem !important; padding-bottom: 0.65rem !important; border-radius: 0.9rem !important; }
+      input, select, button { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; border-radius: 0.75rem !important; }
       header input { padding-top: 0.15rem !important; padding-bottom: 0.15rem !important; }
-      .grid { gap: 1.5rem !important; }
-      .gap-1\.5 { gap: 0.5rem !important; }
-      .gap-2 { gap: 0.75rem !important; }
-      .gap-3 { gap: 1rem !important; }
-      .gap-4 { gap: 1.5rem !important; }
-      
-      .max-h-\[440px\] { max-height: 550px !important; }
+      .grid { gap: 1.25rem !important; }
     }
   </style>
 </head>
 <body>
   <div class="star-bg"></div>
-  <div id="app" v-cloak class="container mx-auto p-3 md:p-4 max-w-7xl">
+  <div id="app" v-cloak class="container mx-auto p-3 md:p-6 max-w-[1500px]">
     
     <!-- 顶部导航头 -->
     <header class="flex justify-between items-center mb-4 py-2 border-b border-slate-800/80">
@@ -85,9 +75,9 @@
         </h1>
       </div>
       
-      <div class="flex items-center gap-1.5 font-mono text-[9px]">
-        <div class="flex items-center gap-1 bg-slate-950/80 px-2.5 py-1 rounded-full border border-indigo-950 text-slate-400">
-          <span :class="exchangeSyncing ? 'text-indigo-400 animate-pulse' : 'text-emerald-400'"><i class="fa-solid fa-circle text-[5px]"></i></span>
+      <div class="flex items-center gap-2 font-mono text-[10px] md:text-xs">
+        <div class="flex items-center gap-1.5 bg-slate-950/80 px-3 py-1.5 rounded-full border border-indigo-950 text-slate-400">
+          <span :class="exchangeSyncing ? 'text-indigo-400 animate-pulse' : 'text-emerald-400'"><i class="fa-solid fa-circle text-[6px]"></i></span>
           <span class="text-indigo-300 font-medium">SGD 1</span>
           <span class="text-slate-700">=</span>
           <span class="text-amber-400 font-bold">MYR {{ exchangeRate.toFixed(2) }}</span>
@@ -95,8 +85,7 @@
           <span class="text-rose-400 font-bold">CNY {{ exchangeRateCny.toFixed(2) }}</span>
         </div>
         
-        <!-- 语言切换按钮 -->
-        <button @click="toggleLang" class="bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-white px-2.5 py-1 rounded-full border border-slate-800 transition font-bold uppercase tracking-wider">
+        <button @click="toggleLang" class="bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-white px-3 py-1.5 rounded-full border border-slate-800 transition font-bold uppercase tracking-wider">
           {{ lang === 'zh' ? 'EN' : 'ZH' }}
         </button>
       </div>
@@ -118,22 +107,22 @@
       </div>
 
       <div class="hidden lg:flex items-center gap-3">
-        <input type="text" v-model="member1" class="bg-indigo-950/40 text-xs font-bold text-indigo-200 w-24 text-center py-1 rounded-xl border border-indigo-900/60 focus:outline-none focus:border-indigo-500 transition shadow-inner">
-        <input type="text" v-model="member2" class="bg-amber-950/40 text-xs font-bold text-amber-200 w-24 text-center py-1 rounded-xl border border-amber-900/60 focus:outline-none focus:border-amber-500 transition shadow-inner">
+        <input type="text" v-model="member1" class="bg-indigo-950/40 text-xs font-bold text-indigo-200 w-28 text-center py-1 rounded-xl border border-indigo-900/60 focus:outline-none focus:border-indigo-500 transition shadow-inner">
+        <input type="text" v-model="member2" class="bg-amber-950/40 text-xs font-bold text-amber-200 w-28 text-center py-1 rounded-xl border border-amber-900/60 focus:outline-none focus:border-amber-500 transition shadow-inner">
       </div>
     </section>
 
-    <!-- 核心布局 -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <!-- 核心布局：两列在大屏对称相呼应 -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
       
-      <!-- 左侧控制面板 -->
-      <main class="lg:col-span-5 space-y-4">
+      <!-- 左侧控制面板 (5列) -->
+      <main class="lg:col-span-5 space-y-4 flex flex-col">
         <!-- 记账板块 -->
-        <div class="glass-card rounded-2xl p-3 md:p-4">
+        <div class="glass-card rounded-2xl p-4">
           <h2 class="text-xs md:text-base font-bold mb-3 text-slate-200 flex items-center gap-2"><i class="fa-solid fa-circle-plus text-indigo-400"></i> {{ t('addRecord') }}</h2>
           <form @submit.prevent="addRecord" class="space-y-3">
             <div>
-              <label class="block text-[10px] md:text-[11px] text-slate-400 mb-1 font-medium">{{ t('payer') }}</label>
+              <label class="block text-[11px] text-slate-400 mb-1 font-medium">{{ t('payer') }}</label>
               <div class="grid grid-cols-2 gap-2">
                 <button type="button" @click="form.payer = member1" :class="form.payer === member1 ? 'bg-indigo-600/25 neon-border-indigo text-indigo-200 font-bold' : 'bg-slate-900/40 border-slate-800 text-slate-400 hover:bg-slate-900/80'" class="py-2 rounded-xl border text-xs transition">{{ member1 }}</button>
                 <button type="button" @click="form.payer = member2" :class="form.payer === member2 ? 'bg-amber-600/25 neon-border-amber text-amber-200 font-bold' : 'bg-slate-900/40 border-slate-800 text-slate-400 hover:bg-slate-900/80'" class="py-2 rounded-xl border text-xs transition">{{ member2 }}</button>
@@ -141,13 +130,13 @@
             </div>
 
             <div>
-              <label class="block text-[10px] md:text-[11px] text-slate-400 mb-1 font-medium">{{ t('amount') }}</label>
+              <label class="block text-[11px] text-slate-400 mb-1 font-medium">{{ t('amount') }}</label>
               <div class="flex gap-2">
                 <div class="relative flex-1">
-                  <span class="absolute left-3 top-1.5 md:top-2 text-indigo-400 font-bold text-xs md:text-sm font-mono">{{ form.currency }}</span>
-                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-1 md:py-1.5 pl-14 pr-4 text-white focus:outline-none focus:border-indigo-500 font-mono text-sm transition">
+                  <span class="absolute left-3 top-2 text-indigo-400 font-bold text-xs md:text-sm font-mono">{{ form.currency }}</span>
+                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-1.5 pl-14 pr-4 text-white focus:outline-none focus:border-indigo-500 font-mono text-sm transition">
                 </div>
-                <select v-model="form.currency" class="bg-slate-900 border border-slate-800 rounded-xl px-2.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 transition font-mono font-bold">
+                <select v-model="form.currency" class="bg-slate-900 border border-slate-800 rounded-xl px-3 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 transition font-mono font-bold">
                   <option value="SGD">SGD</option>
                   <option value="MYR">MYR</option>
                   <option value="CNY">CNY</option>
@@ -156,24 +145,24 @@
             </div>
 
             <div>
-              <label class="block text-[10px] md:text-[11px] text-slate-400 mb-1 font-medium">{{ t('category') }}</label>
-              <div class="grid grid-cols-3 gap-1.5">
+              <label class="block text-[11px] text-slate-400 mb-1 font-medium">{{ t('category') }}</label>
+              <div class="grid grid-cols-3 gap-2">
                 <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
-                  :class="form.category === cat ? 'bg-indigo-950/80 border-indigo-500 text-white font-bold shadow-lg' : 'bg-slate-950/30 border-slate-900/60 text-slate-400 hover:bg-slate-950/60'" class="flex flex-col items-center justify-center py-2 rounded-xl border transition group">
+                  :class="form.category === cat ? 'bg-indigo-950/80 border-indigo-500 text-white font-bold shadow-lg' : 'bg-slate-950/30 border-slate-900/60 text-slate-400 hover:bg-slate-950/60'" class="flex flex-col items-center justify-center py-2.5 rounded-xl border transition group">
                   <i :class="getCategoryIconOnly(cat)" class="text-sm md:text-base mb-1 transition-transform group-hover:scale-110"></i>
-                  <span class="text-[9px] truncate w-full text-center px-0.5 font-medium tracking-tight">{{ getCategoryDisplayName(cat) }}</span>
+                  <span class="text-[10px] truncate w-full text-center px-0.5 font-medium tracking-tight">{{ getCategoryDisplayName(cat) }}</span>
                 </button>
               </div>
             </div>
 
             <div class="grid grid-cols-12 gap-2">
               <div class="col-span-5">
-                <label class="block text-[10px] md:text-[11px] text-slate-400 mb-1 font-medium">{{ t('date') }}</label>
-                <input type="date" v-model="form.date" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-1 md:py-1.5 px-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 transition font-mono">
+                <label class="block text-[11px] text-slate-400 mb-1 font-medium">{{ t('date') }}</label>
+                <input type="date" v-model="form.date" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-1.5 px-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 transition font-mono">
               </div>
               <div class="col-span-7">
-                <label class="block text-[10px] md:text-[11px] text-slate-400 mb-1 font-medium">{{ t('remark') }}</label>
-                <input type="text" v-model="form.remark" placeholder="..." class="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-1 md:py-1.5 px-3 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 transition">
+                <label class="block text-[11px] text-slate-400 mb-1 font-medium">{{ t('remark') }}</label>
+                <input type="text" v-model="form.remark" placeholder="..." class="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-1.5 px-3 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 transition">
               </div>
             </div>
 
@@ -184,17 +173,17 @@
         </div>
 
         <!-- 数据汇总看板 -->
-        <div class="glass-card rounded-2xl p-3 md:p-4 space-y-3">
+        <div class="glass-card rounded-2xl p-4 space-y-3">
           <h3 class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
             <i class="fa-solid fa-chart-pie text-indigo-400"></i>{{ t('analysis') }}
-            <span class="text-[9px] text-slate-500 font-normal ml-auto">({{ t('excludeHousing') }})</span>
+            <span class="text-[10px] text-slate-500 font-normal ml-auto">({{ t('excludeHousing') }})</span>
           </h3>
           
           <div class="space-y-2">
-            <div class="bg-indigo-950/20 p-2.5 rounded-xl border border-indigo-900/40 space-y-1.5">
+            <div class="bg-indigo-950/20 p-3 rounded-xl border border-indigo-900/40 space-y-1.5">
               <div class="flex justify-between items-center">
                 <span class="text-xs font-bold text-indigo-300">{{ member1 }}</span>
-                <div class="text-[9px] md:text-[10px] text-slate-400 flex items-center gap-1">
+                <div class="text-[10px] text-slate-400 flex items-center gap-1">
                   <span>{{ t('budgetLabel') }}:</span>
                   <div class="flex items-center gap-0.5 font-mono text-indigo-200 font-bold bg-slate-950/60 px-1.5 py-0.5 rounded border border-indigo-900/60">
                     <span>S$</span>
@@ -203,23 +192,23 @@
                 </div>
               </div>
               <div class="grid grid-cols-3 gap-1 text-center sm:text-left">
-                <div><p class="text-[8px] md:text-[9px] text-slate-500 font-medium">{{ t('today') }}</p><p class="text-[11px] md:text-xs font-bold font-mono text-slate-200">S$ {{ totalTodayM1 }}</p></div>
-                <div><p class="text-[8px] md:text-[9px] text-slate-500 font-medium">{{ t('thisWeek') }}</p><p class="text-[11px] md:text-xs font-bold font-mono text-slate-200">S$ {{ totalThisWeekM1 }}</p></div>
+                <div><p class="text-[9px] text-slate-500 font-medium">{{ t('today') }}</p><p class="text-xs font-bold font-mono text-slate-200">S$ {{ totalTodayM1 }}</p></div>
+                <div><p class="text-[9px] text-slate-500 font-medium">{{ t('thisWeek') }}</p><p class="text-xs font-bold font-mono text-slate-200">S$ {{ totalThisWeekM1 }}</p></div>
                 <div class="border-l border-slate-800/80 pl-1 text-right">
-                  <p class="text-[8px] md:text-[9px] text-slate-500 font-medium">
+                  <p class="text-[9px] text-slate-500 font-medium">
                     {{ t('remainingBudget') }}
                     <span v-if="budgetM1 && m1PercentOfBudget >= 100" class="text-[8px] text-rose-500 font-black block">🚨 {{ t('overBudget') }}</span>
                     <span v-else-if="budgetM1 && m1PercentOfBudget >= 80" class="text-[8px] text-amber-500 font-bold block">⚠️ {{ t('nearBudget') }}</span>
                   </p>
-                  <p :class="getBudgetColorClass(m1PercentOfBudget, budgetM1)" class="text-[11px] md:text-xs font-bold font-mono">S$ {{ remainM1 }}</p>
+                  <p :class="getBudgetColorClass(m1PercentOfBudget, budgetM1)" class="text-xs font-bold font-mono">S$ {{ remainM1 }}</p>
                 </div>
               </div>
             </div>
 
-            <div class="bg-amber-950/20 p-2.5 rounded-xl border border-amber-900/40 space-y-1.5">
+            <div class="bg-amber-950/20 p-3 rounded-xl border border-amber-900/40 space-y-1.5">
               <div class="flex justify-between items-center">
                 <span class="text-xs font-bold text-amber-300">{{ member2 }}</span>
-                <div class="text-[9px] md:text-[10px] text-slate-400 flex items-center gap-1">
+                <div class="text-[10px] text-slate-400 flex items-center gap-1">
                   <span>{{ t('budgetLabel') }}:</span>
                   <div class="flex items-center gap-0.5 font-mono text-amber-200 font-bold bg-slate-950/60 px-1.5 py-0.5 rounded border border-amber-900/60">
                     <span>S$</span>
@@ -228,22 +217,22 @@
                 </div>
               </div>
               <div class="grid grid-cols-3 gap-1 text-center sm:text-left">
-                <div><p class="text-[8px] md:text-[9px] text-slate-500 font-medium">{{ t('today') }}</p><p class="text-[11px] md:text-xs font-bold font-mono text-slate-200">S$ {{ totalTodayM2 }}</p></div>
-                <div><p class="text-[8px] md:text-[9px] text-slate-500 font-medium">{{ t('thisWeek') }}</p><p class="text-[11px] md:text-xs font-bold font-mono text-slate-200">S$ {{ totalThisWeekM2 }}</p></div>
+                <div><p class="text-[9px] text-slate-500 font-medium">{{ t('today') }}</p><p class="text-xs font-bold font-mono text-slate-200">S$ {{ totalTodayM2 }}</p></div>
+                <div><p class="text-[9px] text-slate-500 font-medium">{{ t('thisWeek') }}</p><p class="text-xs font-bold font-mono text-slate-200">S$ {{ totalThisWeekM2 }}</p></div>
                 <div class="border-l border-slate-800/80 pl-1 text-right">
-                  <p class="text-[8px] md:text-[9px] text-slate-500 font-medium">
+                  <p class="text-[9px] text-slate-500 font-medium">
                     {{ t('remainingBudget') }}
                     <span v-if="budgetM2 && m2PercentOfBudget >= 100" class="text-[8px] text-rose-500 font-black block">🚨 {{ t('overBudget') }}</span>
                     <span v-else-if="budgetM2 && m2PercentOfBudget >= 80" class="text-[8px] text-amber-500 font-bold block">⚠️ {{ t('nearBudget') }}</span>
                   </p>
-                  <p :class="getBudgetColorClass(m2PercentOfBudget, budgetM2)" class="text-[11px] md:text-xs font-bold font-mono">S$ {{ remainM2 }}</p>
+                  <p :class="getBudgetColorClass(m2PercentOfBudget, budgetM2)" class="text-xs font-bold font-mono">S$ {{ remainM2 }}</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div v-if="totalRatioSum > 0" class="pt-2 border-t border-slate-800/60 space-y-1">
-            <div class="flex justify-between text-[9px] text-slate-400 font-mono">
+            <div class="flex justify-between text-[10px] text-slate-400 font-mono">
               <span class="text-indigo-300 font-medium">{{ member1 }}: {{ m1Percent }}%</span>
               <span class="text-slate-500 font-bold tracking-widest uppercase">{{ t('ratio') }}</span>
               <span class="text-amber-300 font-medium">{{ member2 }}: {{ m2Percent }}%</span>
@@ -256,13 +245,13 @@
 
           <div class="pt-2 border-t border-slate-800/60 flex justify-between items-center relative">
             <div class="relative">
-              <button @click.stop="toggleDatePicker('left')" class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 hover:border-indigo-500/80 text-[10px] md:text-[11px] font-bold font-mono text-indigo-300 px-3 py-1 rounded-xl transition shadow-inner">
+              <button @click.stop="toggleDatePicker('left')" class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 hover:border-indigo-500/80 text-xs font-bold font-mono text-indigo-300 px-3 py-1 rounded-xl transition shadow-inner">
                 <span>{{ selectedMonthText }}</span>
                 <i class="fa-regular fa-calendar-days text-indigo-400"></i>
               </button>
               
               <transition name="fade">
-                <div v-if="showDatePicker && activePicker === 'left'" @click.stop class="absolute left-0 bottom-full mb-2 z-50 w-64 md:w-72 glass-card rounded-2xl p-3 md:p-4 shadow-2xl border border-slate-800/80 bg-slate-950/98">
+                <div v-if="showDatePicker && activePicker === 'left'" @click.stop class="absolute left-0 bottom-full mb-2 z-50 w-72 glass-card rounded-2xl p-4 shadow-2xl border border-slate-800/80 bg-slate-950/98">
                   <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
                     <button type="button" @click="changePanelYear(-1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-left"></i></button>
                     <span class="text-sm font-bold text-slate-200 font-mono">{{ panelYear }} 年</span>
@@ -273,34 +262,34 @@
                       {{ String(m).padStart(2, '0') }}月
                     </button>
                   </div>
-                  <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold py-1.5 text-[10px] rounded-xl transition tracking-wider">回到本月</button>
+                  <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold py-1.5 text-xs rounded-xl transition tracking-wider">回到本月</button>
                 </div>
               </transition>
             </div>
             
             <div class="text-right">
-              <span class="text-[9px] md:text-[10px] text-slate-500 font-medium">{{ t('thisMonthTotal') }}:</span>
-              <p class="text-xs md:text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200 font-mono">S$ {{ totalMonth }}</p>
+              <span class="text-[10px] text-slate-500 font-medium">{{ t('thisMonthTotal') }}:</span>
+              <p class="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200 font-mono">S$ {{ totalMonth }}</p>
             </div>
           </div>
         </div>
       </main>
 
-      <!-- 右侧明细与高级统计看板 -->
-      <section class="lg:col-span-7 space-y-4">
+      <!-- 右侧明细与高级统计看板 (7列) -->
+      <section class="lg:col-span-7 space-y-4 flex flex-col">
         
         <!-- 品类对比统计看板 (PC端) -->
         <div class="hidden lg:block glass-card rounded-2xl p-4 space-y-3">
-          <div class="flex flex-col gap-2 border-b border-slate-800/80 pb-2.5">
-            <div class="flex flex-col gap-0.5">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+            <div>
               <h2 class="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">Starry Analytics Studio</h2>
               <h2 class="text-base font-black text-slate-100 flex items-center gap-1.5 leading-tight">
                 <i class="fa-solid fa-chart-line text-indigo-400"></i>{{ lang === 'zh' ? '品类对比深度查询' : 'Deep Category Inquiry' }}
               </h2>
             </div>
             
-            <div class="flex items-center gap-1.5 text-[10px]">
-              <div class="relative flex items-center bg-slate-950/60 px-1 py-0.5 rounded-xl border border-slate-800/60 h-6">
+            <div class="flex items-center gap-2 text-xs">
+              <div class="relative flex items-center bg-slate-950/60 px-1 py-0.5 rounded-xl border border-slate-800/60 h-7">
                 <button type="button" @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-1.5 transition text-xs">◀</button>
                 <button type="button" @click.stop="toggleDatePicker('top')" class="px-1.5 font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center gap-1">
                   <span>{{ selectedMonthText }}</span>
@@ -320,18 +309,19 @@
                         {{ String(m).padStart(2, '0') }}月
                       </button>
                     </div>
-                    <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold py-1.5 text-[10px] rounded-xl transition">回到本月</button>
+                    <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold py-1.5 text-xs rounded-xl transition">回到本月</button>
                   </div>
                 </transition>
               </div>
 
-              <div class="flex bg-slate-950/60 p-0.5 rounded-xl border border-slate-800/60 h-6 items-center">
+              <div class="flex bg-slate-950/60 p-0.5 rounded-xl border border-slate-800/60 h-7 items-center">
                 <button type="button" @click="chartMember = 'all'" :class="chartMember === 'all' ? 'bg-slate-800 text-slate-200' : 'text-slate-500 hover:text-slate-400'" class="px-2 py-0.5 rounded-lg transition font-bold">{{ t('viewAll') }}</button>
-                <button type="button" @click="chartMember = 'm1'" :class="chartMember === 'm1' ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30' : 'text-slate-500 hover:text-slate-400'" class="px-2 py-0.5 rounded-lg transition font-bold truncate max-w-[55px]">{{ member1 }}</button>
-                <button type="button" @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-amber-600/30 text-amber-300 border border-amber-500/30' : 'text-slate-500 hover:text-slate-400'" class="px-2 py-0.5 rounded-lg transition font-bold truncate max-w-[55px]">{{ member2 }}</button>
+                <button type="button" @click="chartMember = 'm1'" :class="chartMember === 'm1' ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30' : 'text-slate-500 hover:text-slate-400'" class="px-2 py-0.5 rounded-lg transition font-bold truncate max-w-[65px]">{{ member1 }}</button>
+                <button type="button" @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-amber-600/30 text-amber-300 border border-amber-500/30' : 'text-slate-500 hover:text-slate-400'" class="px-2 py-0.5 rounded-lg transition font-bold truncate max-w-[65px]">{{ member2 }}</button>
               </div>
 
-              <div class="flex bg-slate-950/60 p-0.5 rounded-xl border border-slate-800/60 h-6 items-center font-bold">
+              <!-- 已设置默认选定：“今日” -->
+              <div class="flex bg-slate-950/60 p-0.5 rounded-xl border border-slate-800/60 h-7 items-center font-bold">
                 <button type="button" @click="categoryRange = 'today'" :class="categoryRange === 'today' ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeToday') }}</button>
                 <button type="button" @click="categoryRange = 'week'" :class="categoryRange === 'week' ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
                 <button type="button" @click="categoryRange = 'month'" :class="categoryRange === 'month' ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeMonth') }}</button>
@@ -342,20 +332,20 @@
 
           <div class="flex items-center gap-4 bg-slate-950/30 p-3 rounded-xl border border-slate-900">
             <div class="w-2/5 flex justify-center relative flex-shrink-0">
-              <svg width="150" height="150" viewBox="0 0 150 150" class="transform -rotate-90">
+              <svg width="140" height="140" viewBox="0 0 150 150" class="transform -rotate-90">
                 <circle cx="75" cy="75" r="55" fill="transparent" stroke="#111827" stroke-width="12" />
                 <circle v-for="(slice, index) in chartSlices" :key="index"
                   cx="75" cy="75" r="55" fill="transparent" :stroke="slice.color" stroke-width="12" :stroke-dasharray="slice.dashArray" :stroke-dashoffset="slice.offset" class="chart-ring" />
               </svg>
               <div class="absolute inset-0 flex flex-col justify-center items-center text-center">
-                <span class="text-[9px] text-slate-500 uppercase tracking-widest font-bold truncate max-w-[80px]">{{ chartMember === 'all' ? t('tableTotal') : (chartMember === 'm1' ? member1 : member2) }}</span>
+                <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold truncate max-w-[80px]">{{ chartMember === 'all' ? t('tableTotal') : (chartMember === 'm1' ? member1 : member2) }}</span>
                 <span class="text-base font-black text-slate-100 font-mono mt-0.5">S$ {{ chartTotalSum }}</span>
               </div>
             </div>
 
-            <div class="w-3/5 space-y-1 max-h-[140px] overflow-y-auto pr-1">
-              <div v-if="chartSlices.length === 0" class="text-center text-slate-600 text-[10px] py-6 italic">{{ t('noRecords') }}</div>
-              <div v-else v-for="slice in chartSlices" :key="slice.id" class="flex items-center justify-between text-[11px] py-0.5 px-1.5 rounded hover:bg-slate-800/40 transition">
+            <div class="w-3/5 space-y-1 max-h-[130px] overflow-y-auto pr-1">
+              <div v-if="chartSlices.length === 0" class="text-center text-slate-600 text-xs py-6 italic">{{ t('noRecords') }}</div>
+              <div v-else v-for="slice in chartSlices" :key="slice.id" class="flex items-center justify-between text-xs py-0.5 px-1.5 rounded hover:bg-slate-800/40 transition">
                 <div class="flex items-center gap-1.5 truncate w-[75%]">
                   <span class="w-2 h-2 rounded-full flex-shrink-0 animate-pulse" :style="{ backgroundColor: slice.color }"></span>
                   <span class="text-slate-300 font-medium truncate">{{ slice.displayName }}</span>
@@ -366,7 +356,7 @@
           </div>
 
           <div class="overflow-x-auto">
-            <table class="w-full text-[11px] text-slate-300 min-w-[320px]">
+            <table class="w-full text-xs text-slate-300 min-w-[320px]">
               <thead>
                 <tr class="border-b border-slate-800 text-slate-500">
                   <th class="py-1.5 text-left font-bold tracking-wider">{{ t('tableCat') }}</th>
@@ -382,27 +372,27 @@
                 </tr>
                 <template v-else>
                   <tr v-for="row in categoryComparison" :key="row.cat" class="border-b border-slate-900/60 hover:bg-slate-900/40 transition" :class="{'opacity-50 italic bg-slate-950/30': row.cat.includes('居住房租')}">
-                    <td class="py-2 text-left flex items-center gap-1.5">
+                    <td class="py-1.5 text-left flex items-center gap-1.5">
                       <i :class="getCategoryIconOnly(row.cat)" class="text-xs"></i>
                       <span class="font-bold text-slate-200">{{ getCategoryDisplayName(row.cat) }}</span>
                       <span v-if="row.cat.includes('居住房租')" class="px-1.5 py-0.2 rounded bg-orange-500/10 border border-orange-500/30 text-[8px] text-orange-400 font-sans tracking-tight scale-90">{{ t('excludeLabel') }}</span>
                     </td>
-                    <td class="py-2 text-right font-mono text-indigo-300" :class="{'font-black': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
-                    <td class="py-2 text-right font-mono text-amber-300" :class="{'font-black': chartMember === 'm2'}">S$ {{ row.m2.toFixed(2) }}</td>
-                    <td class="py-2 text-right font-mono font-bold text-slate-100">S$ {{ row.total.toFixed(2) }}</td>
-                    <td class="py-2 text-right font-mono text-[9px] text-slate-500 font-bold">{{ row.ratio }}%</td>
+                    <td class="py-1.5 text-right font-mono text-indigo-300" :class="{'font-black': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
+                    <td class="py-1.5 text-right font-mono text-amber-300" :class="{'font-black': chartMember === 'm2'}">S$ {{ row.m2.toFixed(2) }}</td>
+                    <td class="py-1.5 text-right font-mono font-bold text-slate-100">S$ {{ row.total.toFixed(2) }}</td>
+                    <td class="py-1.5 text-right font-mono text-[10px] text-slate-500 font-bold">{{ row.ratio }}%</td>
                   </tr>
 
                   <tr class="border-t border-dashed border-indigo-500/30 bg-indigo-950/15 font-bold">
-                    <td class="py-2 text-left flex items-center gap-1.5">
+                    <td class="py-1.5 text-left flex items-center gap-1.5">
                       <i class="fa-solid fa-calculator text-indigo-400 text-xs"></i>
                       <span class="text-white">{{ lang === 'zh' ? '日常总支出' : 'Daily Subtotal' }}</span>
                       <span class="px-1.5 py-0.2 rounded bg-indigo-500/10 border border-indigo-500/30 text-[8px] text-indigo-300 font-sans tracking-tight scale-90">{{ lang === 'zh' ? '不含房租' : 'Excl. Rent' }}</span>
                     </td>
-                    <td class="py-2 text-right font-mono text-indigo-300">S$ {{ dailyM1Sum.toFixed(2) }}<span class="text-[9px] text-slate-500 ml-0.5 font-normal">({{ dailyM1Percent }}%)</span></td>
-                    <td class="py-2 text-right font-mono text-amber-300">S$ {{ dailyM2Sum.toFixed(2) }}<span class="text-[9px] text-slate-500 ml-0.5 font-normal">({{ dailyM2Percent }}%)</span></td>
-                    <td class="py-2 text-right font-mono text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-pink-300 font-black">S$ {{ dailyTotalSum.toFixed(2) }}</td>
-                    <td class="py-2 text-right font-mono"></td>
+                    <td class="py-1.5 text-right font-mono text-indigo-300">S$ {{ dailyM1Sum.toFixed(2) }}<span class="text-[9px] text-slate-500 ml-0.5 font-normal">({{ dailyM1Percent }}%)</span></td>
+                    <td class="py-1.5 text-right font-mono text-amber-300">S$ {{ dailyM2Sum.toFixed(2) }}<span class="text-[9px] text-slate-500 ml-0.5 font-normal">({{ dailyM2Percent }}%)</span></td>
+                    <td class="py-1.5 text-right font-mono text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-pink-300 font-black">S$ {{ dailyTotalSum.toFixed(2) }}</td>
+                    <td class="py-1.5 text-right font-mono"></td>
                   </tr>
                 </template>
               </tbody>
@@ -410,64 +400,23 @@
           </div>
         </div>
 
-        <!-- 固定月费看板 (PC端) -->
-        <div class="hidden lg:block glass-card rounded-2xl p-4 border border-indigo-500/15 bg-gradient-to-b from-indigo-950/5 to-transparent">
-          <div class="flex justify-between items-center mb-2 border-b border-slate-800 pb-1.5">
-            <h3 class="text-sm font-black text-slate-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-rectangle-list text-indigo-400"></i>
-              <span>{{ lang === 'zh' ? '全时段固定月费总览' : 'All-Time Subscriptions' }}</span>
-            </h3>
-            <span class="text-[10px] font-mono bg-indigo-950/80 text-indigo-300 border border-indigo-900/40 px-2 py-0.5 rounded-full font-bold">
-              共 {{ allSubscriptions.length }} 项
-            </span>
-          </div>
-          
-          <div class="space-y-1.5 max-h-[180px] overflow-y-auto pr-1">
-            <div v-if="allSubscriptions.length === 0" class="text-center py-4 text-slate-600 text-[11px] italic">
-              当前云端无任何固定月费流水记录
-            </div>
-            <div v-else v-for="sub in allSubscriptions" :key="sub.id" class="flex items-center justify-between p-2 rounded-xl bg-slate-950/40 border border-slate-900 hover:border-indigo-500/30 transition text-[11px]">
-              <div class="flex items-center gap-2 truncate">
-                <span :class="sub.payer === member1 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/20' : 'bg-amber-500/15 text-amber-300 border-amber-500/20'" class="text-[10px] px-1.5 py-0.2 rounded font-mono border flex-shrink-0 font-bold">
-                  {{ sub.payer }}
-                </span>
-                <div class="truncate">
-                  <p class="font-bold text-slate-200 truncate">{{ sub.remark || '未命名固定月费' }}</p>
-                  <p class="text-[9px] text-slate-500 font-mono">扣款锁定日: {{ sub.date }}</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-1.5 flex-shrink-0">
-                <div class="text-right font-mono">
-                  <p class="font-bold text-indigo-300">S$ {{ Number(sub.amount).toFixed(2) }}</p>
-                  <p v-if="sub.currency && sub.currency !== 'SGD'" class="text-[9px] text-slate-500">
-                    ({{ sub.currency === 'MYR' ? 'RM' : '¥' }} {{ Number(sub.original_amount).toFixed(2) }})
-                  </p>
-                </div>
-                <button type="button" @click="deleteRecord(sub.id)" class="text-rose-500/60 p-1 hover:text-rose-400 transition" title="删除">
-                  <i class="fa-regular fa-trash-can text-[11px]"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 账目明细流水表 (带极简筛选增强功能) -->
-        <div class="glass-card rounded-2xl p-3 md:p-4">
-          <div class="flex flex-col gap-2.5 mb-3">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div class="flex items-center gap-1">
+        <!-- 账目明细流水表 (经过 PC 端对称优化) -->
+        <div class="glass-card rounded-2xl p-4 space-y-3">
+          <div class="flex flex-col gap-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
+              <div class="flex items-center gap-2">
                 <h2 class="text-xs md:text-base font-bold text-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-list text-amber-400"></i> {{ t('details') }}</h2>
                 
-                <div class="relative flex items-center bg-slate-950/80 border border-slate-800 rounded-2xl p-0.5 ml-1">
-                  <button type="button" @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-2 py-0.5 transition text-xs">◀</button>
-                  <button type="button" @click.stop="toggleDatePicker('bottom')" class="px-1.5 py-0.5 text-[10px] font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center gap-1">
+                <div class="relative flex items-center bg-slate-950/80 border border-slate-800 rounded-xl p-0.5">
+                  <button type="button" @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-1.5 py-0.5 transition text-xs">◀</button>
+                  <button type="button" @click.stop="toggleDatePicker('bottom')" class="px-1.5 py-0.5 text-xs font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center gap-1">
                     <span>{{ selectedMonthText }}</span>
                     <i class="fa-regular fa-calendar text-slate-400"></i>
                   </button>
-                  <button type="button" @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 px-2 py-0.5 transition text-xs">▶</button>
+                  <button type="button" @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 px-1.5 py-0.5 transition text-xs">▶</button>
 
                   <transition name="fade">
-                    <div v-if="showDatePicker && activePicker === 'bottom'" @click.stop class="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-64 md:w-72 glass-card rounded-2xl p-3 md:p-4 shadow-2xl border border-slate-800/80 bg-slate-950/98">
+                    <div v-if="showDatePicker && activePicker === 'bottom'" @click.stop class="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-72 glass-card rounded-2xl p-4 shadow-2xl border border-slate-800/80 bg-slate-950/98">
                       <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
                         <button type="button" @click="changePanelYear(-1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-left"></i></button>
                         <span class="text-sm font-bold text-slate-200 font-mono">{{ panelYear }} 年</span>
@@ -478,88 +427,91 @@
                           {{ String(m).padStart(2, '0') }}月
                         </button>
                       </div>
-                      <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold py-1.5 text-[10px] rounded-xl transition">回到本月</button>
+                      <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold py-1.5 text-xs rounded-xl transition">回到本月</button>
                     </div>
                   </transition>
                 </div>
               </div>
               
-              <div class="flex items-center gap-2 justify-between sm:justify-end text-[9px] md:text-[10px]">
-                <button type="button" @click="exportToCSV" class="bg-emerald-950/35 border border-emerald-900/60 text-emerald-300 px-2.5 py-1 rounded-xl hover:bg-emerald-900/50 transition flex items-center gap-1 font-bold">
-                  <i class="fa-solid fa-arrow-up-from-bracket"></i>{{ t('exportBtn') }}
-                </button>
-                
+              <div class="flex items-center gap-2 justify-between sm:justify-end text-xs">
+                <!-- 默认选定“今日” -->
                 <div class="flex bg-slate-950/80 p-0.5 rounded-xl border border-slate-800">
                   <button type="button" @click="filterRange = 'today'" :class="filterRange === 'today' ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeToday') }}</button>
                   <button type="button" @click="filterRange = 'week'" :class="filterRange === 'week' ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
                   <button type="button" @click="filterRange = 'month'" :class="filterRange === 'month' ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeMonth') }}</button>
                 </div>
+
+                <button type="button" @click="exportToCSV" class="bg-emerald-950/35 border border-emerald-900/60 text-emerald-300 px-2.5 py-1 rounded-xl hover:bg-emerald-900/50 transition flex items-center gap-1 font-bold">
+                  <i class="fa-solid fa-arrow-up-from-bracket"></i>{{ t('exportBtn') }}
+                </button>
               </div>
             </div>
 
-            <!-- 明细筛选控制条 -->
-            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-900/80 text-[10px]">
-              <!-- 关键字搜索框 -->
-              <div class="relative flex-1 min-w-[120px]">
-                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-500 text-[10px]"></i>
-                <input type="text" v-model="filters.keyword" placeholder="搜索备注..." class="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl py-1 pl-7 pr-2 text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 transition">
+            <!-- 明细精细化筛选工具栏 (网格化对齐优化) -->
+            <div class="grid grid-cols-2 md:grid-cols-12 gap-2 text-xs">
+              <div class="col-span-2 md:col-span-4 relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                <input type="text" v-model="filters.keyword" placeholder="搜索备注..." class="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl py-1 pl-8 pr-2 text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 transition">
               </div>
 
-              <!-- 成员筛选 -->
-              <select v-model="filters.payer" class="bg-slate-950/60 border border-slate-800/80 rounded-xl px-2 py-1 text-slate-300 focus:outline-none focus:border-indigo-500/60 transition font-bold">
-                <option value="all">全部成员</option>
-                <option :value="member1">{{ member1 }}</option>
-                <option :value="member2">{{ member2 }}</option>
-              </select>
+              <div class="col-span-1 md:col-span-2">
+                <select v-model="filters.payer" class="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-2 py-1 text-slate-300 focus:outline-none focus:border-indigo-500/60 transition font-bold">
+                  <option value="all">全部成员</option>
+                  <option :value="member1">{{ member1 }}</option>
+                  <option :value="member2">{{ member2 }}</option>
+                </select>
+              </div>
 
-              <!-- 分类筛选 -->
-              <select v-model="filters.category" class="bg-slate-950/60 border border-slate-800/80 rounded-xl px-2 py-1 text-slate-300 focus:outline-none focus:border-indigo-500/60 transition">
-                <option value="all">全部分类</option>
-                <option v-for="cat in categories" :key="cat" :value="cat">{{ getCategoryDisplayName(cat) }}</option>
-              </select>
+              <div class="col-span-1 md:col-span-3">
+                <select v-model="filters.category" class="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-2 py-1 text-slate-300 focus:outline-none focus:border-indigo-500/60 transition">
+                  <option value="all">全部分类</option>
+                  <option v-for="cat in categories" :key="cat" :value="cat">{{ getCategoryDisplayName(cat) }}</option>
+                </select>
+              </div>
 
-              <!-- 币种筛选 -->
-              <select v-model="filters.currency" class="bg-slate-950/60 border border-slate-800/80 rounded-xl px-2 py-1 text-slate-300 focus:outline-none focus:border-indigo-500/60 transition font-mono font-bold">
-                <option value="all">币种</option>
-                <option value="SGD">SGD</option>
-                <option value="MYR">MYR</option>
-                <option value="CNY">CNY</option>
-              </select>
+              <div class="col-span-1 md:col-span-1.5">
+                <select v-model="filters.currency" class="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-2 py-1 text-slate-300 focus:outline-none focus:border-indigo-500/60 transition font-mono font-bold">
+                  <option value="all">币种</option>
+                  <option value="SGD">SGD</option>
+                  <option value="MYR">MYR</option>
+                  <option value="CNY">CNY</option>
+                </select>
+              </div>
 
-              <!-- 排序规则 -->
-              <button type="button" @click="filters.sortByAmount = !filters.sortByAmount" :class="filters.sortByAmount ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500/40' : 'bg-slate-950/60 text-slate-400 border-slate-800/80'" class="px-2 py-1 rounded-xl border transition flex items-center gap-1 font-bold">
-                <i class="fa-solid fa-sort"></i>
-                <span>{{ filters.sortByAmount ? '按金额' : '按日期' }}</span>
-              </button>
+              <div class="col-span-1 md:col-span-1.5">
+                <button type="button" @click="filters.sortByAmount = !filters.sortByAmount" :class="filters.sortByAmount ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500/40' : 'bg-slate-950/60 text-slate-400 border-slate-800/80'" class="w-full h-full py-1 rounded-xl border transition flex items-center justify-center gap-1 font-bold">
+                  <i class="fa-solid fa-sort"></i>
+                  <span>{{ filters.sortByAmount ? '按金额' : '按日期' }}</span>
+                </button>
+              </div>
             </div>
 
-            <!-- 当前筛选的统计小计 (自动联动) -->
-            <div v-if="filteredRecords.length > 0 && (filters.keyword || filters.payer !== 'all' || filters.category !== 'all' || filters.currency !== 'all')" class="bg-indigo-950/20 px-3 py-1.5 rounded-xl border border-indigo-900/30 flex justify-between items-center text-[10px] font-mono">
+            <div v-if="filteredRecords.length > 0 && (filters.keyword || filters.payer !== 'all' || filters.category !== 'all' || filters.currency !== 'all')" class="bg-indigo-950/20 px-3 py-1.5 rounded-xl border border-indigo-900/30 flex justify-between items-center text-xs font-mono">
               <span class="text-slate-400">已筛选出 {{ summaryMetrics.count }} 笔记录</span>
               <span class="text-indigo-300 font-bold">小计: S$ {{ summaryMetrics.sum.toFixed(2) }}</span>
             </div>
           </div>
 
           <!-- 账目列表展示 -->
-          <div class="space-y-2 max-h-[350px] md:max-h-[440px] overflow-y-auto pr-0.5">
-            <div v-if="loading" class="text-center py-4 text-slate-500"><i class="fa-solid fa-circle-notch animate-spin text-xs mb-1"></i><p class="text-[9px]">{{ t('loading') }}...</p></div>
-            <div v-else-if="filteredRecords.length === 0" class="text-center py-6 text-slate-600 text-xs italic">{{ t('noRecords') }}</div>
-            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex items-center justify-between p-2 md:p-2.5 rounded-xl bg-slate-950/40 border border-slate-900/80 hover:border-slate-800 transition" :class="{'border-orange-950 bg-orange-950/5': item.category.includes('居住房租')}">
-              <div class="flex items-center gap-2 truncate">
-                <span :class="item.payer === member1 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/20' : 'bg-amber-500/15 text-amber-300 border-amber-500/20'" class="text-[8px] md:text-[9px] px-2 py-0.5 rounded-full font-bold border flex-shrink-0">{{ item.payer }}</span>
+          <div class="space-y-2 max-h-[380px] md:max-h-[460px] overflow-y-auto pr-1">
+            <div v-if="loading" class="text-center py-6 text-slate-500"><i class="fa-solid fa-circle-notch animate-spin text-sm mb-1"></i><p class="text-xs">{{ t('loading') }}...</p></div>
+            <div v-else-if="filteredRecords.length === 0" class="text-center py-8 text-slate-600 text-xs italic">{{ t('noRecords') }}</div>
+            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/40 border border-slate-900/80 hover:border-slate-800 transition" :class="{'border-orange-950 bg-orange-950/5': item.category.includes('居住房租')}">
+              <div class="flex items-center gap-2.5 truncate">
+                <span :class="item.payer === member1 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/20' : 'bg-amber-500/15 text-amber-300 border-amber-500/20'" class="text-[10px] px-2.5 py-0.5 rounded-full font-bold border flex-shrink-0">{{ item.payer }}</span>
                 <div class="truncate">
-                  <div class="flex items-center gap-1 flex-wrap">
+                  <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="text-xs font-bold text-slate-200">{{ getCategoryDisplayName(item.category) }}</span>
-                    <span v-if="item.category.includes('居住房租')" class="text-[8px] text-orange-500/70 scale-90 origin-left">({{ t('excludeLabel') }})</span>
-                    <span v-if="item.remark" class="text-[9px] md:text-[10px] text-slate-400 font-medium truncate max-w-[120px] sm:max-w-none"> - {{ item.remark }}</span>
+                    <span v-if="item.category.includes('居住房租')" class="text-[9px] text-orange-500/70 scale-90 origin-left">({{ t('excludeLabel') }})</span>
+                    <span v-if="item.remark" class="text-xs text-slate-400 font-medium truncate max-w-[150px] sm:max-w-none"> - {{ item.remark }}</span>
                   </div>
-                  <p class="text-[8px] md:text-[9px] text-slate-500 font-mono">{{ item.date }}</p>
+                  <p class="text-[10px] text-slate-500 font-mono">{{ item.date }}</p>
                 </div>
               </div>
-              <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex items-center gap-2.5 flex-shrink-0">
                 <div class="text-right">
-                  <p class="text-xs font-black text-slate-100 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
-                  <p v-if="item.currency && item.currency !== 'SGD'" class="text-[8px] md:text-[9px] font-mono font-bold" :class="item.currency === 'CNY' ? 'text-rose-400/80' : 'text-amber-400/80'">
+                  <p class="text-xs md:text-sm font-black text-slate-100 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
+                  <p v-if="item.currency && item.currency !== 'SGD'" class="text-[10px] font-mono font-bold" :class="item.currency === 'CNY' ? 'text-rose-400/80' : 'text-amber-400/80'">
                     ({{ item.currency === 'MYR' ? 'RM' : '¥' }} {{ Number(item.original_amount).toFixed(2) }})
                   </p>
                 </div>
@@ -568,6 +520,48 @@
             </div>
           </div>
         </div>
+
+        <!-- 固定月费看板 (PC端) -->
+        <div class="hidden lg:block glass-card rounded-2xl p-4 border border-indigo-500/15 bg-gradient-to-b from-indigo-950/5 to-transparent">
+          <div class="flex justify-between items-center mb-2 border-b border-slate-800 pb-2">
+            <h3 class="text-sm font-black text-slate-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-rectangle-list text-indigo-400"></i>
+              <span>{{ lang === 'zh' ? '全时段固定月费总览' : 'All-Time Subscriptions' }}</span>
+            </h3>
+            <span class="text-[10px] font-mono bg-indigo-950/80 text-indigo-300 border border-indigo-900/40 px-2 py-0.5 rounded-full font-bold">
+              共 {{ allSubscriptions.length }} 项
+            </span>
+          </div>
+          
+          <div class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+            <div v-if="allSubscriptions.length === 0" class="text-center py-4 text-slate-600 text-xs italic">
+              当前云端无任何固定月费流水记录
+            </div>
+            <div v-else v-for="sub in allSubscriptions" :key="sub.id" class="flex items-center justify-between p-2 rounded-xl bg-slate-950/40 border border-slate-900 hover:border-indigo-500/30 transition text-xs">
+              <div class="flex items-center gap-2 truncate">
+                <span :class="sub.payer === member1 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/20' : 'bg-amber-500/15 text-amber-300 border-amber-500/20'" class="text-[10px] px-1.5 py-0.2 rounded font-mono border flex-shrink-0 font-bold">
+                  {{ sub.payer }}
+                </span>
+                <div class="truncate">
+                  <p class="font-bold text-slate-200 truncate">{{ sub.remark || '未命名固定月费' }}</p>
+                  <p class="text-[10px] text-slate-500 font-mono">扣款锁定日: {{ sub.date }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <div class="text-right font-mono">
+                  <p class="font-bold text-indigo-300">S$ {{ Number(sub.amount).toFixed(2) }}</p>
+                  <p v-if="sub.currency && sub.currency !== 'SGD'" class="text-[10px] text-slate-500">
+                    ({{ sub.currency === 'MYR' ? 'RM' : '¥' }} {{ Number(sub.original_amount).toFixed(2) }})
+                  </p>
+                </div>
+                <button type="button" @click="deleteRecord(sub.id)" class="text-rose-500/60 p-1 hover:text-rose-400 transition" title="删除">
+                  <i class="fa-regular fa-trash-can text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </section>
     </div>
   </div>
@@ -705,8 +699,9 @@
           return parseInt(yr) === panelYear.value && parseInt(mo) === month;
         };
         
-        const filterRange = ref('month');
-        const categoryRange = ref('month');
+        // 【设置默认显示：本日/今日】
+        const filterRange = ref('today');
+        const categoryRange = ref('today');
         const chartMember = ref('all');
 
         // 流水明细过滤控制面板状态
@@ -737,9 +732,7 @@
             }
           } catch (err) {
             console.warn(err);
-          } finally {
-            exchangeSyncing.value = false;
-          }
+          } font-bold; exchangeSyncing.value = false;
         };
 
         const fetchCloudBudget = async () => {

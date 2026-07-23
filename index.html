@@ -166,26 +166,20 @@
         </h1>
       </div>
       
-      <!-- 汇率与网络同步状态栏（绿=实时 / 红=断网离线） -->
+      <!-- 汇率状态栏（仅图标：🟢 绿色小圆点 / 🔴 红色骷髅） -->
       <div class="flex items-center gap-2 font-mono text-[9px]">
-        <div :class="exchangeSyncError ? 'bg-rose-950/90 border-rose-600/80 shadow-[0_0_12px_rgba(244,63,94,0.4)]' : 'bg-purple-950/90 border-emerald-500/60 shadow-[0_0_12px_rgba(52,211,153,0.25)]'" class="flex items-center gap-1.5 px-3 py-1 rounded-full border transition-all">
+        <div :class="exchangeSyncError ? 'bg-rose-950/90 border-rose-600/80 shadow-[0_0_12px_rgba(244,63,94,0.4)]' : 'bg-purple-950/90 border-emerald-500/60 shadow-[0_0_12px_rgba(52,211,153,0.25)]'" class="flex items-center gap-2 px-2.5 py-1 rounded-full border transition-all">
           
-          <!-- 🟢 联网成功状态 -->
-          <template v-if="!exchangeSyncError">
-            <span class="flex h-2 w-2 relative">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span class="text-emerald-400 font-bold tracking-tight">实时</span>
-          </template>
+          <!-- 🟢 实时连线：绿色小圆点 -->
+          <span v-if="!exchangeSyncError" class="flex h-2 w-2 relative flex-shrink-0">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
 
-          <!-- 🔴 离线 / 断网警报状态 -->
-          <template v-else>
-            <span class="text-rose-500 animate-bounce"><i class="fa-solid fa-skull text-[9px]"></i></span>
-            <span class="text-rose-400 font-bold tracking-tight animate-pulse">断网/离线</span>
-          </template>
+          <!-- 🔴 离线断网：红色骷髅 -->
+          <span v-else class="text-rose-500 animate-bounce flex-shrink-0"><i class="fa-solid fa-skull text-[10px]"></i></span>
 
-          <span class="text-purple-400 font-medium ml-1">SGD 1</span>
+          <span class="text-purple-400 font-medium">SGD 1</span>
           <span class="text-pink-900 font-bold">=</span>
           <span class="text-pink-300 font-bold text-glow-pink">MYR {{ exchangeRate.toFixed(2) }}</span>
           <span class="text-pink-900 font-bold">|</span>

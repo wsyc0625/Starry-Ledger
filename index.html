@@ -101,27 +101,17 @@
         </div>
         
         <button @click="toggleLang" class="bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-white px-2.5 py-1 rounded-full border border-slate-800 transition font-bold uppercase tracking-wider">
-          {{ lang === 'zh' ? 'EN' : 'ZH' }}
+          {{ lang === 'zh' ? 'EN' : '中文' }}
         </button>
       </div>
     </header>
 
-    <!-- 成员管理面板 -->
-    <section class="glass-card rounded-2xl p-3 mb-4 flex items-center gap-3 overflow-x-auto whitespace-nowrap">
+    <!-- 成员管理面板 (PC端显示，手机移动端完全隐藏 hidden lg:flex) -->
+    <section class="hidden lg:flex glass-card rounded-2xl p-3 mb-4 items-center gap-3 overflow-x-auto whitespace-nowrap">
       <span class="text-xs font-bold text-slate-300 flex-shrink-0 flex items-center gap-1.5">
         <i class="fa-solid fa-user-astronaut text-indigo-400"></i>{{ t('members') }}:
       </span>
-      
-      <div class="flex lg:hidden items-center gap-2">
-        <span class="bg-indigo-950/60 text-xs font-bold text-indigo-300 px-3 py-1 rounded-xl border border-indigo-900/50 shadow-inner">
-          {{ member1 }}
-        </span>
-        <span class="bg-amber-950/60 text-xs font-bold text-amber-300 px-3 py-1 rounded-xl border border-amber-900/50 shadow-inner">
-          {{ member2 }}
-        </span>
-      </div>
-
-      <div class="hidden lg:flex items-center gap-3">
+      <div class="flex items-center gap-3">
         <input type="text" v-model="member1" class="bg-indigo-950/40 text-xs font-bold text-indigo-200 w-24 text-center py-1 rounded-xl border border-indigo-900/60 focus:outline-none focus:border-indigo-500 transition shadow-inner">
         <input type="text" v-model="member2" class="bg-amber-950/40 text-xs font-bold text-amber-200 w-24 text-center py-1 rounded-xl border border-amber-900/60 focus:outline-none focus:border-amber-500 transition shadow-inner">
       </div>
@@ -202,7 +192,7 @@
                   <span>{{ t('budgetLabel') }}:</span>
                   <div class="flex items-center gap-0.5 font-mono text-indigo-200 font-bold bg-slate-950/60 px-1.5 py-0.5 rounded border border-indigo-900/60">
                     <span>S$</span>
-                    <input type="number" v-model.number="budgetM1" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" placeholder="未设" class="w-12 bg-transparent text-indigo-200 font-bold focus:outline-none border-b border-transparent focus:border-indigo-400 text-center py-0 h-4 leading-none">
+                    <input type="number" v-model.number="budgetM1" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" :placeholder="lang === 'zh' ? '未设' : 'None'" class="w-12 bg-transparent text-indigo-200 font-bold focus:outline-none border-b border-transparent focus:border-indigo-400 text-center py-0 h-4 leading-none">
                   </div>
                 </div>
               </div>
@@ -227,7 +217,7 @@
                   <span>{{ t('budgetLabel') }}:</span>
                   <div class="flex items-center gap-0.5 font-mono text-amber-200 font-bold bg-slate-950/60 px-1.5 py-0.5 rounded border border-amber-900/60">
                     <span>S$</span>
-                    <input type="number" v-model.number="budgetM2" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" placeholder="未设" class="w-12 bg-transparent text-amber-200 font-bold focus:outline-none border-b border-transparent focus:border-amber-400 text-center py-0 h-4 leading-none">
+                    <input type="number" v-model.number="budgetM2" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" :placeholder="lang === 'zh' ? '未设' : 'None'" class="w-12 bg-transparent text-amber-200 font-bold focus:outline-none border-b border-transparent focus:border-amber-400 text-center py-0 h-4 leading-none">
                   </div>
                 </div>
               </div>
@@ -258,6 +248,7 @@
             </div>
           </div>
 
+          <!-- 月份同步选择核心控件 -->
           <div class="pt-2 border-t border-slate-800/60 flex justify-between items-center relative">
             <div class="relative">
               <button @click.stop="toggleDatePicker('left')" class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 hover:border-indigo-500/80 text-[10px] md:text-[11px] font-bold font-mono text-indigo-300 px-3 py-1 rounded-xl transition shadow-inner">
@@ -269,15 +260,15 @@
                 <div v-if="showDatePicker && activePicker === 'left'" @click.stop class="absolute left-0 bottom-full mb-2 z-50 w-64 md:w-72 glass-card rounded-2xl p-3 md:p-4 shadow-2xl border border-slate-800/80 bg-slate-950/98">
                   <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
                     <button type="button" @click="changePanelYear(-1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-left"></i></button>
-                    <span class="text-sm font-bold text-slate-200 font-mono">{{ panelYear }} 年</span>
+                    <span class="text-sm font-bold text-slate-200 font-mono">{{ panelYear }} {{ lang === 'zh' ? '年' : '' }}</span>
                     <button type="button" @click="changePanelYear(1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-right"></i></button>
                   </div>
                   <div class="grid grid-cols-4 gap-1.5">
                     <button type="button" v-for="m in 12" :key="m" @click="selectPanelMonth(m)" :class="isCurrentSelected(m) ? 'bg-indigo-600 text-white font-bold shadow-md' : 'bg-slate-900/60 hover:bg-slate-800 text-slate-300'" class="py-1.5 text-xs font-mono rounded-xl transition">
-                      {{ String(m).padStart(2, '0') }}月
+                      {{ lang === 'zh' ? String(m).padStart(2, '0') + '月' : getMonthShortName(m) }}
                     </button>
                   </div>
-                  <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold py-1.5 text-[10px] rounded-xl transition tracking-wider">回到本月</button>
+                  <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold py-1.5 text-[10px] rounded-xl transition tracking-wider">{{ t('backToCurrentMonth') }}</button>
                 </div>
               </transition>
             </div>
@@ -289,21 +280,21 @@
           </div>
         </div>
 
-        <!-- 固定月费看板 -->
-        <div class="glass-card rounded-2xl p-3 md:p-4 border border-indigo-500/15 bg-gradient-to-b from-indigo-950/5 to-transparent">
+        <!-- 固定月费看板 (PC端显示，手机移动端完全隐藏 hidden lg:block) -->
+        <div class="hidden lg:block glass-card rounded-2xl p-3 md:p-4 border border-indigo-500/15 bg-gradient-to-b from-indigo-950/5 to-transparent">
           <div class="flex justify-between items-center mb-2 border-b border-slate-800 pb-1.5">
             <h3 class="text-xs md:text-sm font-black text-slate-200 flex items-center gap-1.5">
               <i class="fa-solid fa-rectangle-list text-indigo-400"></i>
-              <span>{{ lang === 'zh' ? '全时段固定月费总览' : 'All-Time Subscriptions' }}</span>
+              <span>{{ t('subHeader') }}</span>
             </h3>
             <span class="text-[9px] md:text-[10px] font-mono bg-indigo-950/80 text-indigo-300 border border-indigo-900/40 px-2 py-0.5 rounded-full font-bold">
-              共 {{ allSubscriptions.length }} 项
+              {{ t('subTotal') }}: {{ allSubscriptions.length }}
             </span>
           </div>
           
           <div class="space-y-1.5 max-h-[180px] overflow-y-auto pr-1">
             <div v-if="allSubscriptions.length === 0" class="text-center py-4 text-slate-600 text-[10px] md:text-[11px] italic">
-              当前云端无任何固定月费流水记录
+              {{ t('subEmpty') }}
             </div>
             <div v-else v-for="sub in allSubscriptions" :key="sub.id" class="flex items-center justify-between p-2 rounded-xl bg-slate-950/40 border border-slate-900 hover:border-indigo-500/30 transition text-[10px] md:text-[11px]">
               <div class="flex items-center gap-2 truncate">
@@ -311,8 +302,8 @@
                   {{ sub.payer }}
                 </span>
                 <div class="truncate">
-                  <p class="font-bold text-slate-200 truncate text-[10px] md:text-[11px]">{{ sub.remark || '未命名固定月费' }}</p>
-                  <p class="text-[8px] md:text-[9px] text-slate-500 font-mono">扣款锁定日: {{ sub.date }}</p>
+                  <p class="font-bold text-slate-200 truncate text-[10px] md:text-[11px]">{{ sub.remark || t('unnamedSub') }}</p>
+                  <p class="text-[8px] md:text-[9px] text-slate-500 font-mono">{{ t('lockDate') }}: {{ sub.date }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-1.5 flex-shrink-0">
@@ -322,7 +313,7 @@
                     ({{ sub.currency === 'MYR' ? 'RM' : '¥' }} {{ Number(sub.original_amount).toFixed(2) }})
                   </p>
                 </div>
-                <button type="button" @click="deleteRecord(sub.id)" class="text-rose-500/60 p-1 hover:text-rose-400 transition" title="删除">
+                <button type="button" @click="deleteRecord(sub.id)" class="text-rose-500/60 p-1 hover:text-rose-400 transition" :title="lang === 'zh' ? '删除' : 'Delete'">
                   <i class="fa-regular fa-trash-can text-[10px] md:text-[11px]"></i>
                 </button>
               </div>
@@ -340,7 +331,7 @@
             <div class="flex flex-col gap-0.5">
               <h2 class="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">Starry Analytics Studio</h2>
               <h2 class="text-base font-black text-slate-100 flex items-center gap-1.5 leading-tight">
-                <i class="fa-solid fa-chart-line text-indigo-400"></i>{{ lang === 'zh' ? '品类对比深度查询' : 'Deep Category Inquiry' }}
+                <i class="fa-solid fa-chart-line text-indigo-400"></i>{{ lang === 'zh' ? '品类对比深度查询' : 'Deep Category Analysis' }}
               </h2>
             </div>
             
@@ -357,15 +348,15 @@
                   <div v-if="showDatePicker && activePicker === 'top'" @click.stop class="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-72 glass-card rounded-2xl p-4 shadow-2xl border border-slate-800/80 bg-slate-950/98">
                     <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
                       <button type="button" @click="changePanelYear(-1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-left"></i></button>
-                      <span class="text-sm font-bold text-slate-200 font-mono">{{ panelYear }} 年</span>
+                      <span class="text-sm font-bold text-slate-200 font-mono">{{ panelYear }} {{ lang === 'zh' ? '年' : '' }}</span>
                       <button type="button" @click="changePanelYear(1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-right"></i></button>
                     </div>
                     <div class="grid grid-cols-4 gap-1.5">
                       <button type="button" v-for="m in 12" :key="m" @click="selectPanelMonth(m)" :class="isCurrentSelected(m) ? 'bg-indigo-600 text-white font-bold' : 'bg-slate-900/60 hover:bg-slate-800 text-slate-300'" class="py-1.5 text-xs font-mono rounded-xl transition">
-                        {{ String(m).padStart(2, '0') }}月
+                        {{ lang === 'zh' ? String(m).padStart(2, '0') + '月' : getMonthShortName(m) }}
                       </button>
                     </div>
-                    <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold py-1.5 text-[10px] rounded-xl transition">回到本月</button>
+                    <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold py-1.5 text-[10px] rounded-xl transition">{{ t('backToCurrentMonth') }}</button>
                   </div>
                 </transition>
               </div>
@@ -441,7 +432,7 @@
                   <tr class="border-t border-dashed border-indigo-500/30 bg-indigo-950/15 font-bold">
                     <td class="py-2 text-left flex items-center gap-1.5">
                       <i class="fa-solid fa-calculator text-indigo-400 text-xs"></i>
-                      <span class="text-white">{{ lang === 'zh' ? '日常总支出' : 'Daily Subtotal' }}</span>
+                      <span class="text-white">{{ lang === 'zh' ? '日常总支出' : 'Subtotal (Excl. Rent)' }}</span>
                       <span class="px-1.5 py-0.2 rounded bg-indigo-500/10 border border-indigo-500/30 text-[8px] text-indigo-300 font-sans tracking-tight scale-90">{{ lang === 'zh' ? '不含房租' : 'Excl. Rent' }}</span>
                     </td>
                     <td class="py-2 text-right font-mono text-indigo-300">S$ {{ dailyM1Sum.toFixed(2) }}<span class="text-[9px] text-slate-500 ml-0.5 font-normal">({{ dailyM1Percent }}%)</span></td>
@@ -455,7 +446,7 @@
           </div>
         </div>
 
-        <!-- 账目明细流水表 -->
+        <!-- 账目明细流水表 (已同步月份选择) -->
         <div class="glass-card rounded-2xl p-3 md:p-4">
           <div class="flex flex-col gap-2.5 mb-3">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -466,7 +457,7 @@
                 
                 <!-- 独立日期切换控件 -->
                 <div class="relative flex items-center bg-slate-900 border border-slate-800 hover:border-indigo-500/80 rounded-xl px-1.5 py-0.5 transition shadow-inner">
-                  <button type="button" @click="offsetDay(-1)" title="前一天" class="text-slate-400 hover:text-indigo-300 px-1.5 py-0.5 transition text-xs">◀</button>
+                  <button type="button" @click="offsetDay(-1)" :title="lang==='zh'?'前一天':'Prev Day'" class="text-slate-400 hover:text-indigo-300 px-1.5 py-0.5 transition text-xs">◀</button>
                   
                   <div class="relative flex items-center cursor-pointer">
                     <span class="text-[10px] md:text-[11px] font-bold font-mono text-indigo-300 px-1">
@@ -476,11 +467,11 @@
                     <input type="date" v-model="selectedDay" @change="onDayPicked" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                   </div>
                   
-                  <button type="button" @click="offsetDay(1)" title="后一天" class="text-slate-400 hover:text-indigo-300 px-1.5 py-0.5 transition text-xs">▶</button>
+                  <button type="button" @click="offsetDay(1)" :title="lang==='zh'?'后一天':'Next Day'" class="text-slate-400 hover:text-indigo-300 px-1.5 py-0.5 transition text-xs">▶</button>
                 </div>
 
                 <button v-if="selectedDay !== getLocalDateString()" type="button" @click="resetToToday" class="bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-800/60 px-2 py-0.5 rounded-xl text-[9px] font-bold transition">
-                  回到今天
+                  {{ t('backToToday') }}
                 </button>
               </div>
               
@@ -491,7 +482,7 @@
                 
                 <div class="flex bg-slate-950/80 p-0.5 rounded-xl border border-slate-800">
                   <button type="button" @click="filterRange = 'today'" :class="filterRange === 'today' ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">
-                    {{ filterRange === 'today' && selectedDay !== getLocalDateString() ? '指定日期' : t('rangeToday') }}
+                    {{ filterRange === 'today' && selectedDay !== getLocalDateString() ? (lang==='zh'?'指定日期':'Date') : t('rangeToday') }}
                   </button>
                   <button type="button" @click="filterRange = 'week'" :class="filterRange === 'week' ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
                   <button type="button" @click="filterRange = 'month'" :class="filterRange === 'month' ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeMonth') }}</button>
@@ -503,22 +494,22 @@
             <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-900/80 text-[10px]">
               <div class="relative flex-1 min-w-[120px]">
                 <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-500 text-[10px]"></i>
-                <input type="text" v-model="filters.keyword" placeholder="搜索备注..." class="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl py-1 pl-7 pr-2 text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 transition">
+                <input type="text" v-model="filters.keyword" :placeholder="t('searchPlaceholder')" class="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl py-1 pl-7 pr-2 text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 transition">
               </div>
 
               <select v-model="filters.payer" class="bg-slate-950/60 border border-slate-800/80 rounded-xl px-2 py-1 text-slate-300 focus:outline-none focus:border-indigo-500/60 transition font-bold">
-                <option value="all">全部成员</option>
+                <option value="all">{{ t('allMembers') }}</option>
                 <option :value="member1">{{ member1 }}</option>
                 <option :value="member2">{{ member2 }}</option>
               </select>
 
               <select v-model="filters.category" class="bg-slate-950/60 border border-slate-800/80 rounded-xl px-2 py-1 text-slate-300 focus:outline-none focus:border-indigo-500/60 transition">
-                <option value="all">全部分类</option>
+                <option value="all">{{ t('allCategories') }}</option>
                 <option v-for="cat in categories" :key="cat" :value="cat">{{ getCategoryDisplayName(cat) }}</option>
               </select>
 
               <select v-model="filters.currency" class="bg-slate-950/60 border border-slate-800/80 rounded-xl px-2 py-1 text-slate-300 focus:outline-none focus:border-indigo-500/60 transition font-mono font-bold">
-                <option value="all">币种</option>
+                <option value="all">{{ t('allCurrencies') }}</option>
                 <option value="SGD">SGD</option>
                 <option value="MYR">MYR</option>
                 <option value="CNY">CNY</option>
@@ -526,15 +517,15 @@
 
               <button type="button" @click="filters.sortByAmount = !filters.sortByAmount" :class="filters.sortByAmount ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500/40' : 'bg-slate-950/60 text-slate-400 border-slate-800/80'" class="px-2 py-1 rounded-xl border transition flex items-center gap-1 font-bold">
                 <i class="fa-solid fa-sort"></i>
-                <span>{{ filters.sortByAmount ? '按金额' : '按日期' }}</span>
+                <span>{{ filters.sortByAmount ? t('sortByAmount') : t('sortByDate') }}</span>
               </button>
             </div>
 
-            <!-- 新增/恢复：筛选条件下的数据笔数与总合 (小计) 展示 -->
+            <!-- 筛选小计 -->
             <div class="bg-indigo-950/30 px-3 py-1.5 rounded-xl border border-indigo-900/40 flex justify-between items-center text-[10px] md:text-[11px] font-mono shadow-inner">
-              <span class="text-slate-400 font-medium">已选中 {{ summaryMetrics.count }} 笔记录</span>
+              <span class="text-slate-400 font-medium">{{ summaryMetrics.count }} {{ t('recordCountSuffix') }}</span>
               <div class="flex items-center gap-1">
-                <span class="text-slate-400">{{ lang === 'zh' ? '选项总合' : 'Selected Total' }}:</span>
+                <span class="text-slate-400">{{ t('selectedTotal') }}:</span>
                 <span class="text-amber-400 font-black text-xs md:text-sm">S$ {{ summaryMetrics.sum.toFixed(2) }}</span>
               </div>
             </div>
@@ -593,6 +584,8 @@
       setup() {
         const lang = ref('zh');
         const exchangeSyncError = ref(false);
+
+        // 高质量与更地道的双语词典
         const translations = {
           zh: {
             members: '记账成员', addRecord: '记一笔账', payer: '支付人', amount: '消费金额', category: '选择分类', date: '日期', remark: '备注', save: '保存记录',
@@ -602,17 +595,23 @@
             tableCat: '消费品类', tableTotal: '总支出', tableRatio: '分类占比',
             budgetSuffix: '月度预算', budgetLabel: '每月预算', remainingBudget: '本月剩余日常预算',
             nearBudget: '接近上限', overBudget: '超支警告', excludeHousing: '不含房租', excludeLabel: '不计入日常预算',
-            viewAll: '全部'
+            viewAll: '全部', backToCurrentMonth: '回到本月', backToToday: '回到今天',
+            searchPlaceholder: '搜索备注...', allMembers: '全部成员', allCategories: '全部分类', allCurrencies: '币种',
+            sortByAmount: '按金额', sortByDate: '按日期', recordCountSuffix: '笔记录', selectedTotal: '选项总合',
+            subHeader: '全时段固定月费总览', subTotal: '共', subEmpty: '当前云端无任何固定月费流水记录', unnamedSub: '未命名固定月费', lockDate: '扣款锁定日'
           },
           en: {
             members: 'Ledger Crew', addRecord: 'Add Record', payer: 'Payer', amount: 'Amount', category: 'Category', date: 'Date', remark: 'Remark', save: 'Save Record',
             analysis: 'Analytics Board', today: 'Today', thisWeek: 'Weekly', thisMonthTotal: 'Monthly Total',
-            details: 'Ledger Trails', loading: 'Syncing cloud...', noRecords: 'No records found',
-            rangeToday: 'Today', rangeWeek: 'Weekly', rangeMonth: 'Monthly', exportBtn: 'Export CSV', ratio: 'Share Ratio',
+            details: 'Transaction History', loading: 'Syncing cloud...', noRecords: 'No records found',
+            rangeToday: 'Today', rangeWeek: 'Weekly', rangeMonth: 'Monthly', exportBtn: 'Export CSV', ratio: 'Ratio',
             tableCat: 'Category', tableTotal: 'Total', tableRatio: 'Share',
             budgetSuffix: ' Budget', budgetLabel: 'Budget', remainingBudget: 'Remaining Budget',
-            nearBudget: 'Near Limit', overBudget: 'Over Budget', excludeHousing: 'Excl. Rent', excludeLabel: 'Excl. from Budget',
-            viewAll: 'All'
+            nearBudget: 'Near Limit', overBudget: 'Over Limit', excludeHousing: 'Excl. Rent', excludeLabel: 'Excl. Budget',
+            viewAll: 'All', backToCurrentMonth: 'Current Month', backToToday: 'Today',
+            searchPlaceholder: 'Search remark...', allMembers: 'All Crew', allCategories: 'All Categories', allCurrencies: 'Currencies',
+            sortByAmount: 'By Amount', sortByDate: 'By Date', recordCountSuffix: 'Items', selectedTotal: 'Subtotal',
+            subHeader: 'Fixed Subscriptions', subTotal: 'Total', subEmpty: 'No subscription records found in cloud', unnamedSub: 'Subscription', lockDate: 'Billing Date'
           }
         };
 
@@ -645,6 +644,11 @@
 
         const getCategoryDisplayName = (cat) => lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
 
+        const getMonthShortName = (m) => {
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          return months[m - 1];
+        };
+
         const getCategoryIconOnly = (cat) => {
           if (cat.includes('日常伙食')) return 'fa-solid fa-bowl-rice text-blue-400';
           if (cat.includes('餐厅')) return 'fa-solid fa-utensils text-pink-400';
@@ -666,7 +670,7 @@
         const activePicker = ref('top');
         const panelYear = ref(parseInt(selectedMonth.value.split('-')[0]));
 
-        // 绑定监听：只要 selectedMonth 改变，就重新抓取云端数据，做到全局与两个看板同步
+        // 双向同步关键点：选定月份改变时，自动重新同步并抓取当前月份的全部数据
         watch(selectedMonth, () => {
           fetchRecords();
         });
@@ -677,12 +681,12 @@
 
         const selectedMonthText = computed(() => {
           const [yr, mo] = selectedMonth.value.split('-');
-          return `${yr}年 ${mo}月`;
+          return lang.value === 'zh' ? `${yr}年 ${mo}月` : `${getMonthShortName(parseInt(mo))} ${yr}`;
         });
 
         const selectedDayText = computed(() => {
           const [yr, mo, da] = selectedDay.value.split('-');
-          return `${yr}年 ${mo}月 ${da}日`;
+          return lang.value === 'zh' ? `${yr}年 ${mo}月 ${da}日` : `${da} ${getMonthShortName(parseInt(mo))} ${yr}`;
         });
 
         const offsetDay = (days) => {
@@ -699,7 +703,7 @@
           
           const targetMonth = `${y}-${m}`;
           if (targetMonth !== selectedMonth.value) {
-            selectedMonth.value = targetMonth; // 自动同步更新看板月份
+            selectedMonth.value = targetMonth; // 驱动月份完全同步
           }
         };
 
@@ -707,7 +711,7 @@
           filterRange.value = 'today';
           const targetMonth = selectedDay.value.substring(0, 7);
           if (targetMonth !== selectedMonth.value) {
-            selectedMonth.value = targetMonth; // 自动同步更新看板月份
+            selectedMonth.value = targetMonth; // 驱动月份完全同步
           }
         };
 
@@ -716,7 +720,7 @@
           filterRange.value = 'today';
           const targetMonth = selectedDay.value.substring(0, 7);
           if (targetMonth !== selectedMonth.value) {
-            selectedMonth.value = targetMonth; // 自动同步更新看板月份
+            selectedMonth.value = targetMonth; // 驱动月份完全同步
           }
         };
 
@@ -736,6 +740,8 @@
           const formattedMonth = String(month).padStart(2, '0');
           selectedMonth.value = `${panelYear.value}-${formattedMonth}`;
           showDatePicker.value = false;
+          // 当直接选择月份时，切换列表筛选为月度展示
+          filterRange.value = 'month';
         };
 
         const selectCurrentMonth = () => {
@@ -743,6 +749,7 @@
           selectedMonth.value = current;
           panelYear.value = parseInt(current.split('-')[0]);
           showDatePicker.value = false;
+          filterRange.value = 'month';
         };
 
         const isCurrentSelected = (month) => {
@@ -750,7 +757,7 @@
           return parseInt(yr) === panelYear.value && parseInt(mo) === month;
         };
         
-        const filterRange = ref('today');
+        const filterRange = ref('month'); // 默认呈现当月，同步整体体验
         const categoryRange = ref('month');
         const chartMember = ref('all');
 
@@ -878,7 +885,6 @@
           return list;
         });
 
-        // 动态计算筛选小计与数量
         const summaryMetrics = computed(() => {
           const list = filteredRecords.value;
           const sum = list.reduce((acc, item) => acc + Number(item.amount), 0);
@@ -1057,12 +1063,12 @@
               if (currentPayer === member1.value && budgetM1.value) {
                 const newTotal = m1TotalNum.value; const percent = (newTotal / budgetM1.value) * 100; 
                 if (percent >= 100 && (priorM1Total / budgetM1.value) * 100 < 100) {
-                  alert(`🚨 预算溢出警告：\n${member1.value} 的本月日常账目已超出预算上限！`);
+                  alert(lang.value === 'zh' ? `🚨 预算溢出警告：\n${member1.value} 的本月日常账目已超出预算上限！` : `🚨 Budget Alert:\n${member1.value} has exceeded the monthly budget limit!`);
                 }
               } else if (currentPayer === member2.value && budgetM2.value) {
                 const newTotal = m2TotalNum.value; const percent = (newTotal / budgetM2.value) * 100;
                 if (percent >= 100 && (priorM2Total / budgetM2.value) * 100 < 100) {
-                  alert(`🚨 预算溢出警告：\n${member2.value} 的本月日常账目已超出预算上限！`);
+                  alert(lang.value === 'zh' ? `🚨 预算溢出警告：\n${member2.value} 的本月日常账目已超出预算上限！` : `🚨 Budget Alert:\n${member2.value} has exceeded the monthly budget limit!`);
                 }
               }
             }, 100);
@@ -1070,13 +1076,13 @@
         };
 
         const deleteRecord = async (id) => {
-          if (!confirm('确定要删除账目吗？')) return;
+          if (!confirm(lang.value === 'zh' ? '确定要删除该条账目记录吗？' : 'Are you sure you want to delete this record?')) return;
           await supabaseClient.from('starry_ledger').delete().eq('id', id);
           await fetchRecords();
         };
 
         const exportToCSV = () => {
-          if (filteredRecords.value.length === 0) return alert('当前无筛选数据可导出');
+          if (filteredRecords.value.length === 0) return alert(lang.value === 'zh' ? '当前无筛选数据可导出' : 'No data available to export');
           
           const headers = [
             'Date/日期', 
@@ -1131,7 +1137,7 @@
         return { 
           lang, t, toggleLang, member1, member2, exchangeRate, exchangeRateCny, 
           budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, 
-          getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, 
+          getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, getMonthShortName,
           records, filteredRecords, filters, summaryMetrics, loading, selectedMonth, offsetMonth, 
           selectedDay, selectedDayText, offsetDay, onDayPicked, resetToToday, getLocalDateString,
           form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, 

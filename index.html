@@ -446,7 +446,7 @@
           </div>
         </div>
 
-        <!-- 账目明细流水表 (已同步月份选择 & 图标修复) -->
+        <!-- 账目明细流水表 (默认展示本日) -->
         <div class="glass-card rounded-2xl p-3 md:p-4">
           <div class="flex flex-col gap-2.5 mb-3">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -540,7 +540,6 @@
                 <span :class="item.payer === member1 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/20' : 'bg-amber-500/15 text-amber-300 border-amber-500/20'" class="text-[8px] md:text-[9px] px-2 py-0.5 rounded-full font-bold border flex-shrink-0">{{ item.payer }}</span>
                 <div class="truncate">
                   <div class="flex items-center gap-1.5 flex-wrap">
-                    <!-- 这里加回了分类 Icon -->
                     <i :class="getCategoryIconOnly(item.category)" class="text-xs"></i>
                     <span class="text-xs font-bold text-slate-200">{{ getCategoryDisplayName(item.category) }}</span>
                     <span v-if="item.category.includes('居住房租')" class="text-[8px] text-orange-500/70 scale-90 origin-left">({{ t('excludeLabel') }})</span>
@@ -587,7 +586,6 @@
         const lang = ref('zh');
         const exchangeSyncError = ref(false);
 
-        // 高质量与更地道的双语词典
         const translations = {
           zh: {
             members: '记账成员', addRecord: '记一笔账', payer: '支付人', amount: '消费金额', category: '选择分类', date: '日期', remark: '备注', save: '保存记录',
@@ -672,7 +670,6 @@
         const activePicker = ref('top');
         const panelYear = ref(parseInt(selectedMonth.value.split('-')[0]));
 
-        // 双向同步关键点：选定月份改变时，自动重新同步并抓取当前月份的全部数据
         watch(selectedMonth, () => {
           fetchRecords();
         });
@@ -705,7 +702,7 @@
           
           const targetMonth = `${y}-${m}`;
           if (targetMonth !== selectedMonth.value) {
-            selectedMonth.value = targetMonth; // 驱动月份完全同步
+            selectedMonth.value = targetMonth;
           }
         };
 
@@ -713,7 +710,7 @@
           filterRange.value = 'today';
           const targetMonth = selectedDay.value.substring(0, 7);
           if (targetMonth !== selectedMonth.value) {
-            selectedMonth.value = targetMonth; // 驱动月份完全同步
+            selectedMonth.value = targetMonth;
           }
         };
 
@@ -722,7 +719,7 @@
           filterRange.value = 'today';
           const targetMonth = selectedDay.value.substring(0, 7);
           if (targetMonth !== selectedMonth.value) {
-            selectedMonth.value = targetMonth; // 驱动月份完全同步
+            selectedMonth.value = targetMonth;
           }
         };
 
@@ -742,7 +739,6 @@
           const formattedMonth = String(month).padStart(2, '0');
           selectedMonth.value = `${panelYear.value}-${formattedMonth}`;
           showDatePicker.value = false;
-          // 当直接选择月份时，切换列表筛选为月度展示
           filterRange.value = 'month';
         };
 
@@ -759,7 +755,8 @@
           return parseInt(yr) === panelYear.value && parseInt(mo) === month;
         };
         
-        const filterRange = ref('month'); // 默认呈现当月，同步整体体验
+        // 核心改动：默认将账目流水明细筛选范围设为 'today' (本日)
+        const filterRange = ref('today');
         const categoryRange = ref('month');
         const chartMember = ref('all');
 

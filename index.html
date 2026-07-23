@@ -113,11 +113,6 @@
     ::-webkit-scrollbar-thumb { background: rgba(244, 63, 94, 0.5); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(244, 63, 94, 0.9); box-shadow: 0 0 10px rgba(244, 63, 94, 0.8); }
 
-    input[type="date"]::-webkit-calendar-picker-indicator {
-      cursor: pointer; opacity: 0.85;
-      filter: invert(0.7) sepia(1) saturate(5) hue-rotate(290deg) drop-shadow(0 0 3px rgba(244, 63, 94, 0.7));
-    }
-
     @media (min-width: 1024px) {
       #app { font-size: 1.2rem; }
       .container { max-width: 90rem !important; }
@@ -249,10 +244,42 @@
             </div>
 
             <div class="grid grid-cols-12 gap-2">
-              <div class="col-span-5">
+              <div class="col-span-5 relative">
                 <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">{{ t('date') }}</label>
-                <input type="date" v-model="form.date" required class="w-full bg-purple-950/90 border border-pink-900/80 rounded-xl py-1 md:py-1.5 px-2 text-xs text-purple-200 focus:outline-none focus:border-pink-400 transition font-mono">
+                <!-- 优化统一日历按钮：记一笔账表单 -->
+                <button type="button" @click.stop="toggleDatePicker('formDate')" class="w-full flex items-center justify-between bg-purple-950/90 border border-pink-900/80 hover:border-pink-400 rounded-xl py-1 md:py-1.5 px-2 text-xs text-purple-200 font-mono transition shadow-inner">
+                  <span class="truncate">{{ formDateText }}</span>
+                  <i class="fa-regular fa-calendar-days text-pink-400 text-xs flex-shrink-0 ml-1"></i>
+                </button>
+
+                <!-- 记一笔账表单：炫彩日历弹窗 -->
+                <transition name="fade">
+                  <div v-if="showDatePicker && activePicker === 'formDate'" @click.stop class="absolute left-0 top-full mt-2 z-50 w-64 md:w-72 glass-card rounded-2xl p-3 md:p-4 shadow-2xl border border-pink-800/80 bg-purple-950/98">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-purple-900/80">
+                      <button type="button" @click="changeDayPanelMonth(-1)" class="text-purple-400 hover:text-white p-1 text-xs"><i class="fa-solid fa-chevron-left"></i></button>
+                      <span class="text-xs font-bold text-purple-200 font-mono">{{ dayPanelYear }}年 {{ String(dayPanelMonth + 1).padStart(2, '0') }}月</span>
+                      <button type="button" @click="changeDayPanelMonth(1)" class="text-purple-400 hover:text-white p-1 text-xs"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] text-purple-400 font-bold mb-1">
+                      <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1">
+                      <button type="button" v-for="(dayObj, idx) in currentMonthDays" :key="idx" 
+                        @click="selectFormDate(dayObj.fullDate)"
+                        :disabled="!dayObj.isCurrentMonth"
+                        :class="[
+                          !dayObj.isCurrentMonth ? 'opacity-20 cursor-not-allowed' : '',
+                          form.date === dayObj.fullDate ? 'bg-pink-600 text-white font-bold shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-purple-900/40 hover:bg-purple-800/60 text-purple-200'
+                        ]"
+                        class="py-1 text-xs font-mono rounded-lg transition">
+                        {{ dayObj.day }}
+                      </button>
+                    </div>
+                    <button type="button" @click="selectFormDateToday" class="w-full mt-3 bg-purple-900/80 hover:bg-purple-800 text-pink-300 font-bold py-1.5 text-[10px] rounded-xl transition tracking-wider">{{ t('backToToday') }}</button>
+                  </div>
+                </transition>
               </div>
+
               <div class="col-span-7">
                 <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">{{ t('remark') }}</label>
                 <input type="text" v-model="form.remark" placeholder="..." class="w-full bg-purple-950/90 border border-pink-900/80 rounded-xl py-1 md:py-1.5 px-3 text-xs text-purple-200 focus:outline-none focus:border-pink-400 transition">
@@ -545,18 +572,45 @@
                   <i class="fa-solid fa-list text-pink-400 animate-kuromi-breathe"></i> {{ t('details') }} ✨
                 </h2>
                 
+                <!-- 优化统一日历按钮：账目流水明细 -->
                 <div class="relative flex items-center bg-purple-950 border border-pink-900/80 hover:border-pink-400/80 rounded-xl px-1.5 py-0.5 transition shadow-inner">
                   <button type="button" @click="offsetDay(-1)" :title="lang==='zh'?'前一天':'Prev Day'" class="text-purple-400 hover:text-pink-300 px-1.5 py-0.5 transition text-xs">◀</button>
                   
-                  <div class="relative flex items-center cursor-pointer">
-                    <span class="text-[10px] md:text-[11px] font-bold font-mono text-purple-200 px-1">
+                  <button type="button" @click.stop="toggleDatePicker('detailDate')" class="flex items-center cursor-pointer px-1">
+                    <span class="text-[10px] md:text-[11px] font-bold font-mono text-purple-200">
                       {{ selectedDayText }}
                     </span>
                     <i class="fa-regular fa-calendar-days text-pink-400 text-xs ml-1"></i>
-                    <input type="date" v-model="selectedDay" @change="onDayPicked" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
-                  </div>
+                  </button>
                   
                   <button type="button" @click="offsetDay(1)" :title="lang==='zh'?'后一天':'Next Day'" class="text-purple-400 hover:text-pink-300 px-1.5 py-0.5 transition text-xs">▶</button>
+
+                  <!-- 账目流水明细：炫彩日历弹窗 -->
+                  <transition name="fade">
+                    <div v-if="showDatePicker && activePicker === 'detailDate'" @click.stop class="absolute left-0 top-full mt-2 z-50 w-64 md:w-72 glass-card rounded-2xl p-3 md:p-4 shadow-2xl border border-pink-800/80 bg-purple-950/98">
+                      <div class="flex justify-between items-center mb-3 pb-2 border-b border-purple-900/80">
+                        <button type="button" @click="changeDayPanelMonth(-1)" class="text-purple-400 hover:text-white p-1 text-xs"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span class="text-xs font-bold text-purple-200 font-mono">{{ dayPanelYear }}年 {{ String(dayPanelMonth + 1).padStart(2, '0') }}月</span>
+                        <button type="button" @click="changeDayPanelMonth(1)" class="text-purple-400 hover:text-white p-1 text-xs"><i class="fa-solid fa-chevron-right"></i></button>
+                      </div>
+                      <div class="grid grid-cols-7 gap-1 text-center text-[10px] text-purple-400 font-bold mb-1">
+                        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                      </div>
+                      <div class="grid grid-cols-7 gap-1">
+                        <button type="button" v-for="(dayObj, idx) in currentMonthDays" :key="idx" 
+                          @click="selectDetailDate(dayObj.fullDate)"
+                          :disabled="!dayObj.isCurrentMonth"
+                          :class="[
+                            !dayObj.isCurrentMonth ? 'opacity-20 cursor-not-allowed' : '',
+                            selectedDay === dayObj.fullDate ? 'bg-pink-600 text-white font-bold shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-purple-900/40 hover:bg-purple-800/60 text-purple-200'
+                          ]"
+                          class="py-1 text-xs font-mono rounded-lg transition">
+                          {{ dayObj.day }}
+                        </button>
+                      </div>
+                      <button type="button" @click="selectDetailDateToday" class="w-full mt-3 bg-purple-900/80 hover:bg-purple-800 text-pink-300 font-bold py-1.5 text-[10px] rounded-xl transition tracking-wider">{{ t('backToToday') }}</button>
+                    </div>
+                  </transition>
                 </div>
 
                 <button v-if="selectedDay !== getLocalDateString()" type="button" @click="resetToToday" class="bg-purple-950/80 hover:bg-purple-900/80 text-purple-300 border border-purple-800/80 px-2 py-0.5 rounded-xl text-[9px] font-bold transition shadow-[0_0_6px_rgba(192,132,252,0.2)]">
@@ -760,6 +814,10 @@
         const activePicker = ref('top');
         const panelYear = ref(parseInt(selectedMonth.value.split('-')[0]));
 
+        /* 通用日期面板（日级）的年月管理 */
+        const dayPanelYear = ref(new Date().getFullYear());
+        const dayPanelMonth = ref(new Date().getMonth());
+
         watch(selectedMonth, () => {
           fetchRecords();
         });
@@ -777,6 +835,81 @@
           const [yr, mo, da] = selectedDay.value.split('-');
           return lang.value === 'zh' ? `${yr}年 ${mo}月 ${da}日` : `${da} ${getMonthShortName(parseInt(mo))} ${yr}`;
         });
+
+        const formDateText = computed(() => {
+          if (!form.date) return '';
+          const [yr, mo, da] = form.date.split('-');
+          return lang.value === 'zh' ? `${yr}年 ${mo}月 ${da}日` : `${da} ${getMonthShortName(parseInt(mo))} ${yr}`;
+        });
+
+        /* 计算通用日历网格数据 */
+        const currentMonthDays = computed(() => {
+          const year = dayPanelYear.value;
+          const month = dayPanelMonth.value;
+          const firstDayIndex = new Date(year, month, 1).getDay();
+          const totalDays = new Date(year, month + 1, 0).getDate();
+          const days = [];
+
+          // 上个月占位
+          const prevMonthLastDate = new Date(year, month, 0).getDate();
+          for (let i = firstDayIndex - 1; i >= 0; i--) {
+            days.push({ day: prevMonthLastDate - i, isCurrentMonth: false, fullDate: '' });
+          }
+
+          // 当月日期
+          for (let d = 1; d <= totalDays; d++) {
+            const mStr = String(month + 1).padStart(2, '0');
+            const dStr = String(d).padStart(2, '0');
+            days.push({ day: d, isCurrentMonth: true, fullDate: `${year}-${mStr}-${dStr}` });
+          }
+
+          // 下个月补齐42格
+          const remaining = 42 - days.length;
+          for (let i = 1; i <= remaining; i++) {
+            days.push({ day: i, isCurrentMonth: false, fullDate: '' });
+          }
+          return days;
+        });
+
+        const changeDayPanelMonth = (offset) => {
+          let newMonth = dayPanelMonth.value + offset;
+          if (newMonth < 0) {
+            dayPanelMonth.value = 11;
+            dayPanelYear.value -= 1;
+          } else if (newMonth > 11) {
+            dayPanelMonth.value = 0;
+            dayPanelYear.value += 1;
+          } else {
+            dayPanelMonth.value = newMonth;
+          }
+        };
+
+        const selectFormDate = (dateStr) => {
+          if (!dateStr) return;
+          form.date = dateStr;
+          showDatePicker.value = false;
+        };
+
+        const selectFormDateToday = () => {
+          form.date = getLocalDateString();
+          showDatePicker.value = false;
+        };
+
+        const selectDetailDate = (dateStr) => {
+          if (!dateStr) return;
+          selectedDay.value = dateStr;
+          filterRange.value = 'today';
+          const targetMonth = dateStr.substring(0, 7);
+          if (targetMonth !== selectedMonth.value) {
+            selectedMonth.value = targetMonth;
+          }
+          showDatePicker.value = false;
+        };
+
+        const selectDetailDateToday = () => {
+          resetToToday();
+          showDatePicker.value = false;
+        };
 
         const offsetDay = (days) => {
           const [yr, mo, da] = selectedDay.value.split('-').map(Number);
@@ -796,14 +929,6 @@
           }
         };
 
-        const onDayPicked = () => {
-          filterRange.value = 'today';
-          const targetMonth = selectedDay.value.substring(0, 7);
-          if (targetMonth !== selectedMonth.value) {
-            selectedMonth.value = targetMonth;
-          }
-        };
-
         const resetToToday = () => {
           selectedDay.value = getLocalDateString();
           filterRange.value = 'today';
@@ -818,7 +943,17 @@
             showDatePicker.value = false;
           } else {
             activePicker.value = position;
-            panelYear.value = parseInt(selectedMonth.value.split('-')[0]);
+            if (position === 'left' || position === 'top') {
+              panelYear.value = parseInt(selectedMonth.value.split('-')[0]);
+            } else if (position === 'formDate') {
+              const baseDate = form.date ? new Date(form.date) : new Date();
+              dayPanelYear.value = baseDate.getFullYear();
+              dayPanelMonth.value = baseDate.getMonth();
+            } else if (position === 'detailDate') {
+              const baseDate = selectedDay.value ? new Date(selectedDay.value) : new Date();
+              dayPanelYear.value = baseDate.getFullYear();
+              dayPanelMonth.value = baseDate.getMonth();
+            }
             showDatePicker.value = true;
           }
         };
@@ -1227,12 +1362,14 @@
           budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, 
           getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, getMonthShortName,
           records, filteredRecords, filters, summaryMetrics, loading, selectedMonth, offsetMonth, 
-          selectedDay, selectedDayText, offsetDay, onDayPicked, resetToToday, getLocalDateString,
+          selectedDay, selectedDayText, formDateText, offsetDay, resetToToday, getLocalDateString,
           form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, 
           totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, 
           m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, 
           categoryComparison, chartTotalSum, chartSlices, showDatePicker, activePicker, 
-          panelYear, selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, 
+          panelYear, dayPanelYear, dayPanelMonth, currentMonthDays, changeDayPanelMonth, 
+          selectFormDate, selectFormDateToday, selectDetailDate, selectDetailDateToday,
+          selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, 
           selectCurrentMonth, isCurrentSelected, dailyM1Sum, daily2Sum, dailyTotalSum, 
           dailyM1Percent, dailyM2Percent, updateCloudBudget, exchangeSyncError, allSubscriptions 
         };

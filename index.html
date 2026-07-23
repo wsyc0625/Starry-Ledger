@@ -45,6 +45,13 @@
     ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
 
+    /* 日期选择框原生图标隐藏/自定义 */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      opacity: 0.6;
+      filter: invert(0.8);
+    }
+
     @media (min-width: 1024px) {
       #app { font-size: 1.2rem; }
       .container { max-width: 90rem !important; }
@@ -86,7 +93,7 @@
       </div>
       
       <div class="flex items-center gap-1.5 font-mono text-[9px]">
-        <!-- 实时汇率：闪烁绿色表示联网成功，红色表示失败 -->
+        <!-- 实时汇率 -->
         <div class="flex items-center gap-1 bg-slate-950/80 px-2.5 py-1 rounded-full border border-indigo-950 text-slate-400">
           <span :class="exchangeSyncError ? 'text-rose-500' : 'text-emerald-400 animate-pulse'"><i class="fa-solid fa-circle text-[5px]"></i></span>
           <span class="text-indigo-300 font-medium">SGD 1</span>
@@ -103,12 +110,22 @@
       </div>
     </header>
 
-    <!-- 成员管理面板 (PC 端可修改成员名称，手机端完全隐藏) -->
-    <section class="hidden lg:flex glass-card rounded-2xl p-3 mb-4 items-center gap-3 overflow-x-auto whitespace-nowrap">
+    <!-- 成员管理面板 -->
+    <section class="glass-card rounded-2xl p-3 mb-4 flex items-center gap-3 overflow-x-auto whitespace-nowrap">
       <span class="text-xs font-bold text-slate-300 flex-shrink-0 flex items-center gap-1.5">
         <i class="fa-solid fa-user-astronaut text-indigo-400"></i>{{ t('members') }}:
       </span>
-      <div class="flex items-center gap-3">
+      
+      <div class="flex lg:hidden items-center gap-2">
+        <span class="bg-indigo-950/60 text-xs font-bold text-indigo-300 px-3 py-1 rounded-xl border border-indigo-900/50 shadow-inner">
+          {{ member1 }}
+        </span>
+        <span class="bg-amber-950/60 text-xs font-bold text-amber-300 px-3 py-1 rounded-xl border border-amber-900/50 shadow-inner">
+          {{ member2 }}
+        </span>
+      </div>
+
+      <div class="hidden lg:flex items-center gap-3">
         <input type="text" v-model="member1" class="bg-indigo-950/40 text-xs font-bold text-indigo-200 w-24 text-center py-1 rounded-xl border border-indigo-900/60 focus:outline-none focus:border-indigo-500 transition shadow-inner">
         <input type="text" v-model="member2" class="bg-amber-950/40 text-xs font-bold text-amber-200 w-24 text-center py-1 rounded-xl border border-amber-900/60 focus:outline-none focus:border-amber-500 transition shadow-inner">
       </div>
@@ -442,37 +459,42 @@
           </div>
         </div>
 
-        <!-- 账目明细流水表 (默认筛选：今日) -->
+        <!-- 账目明细流水表 -->
         <div class="glass-card rounded-2xl p-3 md:p-4">
           <div class="flex flex-col gap-2.5 mb-3">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div class="flex items-center gap-1">
-                <h2 class="text-xs md:text-base font-bold text-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-list text-amber-400"></i> {{ t('details') }}</h2>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-xs md:text-base font-bold text-slate-200 flex items-center gap-1.5">
+                  <i class="fa-solid fa-list text-amber-400"></i> {{ t('details') }}
+                </h2>
                 
-                <div class="relative flex items-center bg-slate-950/80 border border-slate-800 rounded-2xl p-0.5 ml-1">
-                  <button type="button" @click="offsetMonth(-1)" class="text-slate-400 hover:text-indigo-400 px-2 py-0.5 transition text-xs">◀</button>
-                  <button type="button" @click.stop="toggleDatePicker('bottom')" class="px-1.5 py-0.5 text-[10px] font-bold font-mono text-slate-200 hover:text-indigo-400 transition flex items-center gap-1">
-                    <span>{{ selectedMonthText }}</span>
-                    <i class="fa-regular fa-calendar text-slate-400"></i>
+                <!-- 新增：与数据汇总看板按钮风格完全一致的独立日期切换控件 -->
+                <div class="relative flex items-center bg-slate-900 border border-slate-800 hover:border-indigo-500/80 rounded-xl px-1.5 py-0.5 transition shadow-inner">
+                  <!-- 前一天按钮 -->
+                  <button type="button" @click="offsetDay(-1)" title="前一天" class="text-slate-400 hover:text-indigo-300 px-1.5 py-0.5 transition text-xs">
+                    ◀
                   </button>
-                  <button type="button" @click="offsetMonth(1)" class="text-slate-400 hover:text-indigo-400 px-2 py-0.5 transition text-xs">▶</button>
-
-                  <transition name="fade">
-                    <div v-if="showDatePicker && activePicker === 'bottom'" @click.stop class="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-64 md:w-72 glass-card rounded-2xl p-3 md:p-4 shadow-2xl border border-slate-800/80 bg-slate-950/98">
-                      <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
-                        <button type="button" @click="changePanelYear(-1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-left"></i></button>
-                        <span class="text-sm font-bold text-slate-200 font-mono">{{ panelYear }} 年</span>
-                        <button type="button" @click="changePanelYear(1)" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-right"></i></button>
-                      </div>
-                      <div class="grid grid-cols-4 gap-1.5">
-                        <button type="button" v-for="m in 12" :key="m" @click="selectPanelMonth(m)" :class="isCurrentSelected(m) ? 'bg-indigo-600 text-white font-bold' : 'bg-slate-900/60 hover:bg-slate-800 text-slate-300'" class="py-1.5 text-xs font-mono rounded-xl transition">
-                          {{ String(m).padStart(2, '0') }}月
-                        </button>
-                      </div>
-                      <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold py-1.5 text-[10px] rounded-xl transition">回到本月</button>
-                    </div>
-                  </transition>
+                  
+                  <!-- 原生日期选择与展示 -->
+                  <div class="relative flex items-center cursor-pointer">
+                    <span class="text-[10px] md:text-[11px] font-bold font-mono text-indigo-300 px-1">
+                      {{ selectedDayText }}
+                    </span>
+                    <i class="fa-regular fa-calendar-days text-indigo-400 text-xs ml-1"></i>
+                    <!-- 透明覆盖的日期选择器，点击即可弹出日历 -->
+                    <input type="date" v-model="selectedDay" @change="onDayPicked" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                  </div>
+                  
+                  <!-- 后一天按钮 -->
+                  <button type="button" @click="offsetDay(1)" title="后一天" class="text-slate-400 hover:text-indigo-300 px-1.5 py-0.5 transition text-xs">
+                    ▶
+                  </button>
                 </div>
+
+                <!-- 回到今天快捷按钮 -->
+                <button v-if="selectedDay !== getLocalDateString()" type="button" @click="resetToToday" class="bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-800/60 px-2 py-0.5 rounded-xl text-[9px] font-bold transition">
+                  回到今天
+                </button>
               </div>
               
               <div class="flex items-center gap-2 justify-between sm:justify-end text-[9px] md:text-[10px]">
@@ -481,7 +503,9 @@
                 </button>
                 
                 <div class="flex bg-slate-950/80 p-0.5 rounded-xl border border-slate-800">
-                  <button type="button" @click="filterRange = 'today'" :class="filterRange === 'today' ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeToday') }}</button>
+                  <button type="button" @click="filterRange = 'today'" :class="filterRange === 'today' ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">
+                    {{ filterRange === 'today' && selectedDay !== getLocalDateString() ? '指定日期' : t('rangeToday') }}
+                  </button>
                   <button type="button" @click="filterRange = 'week'" :class="filterRange === 'week' ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
                   <button type="button" @click="filterRange = 'month'" :class="filterRange === 'month' ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/30' : 'text-slate-400'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeMonth') }}</button>
                 </div>
@@ -524,7 +548,7 @@
               </button>
             </div>
 
-            <!-- 当前筛选的统计小计 (自动联动) -->
+            <!-- 当前筛选的统计小计 -->
             <div v-if="filteredRecords.length > 0 && (filters.keyword || filters.payer !== 'all' || filters.category !== 'all' || filters.currency !== 'all')" class="bg-indigo-950/20 px-3 py-1.5 rounded-xl border border-indigo-900/30 flex justify-between items-center text-[10px] font-mono">
               <span class="text-slate-400">已筛选出 {{ summaryMetrics.count }} 笔记录</span>
               <span class="text-indigo-300 font-bold">小计: S$ {{ summaryMetrics.sum.toFixed(2) }}</span>
@@ -583,7 +607,7 @@
     createApp({
       setup() {
         const lang = ref('zh');
-        const exchangeSyncError = ref(false); // 联网失败标志位
+        const exchangeSyncError = ref(false);
         const translations = {
           zh: {
             members: '记账成员', addRecord: '记一笔账', payer: '支付人', amount: '消费金额', category: '选择分类', date: '日期', remark: '备注', save: '保存记录',
@@ -651,6 +675,9 @@
         const records = ref([]); const loading = ref(false);
         const selectedMonth = ref(getLocalDateString().substring(0, 7));
         
+        // 增加明细流水专用的日期筛选控制变量
+        const selectedDay = ref(getLocalDateString());
+
         const showDatePicker = ref(false);
         const activePicker = ref('top');
         const panelYear = ref(parseInt(selectedMonth.value.split('-')[0]));
@@ -663,6 +690,51 @@
           const [yr, mo] = selectedMonth.value.split('-');
           return `${yr}年 ${mo}月`;
         });
+
+        const selectedDayText = computed(() => {
+          const [yr, mo, da] = selectedDay.value.split('-');
+          return `${yr}年 ${mo}月 ${da}日`;
+        });
+
+        // 切换前一天 / 后一天
+        const offsetDay = (days) => {
+          const [yr, mo, da] = selectedDay.value.split('-').map(Number);
+          const current = new Date(yr, mo - 1, da);
+          current.setDate(current.getDate() + days);
+          
+          const y = current.getFullYear();
+          const m = String(current.getMonth() + 1).padStart(2, '0');
+          const d = String(current.getDate()).padStart(2, '0');
+          
+          selectedDay.value = `${y}-${m}-${d}`;
+          filterRange.value = 'today'; // 强制激活指定日期模式
+          
+          // 若跨月，自动同步全局月份数据 fetchRecords
+          const targetMonth = `${y}-${m}`;
+          if (targetMonth !== selectedMonth.value) {
+            selectedMonth.value = targetMonth;
+            fetchRecords();
+          }
+        };
+
+        const onDayPicked = () => {
+          filterRange.value = 'today';
+          const targetMonth = selectedDay.value.substring(0, 7);
+          if (targetMonth !== selectedMonth.value) {
+            selectedMonth.value = targetMonth;
+            fetchRecords();
+          }
+        };
+
+        const resetToToday = () => {
+          selectedDay.value = getLocalDateString();
+          filterRange.value = 'today';
+          const targetMonth = selectedDay.value.substring(0, 7);
+          if (targetMonth !== selectedMonth.value) {
+            selectedMonth.value = targetMonth;
+            fetchRecords();
+          }
+        };
 
         const toggleDatePicker = (position) => {
           if (activePicker.value === position && showDatePicker.value) {
@@ -696,12 +768,10 @@
           return parseInt(yr) === panelYear.value && parseInt(mo) === month;
         };
         
-        // 关键改动：流水明细默认设为 'today'（今日/本日）
         const filterRange = ref('today');
         const categoryRange = ref('month');
         const chartMember = ref('all');
 
-        // 流水明细过滤控制面板状态
         const filters = reactive({
           keyword: '',
           payer: 'all',
@@ -732,7 +802,7 @@
             }
           } catch (err) {
             console.warn(err);
-            exchangeSyncError.value = true; // 联网失败标记为红色指示
+            exchangeSyncError.value = true;
           }
         };
 
@@ -796,9 +866,9 @@
         const filteredRecords = computed(() => {
           let list = [...records.value];
 
-          // 1. 时间跨度筛选（默认今天）
+          // 1. 时间跨度筛选（采用选择的 Day）
           if (filterRange.value === 'today') {
-            list = list.filter(r => r.date === getLocalDateString());
+            list = list.filter(r => r.date === selectedDay.value);
           } else if (filterRange.value === 'week') {
             list = list.filter(r => r.date >= getMondayOfThisWeek());
           }
@@ -1068,7 +1138,7 @@
           const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.map(val => `"${val}"`).join(','))].join('\n');
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
           const url = URL.createObjectURL(blob); const link = document.createElement("a");
-          link.setAttribute("href", url); link.setAttribute("download", `Starry_Ledger_${selectedMonth.value}.csv`);
+          link.setAttribute("href", url); link.setAttribute("download", `Starry_Ledger_${selectedDay.value}.csv`);
           document.body.appendChild(link); link.click(); document.body.removeChild(link);
         };
 
@@ -1089,6 +1159,7 @@
           budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, 
           getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, 
           records, filteredRecords, filters, summaryMetrics, loading, selectedMonth, offsetMonth, 
+          selectedDay, selectedDayText, offsetDay, onDayPicked, resetToToday, getLocalDateString,
           form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, 
           totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, 
           m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, 

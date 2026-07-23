@@ -39,13 +39,11 @@
     .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
     .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }
 
-    /* Custom scrollbar for better UI */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
     ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
 
-    /* 日期选择框原生图标隐藏/自定义 */
     input[type="date"]::-webkit-calendar-picker-indicator {
       cursor: pointer;
       opacity: 0.6;
@@ -93,7 +91,6 @@
       </div>
       
       <div class="flex items-center gap-1.5 font-mono text-[9px]">
-        <!-- 实时汇率 -->
         <div class="flex items-center gap-1 bg-slate-950/80 px-2.5 py-1 rounded-full border border-indigo-950 text-slate-400">
           <span :class="exchangeSyncError ? 'text-rose-500' : 'text-emerald-400 animate-pulse'"><i class="fa-solid fa-circle text-[5px]"></i></span>
           <span class="text-indigo-300 font-medium">SGD 1</span>
@@ -103,7 +100,6 @@
           <span class="text-rose-400 font-bold">CNY {{ exchangeRateCny.toFixed(2) }}</span>
         </div>
         
-        <!-- 语言切换按钮 -->
         <button @click="toggleLang" class="bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-white px-2.5 py-1 rounded-full border border-slate-800 transition font-bold uppercase tracking-wider">
           {{ lang === 'zh' ? 'EN' : 'ZH' }}
         </button>
@@ -468,30 +464,21 @@
                   <i class="fa-solid fa-list text-amber-400"></i> {{ t('details') }}
                 </h2>
                 
-                <!-- 新增：与数据汇总看板按钮风格完全一致的独立日期切换控件 -->
+                <!-- 独立日期切换控件 -->
                 <div class="relative flex items-center bg-slate-900 border border-slate-800 hover:border-indigo-500/80 rounded-xl px-1.5 py-0.5 transition shadow-inner">
-                  <!-- 前一天按钮 -->
-                  <button type="button" @click="offsetDay(-1)" title="前一天" class="text-slate-400 hover:text-indigo-300 px-1.5 py-0.5 transition text-xs">
-                    ◀
-                  </button>
+                  <button type="button" @click="offsetDay(-1)" title="前一天" class="text-slate-400 hover:text-indigo-300 px-1.5 py-0.5 transition text-xs">◀</button>
                   
-                  <!-- 原生日期选择与展示 -->
                   <div class="relative flex items-center cursor-pointer">
                     <span class="text-[10px] md:text-[11px] font-bold font-mono text-indigo-300 px-1">
                       {{ selectedDayText }}
                     </span>
                     <i class="fa-regular fa-calendar-days text-indigo-400 text-xs ml-1"></i>
-                    <!-- 透明覆盖的日期选择器，点击即可弹出日历 -->
                     <input type="date" v-model="selectedDay" @change="onDayPicked" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                   </div>
                   
-                  <!-- 后一天按钮 -->
-                  <button type="button" @click="offsetDay(1)" title="后一天" class="text-slate-400 hover:text-indigo-300 px-1.5 py-0.5 transition text-xs">
-                    ▶
-                  </button>
+                  <button type="button" @click="offsetDay(1)" title="后一天" class="text-slate-400 hover:text-indigo-300 px-1.5 py-0.5 transition text-xs">▶</button>
                 </div>
 
-                <!-- 回到今天快捷按钮 -->
                 <button v-if="selectedDay !== getLocalDateString()" type="button" @click="resetToToday" class="bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-800/60 px-2 py-0.5 rounded-xl text-[9px] font-bold transition">
                   回到今天
                 </button>
@@ -514,26 +501,22 @@
 
             <!-- 明细筛选控制条 -->
             <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-900/80 text-[10px]">
-              <!-- 关键字搜索框 -->
               <div class="relative flex-1 min-w-[120px]">
                 <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-500 text-[10px]"></i>
                 <input type="text" v-model="filters.keyword" placeholder="搜索备注..." class="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl py-1 pl-7 pr-2 text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 transition">
               </div>
 
-              <!-- 成员筛选 -->
               <select v-model="filters.payer" class="bg-slate-950/60 border border-slate-800/80 rounded-xl px-2 py-1 text-slate-300 focus:outline-none focus:border-indigo-500/60 transition font-bold">
                 <option value="all">全部成员</option>
                 <option :value="member1">{{ member1 }}</option>
                 <option :value="member2">{{ member2 }}</option>
               </select>
 
-              <!-- 分类筛选 -->
               <select v-model="filters.category" class="bg-slate-950/60 border border-slate-800/80 rounded-xl px-2 py-1 text-slate-300 focus:outline-none focus:border-indigo-500/60 transition">
                 <option value="all">全部分类</option>
                 <option v-for="cat in categories" :key="cat" :value="cat">{{ getCategoryDisplayName(cat) }}</option>
               </select>
 
-              <!-- 币种筛选 -->
               <select v-model="filters.currency" class="bg-slate-950/60 border border-slate-800/80 rounded-xl px-2 py-1 text-slate-300 focus:outline-none focus:border-indigo-500/60 transition font-mono font-bold">
                 <option value="all">币种</option>
                 <option value="SGD">SGD</option>
@@ -541,17 +524,19 @@
                 <option value="CNY">CNY</option>
               </select>
 
-              <!-- 排序规则 -->
               <button type="button" @click="filters.sortByAmount = !filters.sortByAmount" :class="filters.sortByAmount ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500/40' : 'bg-slate-950/60 text-slate-400 border-slate-800/80'" class="px-2 py-1 rounded-xl border transition flex items-center gap-1 font-bold">
                 <i class="fa-solid fa-sort"></i>
                 <span>{{ filters.sortByAmount ? '按金额' : '按日期' }}</span>
               </button>
             </div>
 
-            <!-- 当前筛选的统计小计 -->
-            <div v-if="filteredRecords.length > 0 && (filters.keyword || filters.payer !== 'all' || filters.category !== 'all' || filters.currency !== 'all')" class="bg-indigo-950/20 px-3 py-1.5 rounded-xl border border-indigo-900/30 flex justify-between items-center text-[10px] font-mono">
-              <span class="text-slate-400">已筛选出 {{ summaryMetrics.count }} 笔记录</span>
-              <span class="text-indigo-300 font-bold">小计: S$ {{ summaryMetrics.sum.toFixed(2) }}</span>
+            <!-- 新增/恢复：筛选条件下的数据笔数与总合 (小计) 展示 -->
+            <div class="bg-indigo-950/30 px-3 py-1.5 rounded-xl border border-indigo-900/40 flex justify-between items-center text-[10px] md:text-[11px] font-mono shadow-inner">
+              <span class="text-slate-400 font-medium">已选中 {{ summaryMetrics.count }} 笔记录</span>
+              <div class="flex items-center gap-1">
+                <span class="text-slate-400">{{ lang === 'zh' ? '选项总合' : 'Selected Total' }}:</span>
+                <span class="text-amber-400 font-black text-xs md:text-sm">S$ {{ summaryMetrics.sum.toFixed(2) }}</span>
+              </div>
             </div>
           </div>
 
@@ -672,15 +657,19 @@
           return 'fa-solid fa-bars text-teal-400';
         };
 
-        const records = ref([]); const loading = ref(false);
+        const records = ref([]); 
+        const loading = ref(false);
         const selectedMonth = ref(getLocalDateString().substring(0, 7));
-        
-        // 增加明细流水专用的日期筛选控制变量
         const selectedDay = ref(getLocalDateString());
 
         const showDatePicker = ref(false);
         const activePicker = ref('top');
         const panelYear = ref(parseInt(selectedMonth.value.split('-')[0]));
+
+        // 绑定监听：只要 selectedMonth 改变，就重新抓取云端数据，做到全局与两个看板同步
+        watch(selectedMonth, () => {
+          fetchRecords();
+        });
 
         onMounted(() => {
           window.addEventListener('click', () => { showDatePicker.value = false; });
@@ -696,7 +685,6 @@
           return `${yr}年 ${mo}月 ${da}日`;
         });
 
-        // 切换前一天 / 后一天
         const offsetDay = (days) => {
           const [yr, mo, da] = selectedDay.value.split('-').map(Number);
           const current = new Date(yr, mo - 1, da);
@@ -707,13 +695,11 @@
           const d = String(current.getDate()).padStart(2, '0');
           
           selectedDay.value = `${y}-${m}-${d}`;
-          filterRange.value = 'today'; // 强制激活指定日期模式
+          filterRange.value = 'today';
           
-          // 若跨月，自动同步全局月份数据 fetchRecords
           const targetMonth = `${y}-${m}`;
           if (targetMonth !== selectedMonth.value) {
-            selectedMonth.value = targetMonth;
-            fetchRecords();
+            selectedMonth.value = targetMonth; // 自动同步更新看板月份
           }
         };
 
@@ -721,8 +707,7 @@
           filterRange.value = 'today';
           const targetMonth = selectedDay.value.substring(0, 7);
           if (targetMonth !== selectedMonth.value) {
-            selectedMonth.value = targetMonth;
-            fetchRecords();
+            selectedMonth.value = targetMonth; // 自动同步更新看板月份
           }
         };
 
@@ -731,8 +716,7 @@
           filterRange.value = 'today';
           const targetMonth = selectedDay.value.substring(0, 7);
           if (targetMonth !== selectedMonth.value) {
-            selectedMonth.value = targetMonth;
-            fetchRecords();
+            selectedMonth.value = targetMonth; // 自动同步更新看板月份
           }
         };
 
@@ -752,7 +736,6 @@
           const formattedMonth = String(month).padStart(2, '0');
           selectedMonth.value = `${panelYear.value}-${formattedMonth}`;
           showDatePicker.value = false;
-          fetchRecords();
         };
 
         const selectCurrentMonth = () => {
@@ -760,7 +743,6 @@
           selectedMonth.value = current;
           panelYear.value = parseInt(current.split('-')[0]);
           showDatePicker.value = false;
-          fetchRecords();
         };
 
         const isCurrentSelected = (month) => {
@@ -859,42 +841,34 @@
           const newMonthStr = String(newDate.getMonth() + 1).padStart(2, '0');
           selectedMonth.value = `${newYear}-${newMonthStr}`;
           panelYear.value = newYear;
-          fetchRecords();
         };
 
-        // 高级联动的流水明细计算属性
         const filteredRecords = computed(() => {
           let list = [...records.value];
 
-          // 1. 时间跨度筛选（采用选择的 Day）
           if (filterRange.value === 'today') {
             list = list.filter(r => r.date === selectedDay.value);
           } else if (filterRange.value === 'week') {
             list = list.filter(r => r.date >= getMondayOfThisWeek());
           }
 
-          // 2. 支付人筛选
           if (filters.payer !== 'all') {
             list = list.filter(r => r.payer === filters.payer);
           }
 
-          // 3. 分类筛选
           if (filters.category !== 'all') {
             list = list.filter(r => r.category === filters.category);
           }
 
-          // 4. 币种筛选
           if (filters.currency !== 'all') {
             list = list.filter(r => (r.currency || 'SGD') === filters.currency);
           }
 
-          // 5. 关键字搜备注
           if (filters.keyword.trim()) {
             const kw = filters.keyword.trim().toLowerCase();
             list = list.filter(r => (r.remark || '').toLowerCase().includes(kw));
           }
 
-          // 6. 排序（按金额降序 vs 按日期降序）
           if (filters.sortByAmount) {
             list.sort((a, b) => Number(b.amount) - Number(a.amount));
           } else {
@@ -904,7 +878,7 @@
           return list;
         });
 
-        // 明细筛选统计小计
+        // 动态计算筛选小计与数量
         const summaryMetrics = computed(() => {
           const list = filteredRecords.value;
           const sum = list.reduce((acc, item) => acc + Number(item.amount), 0);

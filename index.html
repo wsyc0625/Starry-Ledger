@@ -446,7 +446,7 @@
           </div>
         </div>
 
-        <!-- 账目明细流水表 (已同步月份选择) -->
+        <!-- 账目明细流水表 (已同步月份选择 & 图标修复) -->
         <div class="glass-card rounded-2xl p-3 md:p-4">
           <div class="flex flex-col gap-2.5 mb-3">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -539,7 +539,9 @@
               <div class="flex items-center gap-2 truncate">
                 <span :class="item.payer === member1 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/20' : 'bg-amber-500/15 text-amber-300 border-amber-500/20'" class="text-[8px] md:text-[9px] px-2 py-0.5 rounded-full font-bold border flex-shrink-0">{{ item.payer }}</span>
                 <div class="truncate">
-                  <div class="flex items-center gap-1 flex-wrap">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <!-- 这里加回了分类 Icon -->
+                    <i :class="getCategoryIconOnly(item.category)" class="text-xs"></i>
                     <span class="text-xs font-bold text-slate-200">{{ getCategoryDisplayName(item.category) }}</span>
                     <span v-if="item.category.includes('居住房租')" class="text-[8px] text-orange-500/70 scale-90 origin-left">({{ t('excludeLabel') }})</span>
                     <span v-if="item.remark" class="text-[9px] md:text-[10px] text-slate-400 font-medium truncate max-w-[120px] sm:max-w-none"> - {{ item.remark }}</span>

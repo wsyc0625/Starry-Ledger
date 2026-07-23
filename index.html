@@ -20,16 +20,6 @@
       overflow-x: hidden;
     }
 
-    /* Web 原生日期选择器适配暗色主题 */
-    input[type="date"], input[type="month"] {
-      color-scheme: dark;
-    }
-    input[type="date"]::-webkit-calendar-picker-indicator,
-    input[type="month"]::-webkit-calendar-picker-indicator {
-      cursor: pointer;
-      filter: invert(0.6) sepia(1) saturate(5) hue-rotate(280deg);
-    }
-
     /* Kuromi 恶魔四角星与骷髅背景粒子 */
     .kuromi-bg-stars { 
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
@@ -115,11 +105,18 @@
 
     [v-cloak] { display: none !important; }
     .chart-ring { transition: stroke-dashoffset 0.6s ease-in-out, stroke 0.3s; }
+    .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: rgba(21, 9, 34, 0.9); }
     ::-webkit-scrollbar-thumb { background: rgba(244, 63, 94, 0.5); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(244, 63, 94, 0.9); box-shadow: 0 0 10px rgba(244, 63, 94, 0.8); }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      cursor: pointer; opacity: 0.85;
+      filter: invert(0.7) sepia(1) saturate(5) hue-rotate(290deg) drop-shadow(0 0 3px rgba(244, 63, 94, 0.7));
+    }
 
     @media (min-width: 1024px) {
       #app { font-size: 1.2rem; }
@@ -252,12 +249,10 @@
             </div>
 
             <div class="grid grid-cols-12 gap-2">
-              <div class="col-span-5 relative">
+              <div class="col-span-5">
                 <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">{{ t('date') }}</label>
-                <!-- Web 原生日期选择器：表单记账 -->
-                <input type="date" v-model="form.date" required class="w-full bg-purple-950/90 border border-pink-900/80 hover:border-pink-400 rounded-xl py-1 md:py-1.5 px-2 text-xs text-purple-200 font-mono transition shadow-inner focus:outline-none focus:border-pink-400">
+                <input type="date" v-model="form.date" required class="w-full bg-purple-950/90 border border-pink-900/80 rounded-xl py-1 md:py-1.5 px-2 text-xs text-purple-200 focus:outline-none focus:border-pink-400 transition font-mono">
               </div>
-
               <div class="col-span-7">
                 <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">{{ t('remark') }}</label>
                 <input type="text" v-model="form.remark" placeholder="..." class="w-full bg-purple-950/90 border border-pink-900/80 rounded-xl py-1 md:py-1.5 px-3 text-xs text-purple-200 focus:outline-none focus:border-pink-400 transition">
@@ -341,10 +336,29 @@
             </div>
           </div>
 
-          <!-- Web 原生月份选择器：数据汇总看板 -->
-          <div class="pt-2 border-t border-purple-900/60 flex justify-between items-center">
-            <div class="flex items-center gap-1.5 bg-purple-950 border border-pink-900/80 hover:border-pink-400/80 px-2 py-0.5 rounded-xl transition shadow-inner">
-              <input type="month" v-model="selectedMonth" class="bg-transparent text-[10px] md:text-[11px] font-bold font-mono text-purple-200 focus:outline-none">
+          <!-- 月份同步选择核心控件 -->
+          <div class="pt-2 border-t border-purple-900/60 flex justify-between items-center relative">
+            <div class="relative">
+              <button @click.stop="toggleDatePicker('left')" class="flex items-center gap-1.5 bg-purple-950 border border-pink-900/80 hover:border-pink-400/80 text-[10px] md:text-[11px] font-bold font-mono text-purple-200 px-3 py-1 rounded-xl transition shadow-inner hover:shadow-[0_0_10px_rgba(244,63,94,0.35)]">
+                <span>{{ selectedMonthText }}</span>
+                <i class="fa-regular fa-calendar-days text-pink-400"></i>
+              </button>
+              
+              <transition name="fade">
+                <div v-if="showDatePicker && activePicker === 'left'" @click.stop class="absolute left-0 bottom-full mb-2 z-50 w-64 md:w-72 glass-card rounded-2xl p-3 md:p-4 shadow-2xl border border-pink-800/80 bg-purple-950/98">
+                  <div class="flex justify-between items-center mb-3 pb-2 border-b border-purple-900/80">
+                    <button type="button" @click="changePanelYear(-1)" class="text-purple-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-left"></i></button>
+                    <span class="text-sm font-bold text-purple-200 font-mono">{{ panelYear }} {{ lang === 'zh' ? '年' : '' }}</span>
+                    <button type="button" @click="changePanelYear(1)" class="text-purple-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-right"></i></button>
+                  </div>
+                  <div class="grid grid-cols-4 gap-1.5">
+                    <button type="button" v-for="m in 12" :key="m" @click="selectPanelMonth(m)" :class="isCurrentSelected(m) ? 'bg-pink-600 text-white font-bold shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-purple-900/60 hover:bg-purple-800/60 text-purple-300'" class="py-1.5 text-xs font-mono rounded-xl transition">
+                      {{ lang === 'zh' ? String(m).padStart(2, '0') + '月' : getMonthShortName(m) }}
+                    </button>
+                  </div>
+                  <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-purple-900/80 hover:bg-purple-800 text-pink-300 font-bold py-1.5 text-[10px] rounded-xl transition tracking-wider">{{ t('backToCurrentMonth') }}</button>
+                </div>
+              </transition>
             </div>
             
             <div class="text-right">
@@ -412,11 +426,29 @@
             </div>
             
             <div class="flex items-center gap-1.5 text-[10px]">
-              <!-- Web 原生月份选择器：品类对比查询 -->
-              <div class="flex items-center bg-purple-950/90 px-1 py-0.5 rounded-xl border border-pink-900/80 h-6">
+              <div class="relative flex items-center bg-purple-950/90 px-1 py-0.5 rounded-xl border border-pink-900/80 h-6">
                 <button type="button" @click="offsetMonth(-1)" class="text-purple-400 hover:text-pink-400 px-1.5 transition text-xs">◀</button>
-                <input type="month" v-model="selectedMonth" class="bg-transparent text-[10px] font-bold font-mono text-purple-200 focus:outline-none">
+                <button type="button" @click.stop="toggleDatePicker('top')" class="px-1.5 font-bold font-mono text-purple-200 hover:text-pink-400 transition flex items-center gap-1">
+                  <span>{{ selectedMonthText }}</span>
+                  <i class="fa-regular fa-calendar text-pink-400"></i>
+                </button>
                 <button type="button" @click="offsetMonth(1)" class="text-purple-400 hover:text-pink-400 px-1.5 transition text-xs">▶</button>
+
+                <transition name="fade">
+                  <div v-if="showDatePicker && activePicker === 'top'" @click.stop class="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-72 glass-card rounded-2xl p-4 shadow-2xl border border-pink-800/80 bg-purple-950/98">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-purple-900/80">
+                      <button type="button" @click="changePanelYear(-1)" class="text-purple-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-left"></i></button>
+                      <span class="text-sm font-bold text-purple-200 font-mono">{{ panelYear }} {{ lang === 'zh' ? '年' : '' }}</span>
+                      <button type="button" @click="changePanelYear(1)" class="text-purple-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-angles-right"></i></button>
+                    </div>
+                    <div class="grid grid-cols-4 gap-1.5">
+                      <button type="button" v-for="m in 12" :key="m" @click="selectPanelMonth(m)" :class="isCurrentSelected(m) ? 'bg-pink-600 text-white font-bold shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-purple-900/60 hover:bg-purple-800/60 text-purple-300'" class="py-1.5 text-xs font-mono rounded-xl transition">
+                        {{ lang === 'zh' ? String(m).padStart(2, '0') + '月' : getMonthShortName(m) }}
+                      </button>
+                    </div>
+                    <button type="button" @click="selectCurrentMonth" class="w-full mt-3 bg-purple-900/80 hover:bg-purple-800 text-pink-300 font-bold py-1.5 text-[10px] rounded-xl transition">{{ t('backToCurrentMonth') }}</button>
+                  </div>
+                </transition>
               </div>
 
               <div class="flex bg-purple-950/90 p-0.5 rounded-xl border border-purple-800/80 h-6 items-center">
@@ -513,10 +545,17 @@
                   <i class="fa-solid fa-list text-pink-400 animate-kuromi-breathe"></i> {{ t('details') }} ✨
                 </h2>
                 
-                <!-- Web 原生日期选择器：账目流水明细 -->
                 <div class="relative flex items-center bg-purple-950 border border-pink-900/80 hover:border-pink-400/80 rounded-xl px-1.5 py-0.5 transition shadow-inner">
                   <button type="button" @click="offsetDay(-1)" :title="lang==='zh'?'前一天':'Prev Day'" class="text-purple-400 hover:text-pink-300 px-1.5 py-0.5 transition text-xs">◀</button>
-                  <input type="date" v-model="selectedDay" @change="filterRange = 'today'" class="bg-transparent text-[10px] md:text-[11px] font-bold font-mono text-purple-200 focus:outline-none">
+                  
+                  <div class="relative flex items-center cursor-pointer">
+                    <span class="text-[10px] md:text-[11px] font-bold font-mono text-purple-200 px-1">
+                      {{ selectedDayText }}
+                    </span>
+                    <i class="fa-regular fa-calendar-days text-pink-400 text-xs ml-1"></i>
+                    <input type="date" v-model="selectedDay" @change="onDayPicked" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                  </div>
+                  
                   <button type="button" @click="offsetDay(1)" :title="lang==='zh'?'后一天':'Next Day'" class="text-purple-400 hover:text-pink-300 px-1.5 py-0.5 transition text-xs">▶</button>
                 </div>
 
@@ -695,6 +734,11 @@
 
         const getCategoryDisplayName = (cat) => lang.value === 'zh' ? cat.split(' ')[0] : cat.split(' ').slice(1).join(' ');
 
+        const getMonthShortName = (m) => {
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          return months[m - 1];
+        };
+
         const getCategoryIconOnly = (cat) => {
           if (cat.includes('日常伙食')) return 'fa-solid fa-utensils text-pink-400';
           if (cat.includes('餐厅')) return 'fa-solid fa-burger text-pink-500';
@@ -712,8 +756,26 @@
         const selectedMonth = ref(getLocalDateString().substring(0, 7));
         const selectedDay = ref(getLocalDateString());
 
+        const showDatePicker = ref(false);
+        const activePicker = ref('top');
+        const panelYear = ref(parseInt(selectedMonth.value.split('-')[0]));
+
         watch(selectedMonth, () => {
           fetchRecords();
+        });
+
+        onMounted(() => {
+          window.addEventListener('click', () => { showDatePicker.value = false; });
+        });
+
+        const selectedMonthText = computed(() => {
+          const [yr, mo] = selectedMonth.value.split('-');
+          return lang.value === 'zh' ? `${yr}年 ${mo}月` : `${getMonthShortName(parseInt(mo))} ${yr}`;
+        });
+
+        const selectedDayText = computed(() => {
+          const [yr, mo, da] = selectedDay.value.split('-');
+          return lang.value === 'zh' ? `${yr}年 ${mo}月 ${da}日` : `${da} ${getMonthShortName(parseInt(mo))} ${yr}`;
         });
 
         const offsetDay = (days) => {
@@ -734,6 +796,14 @@
           }
         };
 
+        const onDayPicked = () => {
+          filterRange.value = 'today';
+          const targetMonth = selectedDay.value.substring(0, 7);
+          if (targetMonth !== selectedMonth.value) {
+            selectedMonth.value = targetMonth;
+          }
+        };
+
         const resetToToday = () => {
           selectedDay.value = getLocalDateString();
           filterRange.value = 'today';
@@ -743,6 +813,38 @@
           }
         };
 
+        const toggleDatePicker = (position) => {
+          if (activePicker.value === position && showDatePicker.value) {
+            showDatePicker.value = false;
+          } else {
+            activePicker.value = position;
+            panelYear.value = parseInt(selectedMonth.value.split('-')[0]);
+            showDatePicker.value = true;
+          }
+        };
+
+        const changePanelYear = (offset) => { panelYear.value += offset; };
+
+        const selectPanelMonth = (month) => {
+          const formattedMonth = String(month).padStart(2, '0');
+          selectedMonth.value = `${panelYear.value}-${formattedMonth}`;
+          showDatePicker.value = false;
+          filterRange.value = 'month';
+        };
+
+        const selectCurrentMonth = () => {
+          const current = getLocalDateString().substring(0, 7);
+          selectedMonth.value = current;
+          panelYear.value = parseInt(current.split('-')[0]);
+          showDatePicker.value = false;
+          filterRange.value = 'month';
+        };
+
+        const isCurrentSelected = (month) => {
+          const [yr, mo] = selectedMonth.value.split('-');
+          return parseInt(yr) === panelYear.value && parseInt(mo) === month;
+        };
+        
         const filterRange = ref('today');
         const categoryRange = ref('month');
         const chartMember = ref('all');
@@ -833,6 +935,7 @@
           const newYear = newDate.getFullYear();
           const newMonthStr = String(newDate.getMonth() + 1).padStart(2, '0');
           selectedMonth.value = `${newYear}-${newMonthStr}`;
+          panelYear.value = newYear;
         };
 
         const filteredRecords = computed(() => {
@@ -1122,14 +1225,15 @@
         return { 
           lang, t, toggleLang, member1, member2, exchangeRate, exchangeRateCny, 
           budgetM1, budgetM2, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, 
-          getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName,
+          getBudgetColorClass, categories, getCategoryIconOnly, getCategoryDisplayName, getMonthShortName,
           records, filteredRecords, filters, summaryMetrics, loading, selectedMonth, offsetMonth, 
-          selectedDay, offsetDay, resetToToday, getLocalDateString,
+          selectedDay, selectedDayText, offsetDay, onDayPicked, resetToToday, getLocalDateString,
           form, filterRange, categoryRange, chartMember, addRecord, deleteRecord, fetchRecords, 
           totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalMonth, 
           m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, 
-          categoryComparison, chartTotalSum, chartSlices, 
-          dailyM1Sum, daily2Sum, dailyTotalSum, 
+          categoryComparison, chartTotalSum, chartSlices, showDatePicker, activePicker, 
+          panelYear, selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, 
+          selectCurrentMonth, isCurrentSelected, dailyM1Sum, daily2Sum, dailyTotalSum, 
           dailyM1Percent, dailyM2Percent, updateCloudBudget, exchangeSyncError, allSubscriptions 
         };
       }

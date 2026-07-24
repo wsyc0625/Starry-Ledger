@@ -13,12 +13,14 @@
   <style>
     body { 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      /* Kuromi 纯正哥特暗黑紫粉背景 */
       background: linear-gradient(135deg, #09030d 0%, #150724 40%, #20062b 70%, #08020a 100%); 
       color: #f3e8ff; 
       min-height: 100vh; 
       overflow-x: hidden;
     }
 
+    /* Kuromi 恶魔四角星与背景粒子 */
     .kuromi-bg-stars { 
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
       background-image: 
@@ -36,6 +38,7 @@
       100% { opacity: 0.6; transform: scale(1); }
     }
 
+    /* Kuromi SVG 图标呼吸霓虹 */
     .animate-kuromi-breathe {
       animation: kuromiBreathe 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
@@ -52,6 +55,7 @@
       }
     }
 
+    /* 酷洛米卡片：紫黑暗黑玻璃 + 哥特边缘 */
     .glass-card { 
       background: rgba(21, 9, 34, 0.82); 
       backdrop-filter: blur(20px); 
@@ -65,6 +69,7 @@
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8), 0 0 20px rgba(236, 72, 153, 0.3);
     }
 
+    /* Kuromi 霓虹边框 */
     .neon-border-purple { 
       border-color: rgba(192, 132, 252, 0.8); 
       box-shadow: 0 0 12px rgba(192, 132, 252, 0.5), inset 0 0 8px rgba(192, 132, 252, 0.3); 
@@ -74,6 +79,7 @@
       box-shadow: 0 0 12px rgba(244, 63, 94, 0.5), inset 0 0 8px rgba(244, 63, 94, 0.3); 
     }
 
+    /* Kuromi 炫紫粉流光按钮 */
     .btn-sparkle {
       position: relative;
       overflow: hidden;
@@ -92,6 +98,7 @@
       100% { left: 140%; }
     }
 
+    /* Kuromi 文本发光 */
     .text-glow-purple { text-shadow: 0 0 8px rgba(192, 132, 252, 0.8); }
     .text-glow-pink { text-shadow: 0 0 8px rgba(244, 63, 94, 0.8); }
     .text-glow-emerald { text-shadow: 0 0 8px rgba(52, 211, 153, 0.8); }
@@ -110,6 +117,24 @@
       cursor: pointer; opacity: 0.85;
       filter: invert(0.7) sepia(1) saturate(5) hue-rotate(290deg) drop-shadow(0 0 3px rgba(244, 63, 94, 0.7));
     }
+
+    @media (min-width: 1024px) {
+      #app { font-size: 1.2rem; }
+      .container { max-width: 90rem !important; }
+      .glass-card { padding: 1.5rem !important; border-radius: 1.5rem !important; }
+      header { margin-bottom: 2rem !important; padding-top: 1.2rem !important; padding-bottom: 1.2rem !important; }
+      .text-xs { font-size: 1.05rem !important; line-height: 1.5rem !important; }
+      .text-sm { font-size: 1.2rem !important; line-height: 1.75rem !important; }
+      .text-base { font-size: 1.35rem !important; line-height: 2rem !important; }
+      .text-lg { font-size: 1.5rem !important; line-height: 2.25rem !important; }
+      .text-\[9px\] { font-size: 11px !important; }
+      .text-\[10px\] { font-size: 12px !important; }
+      .text-\[11px\] { font-size: 13.2px !important; }
+      input, select, button { padding-top: 0.65rem !important; padding-bottom: 0.65rem !important; border-radius: 0.9rem !important; }
+      header input { padding-top: 0.15rem !important; padding-bottom: 0.15rem !important; }
+      .grid { gap: 1.5rem !important; }
+      .max-h-\[440px\] { max-height: 550px !important; }
+    }
   </style>
 </head>
 <body>
@@ -119,22 +144,45 @@
     <!-- 顶部导航头 -->
     <header class="flex justify-between items-center mb-4 py-2 border-b border-pink-900/40">
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 md:w-10 md:h-10 animate-kuromi-breathe flex items-center justify-center overflow-hidden rounded-full border border-pink-500/50 bg-purple-950 shadow-[0_0_12px_rgba(244,63,94,0.9)] text-base">
-          🖤
+        <!-- 酷洛米 Kuromi Icon -->
+        <div class="w-8 h-8 md:w-10 md:h-10 animate-kuromi-breathe flex items-center justify-center">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-[0_0_10px_rgba(244,63,94,0.9)]">
+            <path d="M20 45 C10 25, 5 10, 28 25 C35 30, 42 38, 50 42 C58 38, 65 30, 72 25 C95 10, 90 25, 80 45 C88 60, 80 85, 50 85 C20 85, 12 60, 20 45 Z" fill="#150724" stroke="#f43f5e" stroke-width="4"/>
+            <circle cx="12" cy="12" r="6" fill="#f43f5e" />
+            <circle cx="88" cy="12" r="6" fill="#f43f5e" />
+            <path d="M30 52 C30 45, 70 45, 70 52 C72 68, 65 78, 50 78 C35 78, 28 68, 30 52 Z" fill="#fce7f3" />
+            <ellipse cx="50" cy="34" rx="7" ry="6" fill="#f43f5e" />
+            <circle cx="47" cy="34" r="1.5" fill="#150724" />
+            <circle cx="53" cy="34" r="1.5" fill="#150724" />
+            <path d="M48 38 L48 40 M50 38 L50 40 M52 38 L52 40" stroke="#150724" stroke-width="1" />
+            <ellipse cx="40" cy="58" rx="2.5" ry="4" fill="#150724" />
+            <ellipse cx="60" cy="58" rx="2.5" ry="4" fill="#150724" />
+            <path d="M37 54 L35 52 M63 54 L65 52" stroke="#150724" stroke-width="1.5" stroke-linecap="round" />
+            <path d="M46 66 Q50 70 54 66" stroke="#f43f5e" stroke-width="2" fill="none" stroke-linecap="round" />
+          </svg>
         </div>
         <h1 class="text-sm md:text-lg font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-400 to-rose-400 text-glow-pink">
           {{ lang === 'zh' ? '酷洛米 · 星芒暗黑账本' : 'Kuromi Starry Ledger' }}
         </h1>
       </div>
       
-      <!-- 汇率状态栏 -->
+      <!-- 汇率状态栏（仅图标：🟢 绿色小圆点 / 🔴 红色Kuromi图标） -->
       <div class="flex items-center gap-2 font-mono text-[9px]">
         <div :class="exchangeSyncError ? 'bg-rose-950/90 border-rose-600/80 shadow-[0_0_12px_rgba(244,63,94,0.4)]' : 'bg-purple-950/90 border-emerald-500/60 shadow-[0_0_12px_rgba(52,211,153,0.25)]'" class="flex items-center gap-2 px-2.5 py-1 rounded-full border transition-all">
+          
+          <!-- 🟢 实时连线：绿色小圆点 -->
           <span v-if="!exchangeSyncError" class="flex h-2 w-2 relative flex-shrink-0">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
-          <span v-else class="text-rose-500 animate-bounce flex-shrink-0">🖤</span>
+
+          <!-- 🔴 离线断网：红色Kuromi小头像 -->
+          <span v-else class="text-rose-500 animate-bounce flex-shrink-0 flex items-center justify-center w-3 h-3">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+              <path d="M20 45 C10 25, 5 10, 28 25 C35 30, 42 38, 50 42 C58 38, 65 30, 72 25 C95 10, 90 25, 80 45 C88 60, 80 85, 50 85 C20 85, 12 60, 20 45 Z" fill="#f43f5e"/>
+              <ellipse cx="50" cy="34" rx="7" ry="6" fill="#150724" />
+            </svg>
+          </span>
 
           <span class="text-purple-400 font-medium">SGD 1</span>
           <span class="text-pink-900 font-bold">=</span>
@@ -152,12 +200,15 @@
     <!-- 成员管理面板 -->
     <section class="hidden lg:flex glass-card rounded-2xl p-3 mb-4 items-center gap-3 overflow-x-auto whitespace-nowrap">
       <span class="text-xs font-bold text-pink-300 flex-shrink-0 flex items-center gap-1.5">
-        <span class="w-4 h-4 inline-flex items-center justify-center rounded-full bg-pink-950 text-[10px] border border-pink-500/40 animate-kuromi-breathe">🖤</span>
-        {{ t('members') }} ✨:
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-pink-500 animate-kuromi-breathe inline-block">
+          <path d="M20 45 C10 25, 5 10, 28 25 C35 30, 42 38, 50 42 C58 38, 65 30, 72 25 C95 10, 90 25, 80 45 C88 60, 80 85, 50 85 C20 85, 12 60, 20 45 Z" fill="#f43f5e"/>
+          <circle cx="12" cy="12" r="6" fill="#f43f5e" />
+          <circle cx="88" cy="12" r="6" fill="#f43f5e" />
+        </svg>{{ t('members') }} ✨:
       </span>
       <div class="flex items-center gap-3">
-        <input type="text" v-model="member1" class="bg-purple-950/80 text-xs font-bold text-purple-200 w-24 text-center py-1 rounded-xl border border-purple-600/60 focus:outline-none focus:border-purple-400 transition shadow-inner">
-        <input type="text" v-model="member2" class="bg-rose-950/80 text-xs font-bold text-pink-200 w-24 text-center py-1 rounded-xl border border-rose-600/60 focus:outline-none focus:border-pink-400 transition shadow-inner">
+        <input type="text" v-model="member1" class="bg-purple-950/80 text-xs font-bold text-purple-200 w-24 text-center py-1 rounded-xl border border-purple-600/60 focus:outline-none focus:border-purple-400 transition shadow-inner focus:shadow-[0_0_8px_rgba(192,132,252,0.6)]">
+        <input type="text" v-model="member2" class="bg-rose-950/80 text-xs font-bold text-pink-200 w-24 text-center py-1 rounded-xl border border-rose-600/60 focus:outline-none focus:border-pink-400 transition shadow-inner focus:shadow-[0_0_8px_rgba(244,63,94,0.6)]">
       </div>
     </section>
 
@@ -185,7 +236,7 @@
               <div class="flex gap-2">
                 <div class="relative flex-1">
                   <span class="absolute left-3 top-1.5 md:top-2 text-pink-400 font-bold text-xs md:text-sm font-mono text-glow-pink">{{ form.currency }}</span>
-                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-purple-950/90 border border-pink-900/80 rounded-xl py-1 md:py-1.5 pl-14 pr-4 text-white focus:outline-none focus:border-pink-400 font-mono text-sm transition">
+                  <input type="number" step="0.01" v-model.number="form.amount" required class="w-full bg-purple-950/90 border border-pink-900/80 rounded-xl py-1 md:py-1.5 pl-14 pr-4 text-white focus:outline-none focus:border-pink-400 font-mono text-sm transition focus:shadow-[0_0_12px_rgba(244,63,94,0.4)]">
                 </div>
                 <select v-model="form.currency" class="bg-purple-950 border border-pink-900/80 rounded-xl px-2.5 text-xs text-pink-200 focus:outline-none focus:border-pink-400 transition font-mono font-bold">
                   <option value="SGD">SGD</option>
@@ -200,10 +251,7 @@
               <div class="grid grid-cols-3 gap-1.5">
                 <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
                   :class="form.category === cat ? 'bg-pink-950/80 border-pink-400 text-pink-200 font-bold shadow-[0_0_12px_rgba(244,63,94,0.4)]' : 'bg-purple-950/30 border-purple-900/40 text-purple-300/70 hover:bg-purple-950/60'" class="flex flex-col items-center justify-center py-2 rounded-xl border transition group">
-                  
-                  <div v-if="cat.includes('零星杂费')" class="w-4 h-4 mb-1 flex items-center justify-center text-[10px] group-hover:scale-125 transition-transform">🖤</div>
-                  <i v-else :class="getCategoryIconOnly(cat)" class="text-sm md:text-base mb-1 transition-transform group-hover:scale-125"></i>
-                  
+                  <i :class="getCategoryIconOnly(cat)" class="text-sm md:text-base mb-1 transition-transform group-hover:scale-125 group-hover:drop-shadow-[0_0_6px_rgba(244,63,94,0.8)]"></i>
                   <span class="text-[9px] truncate w-full text-center px-0.5 font-medium tracking-tight">{{ getCategoryDisplayName(cat) }}</span>
                 </button>
               </div>
@@ -220,8 +268,22 @@
               </div>
             </div>
 
+            <!-- 替换骷髅头为 Kuromi 经典头像 SVG 的保存记账按钮 -->
             <button type="submit" class="btn-sparkle w-full bg-gradient-to-r from-purple-800 via-pink-600 to-rose-600 hover:from-purple-700 hover:to-rose-500 text-white font-black py-2.5 rounded-xl text-xs md:text-sm tracking-widest shadow-[0_0_18px_rgba(244,63,94,0.5)] transition transform active:scale-95 uppercase flex items-center justify-center gap-2">
-              <span>🖤</span>
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline-block drop-shadow-[0_0_6px_rgba(255,255,255,0.8)]">
+                <path d="M20 45 C10 25, 5 10, 28 25 C35 30, 42 38, 50 42 C58 38, 65 30, 72 25 C95 10, 90 25, 80 45 C88 60, 80 85, 50 85 C20 85, 12 60, 20 45 Z" fill="#150724" stroke="#ffffff" stroke-width="5"/>
+                <circle cx="12" cy="12" r="7" fill="#ffffff" />
+                <circle cx="88" cy="12" r="7" fill="#ffffff" />
+                <path d="M30 52 C30 45, 70 45, 70 52 C72 68, 65 78, 50 78 C35 78, 28 68, 30 52 Z" fill="#fce7f3" />
+                <ellipse cx="50" cy="34" rx="7" ry="6" fill="#ffffff" />
+                <circle cx="47" cy="34" r="1.5" fill="#150724" />
+                <circle cx="53" cy="34" r="1.5" fill="#150724" />
+                <path d="M48 38 L48 40 M50 38 L50 40 M52 38 L52 40" stroke="#150724" stroke-width="1" />
+                <ellipse cx="40" cy="58" rx="2.5" ry="4" fill="#150724" />
+                <ellipse cx="60" cy="58" rx="2.5" ry="4" fill="#150724" />
+                <path d="M37 54 L35 52 M63 54 L65 52" stroke="#150724" stroke-width="1.5" stroke-linecap="round" />
+                <path d="M46 66 Q50 70 54 66" stroke="#f43f5e" stroke-width="2" fill="none" stroke-linecap="round" />
+              </svg>
               <span>{{ t('save') }} ✨</span>
             </button>
           </form>
@@ -235,7 +297,7 @@
           </h3>
           
           <div class="space-y-2">
-            <div class="bg-purple-950/40 p-2.5 rounded-xl border border-purple-800/50 space-y-1.5 shadow-inner">
+            <div class="bg-purple-950/40 p-2.5 rounded-xl border border-purple-800/50 space-y-1.5 shadow-[inset_0_0_10px_rgba(192,132,252,0.08)]">
               <div class="flex justify-between items-center">
                 <span class="text-xs font-bold text-purple-300 text-glow-purple">{{ member1 }}</span>
                 <div class="text-[9px] md:text-[10px] text-purple-400/80 flex items-center gap-1">
@@ -260,7 +322,7 @@
               </div>
             </div>
 
-            <div class="bg-rose-950/30 p-2.5 rounded-xl border border-rose-900/50 space-y-1.5 shadow-inner">
+            <div class="bg-rose-950/30 p-2.5 rounded-xl border border-rose-900/50 space-y-1.5 shadow-[inset_0_0_10px_rgba(244,63,94,0.08)]">
               <div class="flex justify-between items-center">
                 <span class="text-xs font-bold text-pink-300 text-glow-pink">{{ member2 }}</span>
                 <div class="text-[9px] md:text-[10px] text-purple-400/80 flex items-center gap-1">
@@ -293,15 +355,15 @@
               <span class="text-pink-300 font-medium">{{ member2 }}: {{ m2Percent }}%</span>
             </div>
             <div class="w-full bg-purple-950 rounded-full h-2 overflow-hidden flex border border-purple-900/80 shadow-inner">
-              <div class="bg-gradient-to-r from-purple-600 to-indigo-500 h-full transition-all duration-500" :style="{ width: m1Percent + '%' }"></div>
-              <div class="bg-gradient-to-r from-pink-500 to-rose-500 h-full transition-all duration-500" :style="{ width: m2Percent + '%' }"></div>
+              <div class="bg-gradient-to-r from-purple-600 to-indigo-500 h-full transition-all duration-500 shadow-[0_0_8px_rgba(192,132,252,0.5)]" :style="{ width: m1Percent + '%' }"></div>
+              <div class="bg-gradient-to-r from-pink-500 to-rose-500 h-full transition-all duration-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" :style="{ width: m2Percent + '%' }"></div>
             </div>
           </div>
 
           <!-- 月份同步选择核心控件 -->
           <div class="pt-2 border-t border-purple-900/60 flex justify-between items-center relative">
             <div class="relative">
-              <button @click.stop="toggleDatePicker('left')" class="flex items-center gap-1.5 bg-purple-950 border border-pink-900/80 hover:border-pink-400/80 text-[10px] md:text-[11px] font-bold font-mono text-purple-200 px-3 py-1 rounded-xl transition shadow-inner">
+              <button @click.stop="toggleDatePicker('left')" class="flex items-center gap-1.5 bg-purple-950 border border-pink-900/80 hover:border-pink-400/80 text-[10px] md:text-[11px] font-bold font-mono text-purple-200 px-3 py-1 rounded-xl transition shadow-inner hover:shadow-[0_0_10px_rgba(244,63,94,0.35)]">
                 <span>{{ selectedMonthText }}</span>
                 <i class="fa-regular fa-calendar-days text-pink-400"></i>
               </button>
@@ -337,7 +399,7 @@
               <i class="fa-solid fa-rectangle-list text-pink-400 animate-kuromi-breathe"></i>
               <span>{{ t('subHeader') }}</span>
             </h3>
-            <span class="text-[9px] md:text-[10px] font-mono bg-purple-950 text-pink-300 border border-pink-800 px-2 py-0.5 rounded-full font-bold">
+            <span class="text-[9px] md:text-[10px] font-mono bg-purple-950 text-pink-300 border border-pink-800 px-2 py-0.5 rounded-full font-bold shadow-[0_0_6px_rgba(244,63,94,0.3)]">
               {{ t('subTotal') }}: {{ allSubscriptions.length }}
             </span>
           </div>
@@ -414,9 +476,9 @@
               </div>
 
               <div class="flex bg-purple-950/90 p-0.5 rounded-xl border border-purple-800/80 h-6 items-center">
-                <button type="button" @click="chartMember = 'all'" :class="chartMember === 'all' ? 'bg-purple-900 text-purple-200 shadow' : 'text-purple-400/60 hover:text-purple-300'" class="px-2 py-0.5 rounded-lg transition font-bold">{{ t('viewAll') }}</button>
-                <button type="button" @click="chartMember = 'm1'" :class="chartMember === 'm1' ? 'bg-purple-600/30 text-purple-300 border border-purple-500/40' : 'text-purple-400/60 hover:text-purple-300'" class="px-2 py-0.5 rounded-lg transition font-bold truncate max-w-[55px]">{{ member1 }}</button>
-                <button type="button" @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-rose-600/30 text-pink-300 border border-rose-500/40' : 'text-purple-400/60 hover:text-purple-300'" class="px-2 py-0.5 rounded-lg transition font-bold truncate max-w-[55px]">{{ member2 }}</button>
+                <button type="button" @click="chartMember = 'all'" :class="chartMember === 'all' ? 'bg-purple-900 text-purple-200 shadow-[0_0_6px_rgba(255,255,255,0.2)]' : 'text-purple-400/60 hover:text-purple-300'" class="px-2 py-0.5 rounded-lg transition font-bold">{{ t('viewAll') }}</button>
+                <button type="button" @click="chartMember = 'm1'" :class="chartMember === 'm1' ? 'bg-purple-600/30 text-purple-300 border border-purple-500/40 shadow-[0_0_6px_rgba(192,132,252,0.3)]' : 'text-purple-400/60 hover:text-purple-300'" class="px-2 py-0.5 rounded-lg transition font-bold truncate max-w-[55px]">{{ member1 }}</button>
+                <button type="button" @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-rose-600/30 text-pink-300 border border-rose-500/40 shadow-[0_0_6px_rgba(244,63,94,0.3)]' : 'text-purple-400/60 hover:text-purple-300'" class="px-2 py-0.5 rounded-lg transition font-bold truncate max-w-[55px]">{{ member2 }}</button>
               </div>
 
               <div class="flex bg-purple-950/90 p-0.5 rounded-xl border border-purple-800/80 h-6 items-center font-bold">
@@ -471,10 +533,9 @@
                 <template v-else>
                   <tr v-for="row in categoryComparison" :key="row.cat" class="border-b border-purple-900/40 hover:bg-purple-900/30 transition" :class="{'opacity-50 italic bg-purple-950/20': row.cat.includes('居住房租')}">
                     <td class="py-2 text-left flex items-center gap-1.5">
-                      <div v-if="row.cat.includes('零星杂费')" class="w-3 h-3 flex items-center justify-center text-[9px] flex-shrink-0">🖤</div>
-                      <i v-else :class="getCategoryIconOnly(row.cat)" class="text-xs"></i>
+                      <i :class="getCategoryIconOnly(row.cat)" class="text-xs"></i>
                       <span class="font-bold text-purple-100">{{ getCategoryDisplayName(row.cat) }}</span>
-                      <span v-if="row.cat.includes('居住房租')" class="px-1.5 py-0.2 rounded bg-rose-500/10 border border-rose-500/30 text-[8px] text-rose-400 scale-90">{{ t('excludeLabel') }}</span>
+                      <span v-if="row.cat.includes('居住房租')" class="px-1.5 py-0.2 rounded bg-rose-500/10 border border-rose-500/30 text-[8px] text-rose-400 font-sans tracking-tight scale-90">{{ t('excludeLabel') }}</span>
                     </td>
                     <td class="py-2 text-right font-mono text-purple-300" :class="{'font-black text-glow-purple': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
                     <td class="py-2 text-right font-mono text-pink-300" :class="{'font-black text-glow-pink': chartMember === 'm2'}">S$ {{ row.m2.toFixed(2) }}</td>
@@ -486,7 +547,7 @@
                     <td class="py-2 text-left flex items-center gap-1.5">
                       <i class="fa-solid fa-calculator text-pink-400 text-xs"></i>
                       <span class="text-white">{{ lang === 'zh' ? '日常总支出' : 'Subtotal (Excl. Rent)' }}</span>
-                      <span class="px-1.5 py-0.2 rounded bg-pink-500/10 border border-pink-500/30 text-[8px] text-pink-300 scale-90">{{ lang === 'zh' ? '不含房租' : 'Excl. Rent' }}</span>
+                      <span class="px-1.5 py-0.2 rounded bg-pink-500/10 border border-pink-500/30 text-[8px] text-pink-300 font-sans tracking-tight scale-90">{{ lang === 'zh' ? '不含房租' : 'Excl. Rent' }}</span>
                     </td>
                     <td class="py-2 text-right font-mono text-purple-300">S$ {{ dailyM1Sum.toFixed(2) }}<span class="text-[9px] text-purple-400/60 ml-0.5 font-normal">({{ dailyM1Percent }}%)</span></td>
                     <td class="py-2 text-right font-mono text-pink-300">S$ {{ daily2Sum.toFixed(2) }}<span class="text-[9px] text-purple-400/60 ml-0.5 font-normal">({{ dailyM2Percent }}%)</span></td>
@@ -509,7 +570,7 @@
                 </h2>
                 
                 <div class="relative flex items-center bg-purple-950 border border-pink-900/80 hover:border-pink-400/80 rounded-xl px-1.5 py-0.5 transition shadow-inner">
-                  <button type="button" @click="offsetDay(-1)" class="text-purple-400 hover:text-pink-300 px-1.5 py-0.5 transition text-xs">◀</button>
+                  <button type="button" @click="offsetDay(-1)" :title="lang==='zh'?'前一天':'Prev Day'" class="text-purple-400 hover:text-pink-300 px-1.5 py-0.5 transition text-xs">◀</button>
                   
                   <div class="relative flex items-center cursor-pointer">
                     <span class="text-[10px] md:text-[11px] font-bold font-mono text-purple-200 px-1">
@@ -519,25 +580,25 @@
                     <input type="date" v-model="selectedDay" @change="onDayPicked" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                   </div>
                   
-                  <button type="button" @click="offsetDay(1)" class="text-purple-400 hover:text-pink-300 px-1.5 py-0.5 transition text-xs">▶</button>
+                  <button type="button" @click="offsetDay(1)" :title="lang==='zh'?'后一天':'Next Day'" class="text-purple-400 hover:text-pink-300 px-1.5 py-0.5 transition text-xs">▶</button>
                 </div>
 
-                <button v-if="selectedDay !== getLocalDateString()" type="button" @click="resetToToday" class="bg-purple-950/80 hover:bg-purple-900/80 text-purple-300 border border-purple-800/80 px-2 py-0.5 rounded-xl text-[9px] font-bold transition">
+                <button v-if="selectedDay !== getLocalDateString()" type="button" @click="resetToToday" class="bg-purple-950/80 hover:bg-purple-900/80 text-purple-300 border border-purple-800/80 px-2 py-0.5 rounded-xl text-[9px] font-bold transition shadow-[0_0_6px_rgba(192,132,252,0.2)]">
                   {{ t('backToToday') }}
                 </button>
               </div>
               
               <div class="flex items-center gap-2 justify-between sm:justify-end text-[9px] md:text-[10px]">
-                <button type="button" @click="exportToCSV" class="bg-rose-950/50 border border-rose-900/80 text-pink-300 px-2.5 py-1 rounded-xl hover:bg-rose-900/60 transition flex items-center gap-1 font-bold">
+                <button type="button" @click="exportToCSV" class="bg-rose-950/50 border border-rose-900/80 text-pink-300 px-2.5 py-1 rounded-xl hover:bg-rose-900/60 hover:shadow-[0_0_10px_rgba(244,63,94,0.4)] transition flex items-center gap-1 font-bold">
                   <i class="fa-solid fa-arrow-up-from-bracket"></i>{{ t('exportBtn') }}
                 </button>
                 
                 <div class="flex bg-purple-950 p-0.5 rounded-xl border border-purple-900/80">
-                  <button type="button" @click="filterRange = 'today'" :class="filterRange === 'today' ? 'bg-pink-600/30 text-pink-300 font-bold border border-pink-500/40' : 'text-purple-400/60'" class="px-2 py-0.5 rounded-lg transition">
+                  <button type="button" @click="filterRange = 'today'" :class="filterRange === 'today' ? 'bg-pink-600/30 text-pink-300 font-bold border border-pink-500/40 shadow-[0_0_6px_rgba(244,63,94,0.3)]' : 'text-purple-400/60'" class="px-2 py-0.5 rounded-lg transition">
                     {{ filterRange === 'today' && selectedDay !== getLocalDateString() ? (lang==='zh'?'指定日期':'Date') : t('rangeToday') }}
                   </button>
-                  <button type="button" @click="filterRange = 'week'" :class="filterRange === 'week' ? 'bg-pink-600/30 text-pink-300 font-bold border border-pink-500/40' : 'text-purple-400/60'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
-                  <button type="button" @click="filterRange = 'month'" :class="filterRange === 'month' ? 'bg-pink-600/30 text-pink-300 font-bold border border-pink-500/40' : 'text-purple-400/60'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeMonth') }}</button>
+                  <button type="button" @click="filterRange = 'week'" :class="filterRange === 'week' ? 'bg-pink-600/30 text-pink-300 font-bold border border-pink-500/40 shadow-[0_0_6px_rgba(244,63,94,0.3)]' : 'text-purple-400/60'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeWeek') }}</button>
+                  <button type="button" @click="filterRange = 'month'" :class="filterRange === 'month' ? 'bg-pink-600/30 text-pink-300 font-bold border border-pink-500/40 shadow-[0_0_6px_rgba(244,63,94,0.3)]' : 'text-purple-400/60'" class="px-2 py-0.5 rounded-lg transition">{{ t('rangeMonth') }}</button>
                 </div>
               </div>
             </div>
@@ -567,7 +628,7 @@
                 <option value="CNY">CNY</option>
               </select>
 
-              <button type="button" @click="filters.sortByAmount = !filters.sortByAmount" :class="filters.sortByAmount ? 'bg-pink-600/30 text-pink-300 border-pink-500/40' : 'bg-purple-950/80 text-purple-400/60 border-purple-800/80'" class="px-2 py-1 rounded-xl border transition flex items-center gap-1 font-bold">
+              <button type="button" @click="filters.sortByAmount = !filters.sortByAmount" :class="filters.sortByAmount ? 'bg-pink-600/30 text-pink-300 border-pink-500/40 shadow-[0_0_6px_rgba(244,63,94,0.3)]' : 'bg-purple-950/80 text-purple-400/60 border-purple-800/80'" class="px-2 py-1 rounded-xl border transition flex items-center gap-1 font-bold">
                 <i class="fa-solid fa-sort"></i>
                 <span>{{ filters.sortByAmount ? t('sortByAmount') : t('sortByDate') }}</span>
               </button>
@@ -592,8 +653,7 @@
                 <span :class="item.payer === member1 ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-rose-500/20 text-pink-300 border-rose-500/30'" class="text-[8px] md:text-[9px] px-2 py-0.5 rounded-full font-bold border flex-shrink-0">{{ item.payer }}</span>
                 <div class="truncate">
                   <div class="flex items-center gap-1.5 flex-wrap">
-                    <div v-if="item.category.includes('零星杂费')" class="w-3 h-3 flex items-center justify-center text-[9px] flex-shrink-0">🖤</div>
-                    <i v-else :class="getCategoryIconOnly(item.category)" class="text-xs"></i>
+                    <i :class="getCategoryIconOnly(item.category)" class="text-xs"></i>
                     <span class="text-xs font-bold text-purple-100">{{ getCategoryDisplayName(item.category) }}</span>
                     <span v-if="item.category.includes('居住房租')" class="text-[8px] text-rose-400/70 scale-90 origin-left">({{ t('excludeLabel') }})</span>
                     <span v-if="item.remark" class="text-[9px] md:text-[10px] text-purple-300/60 font-medium truncate max-w-[120px] sm:max-w-none"> - {{ item.remark }}</span>
@@ -671,9 +731,11 @@
         const t = (key) => translations[lang.value][key] || key;
         const toggleLang = () => lang.value = lang.value === 'zh' ? 'en' : 'zh';
 
+        // 默认根据当前设备/身份自动识别或 fallback
         const member1 = ref(localStorage.getItem('member1') || '小星');
         const member2 = ref(localStorage.getItem('member2') || '小辰');
         
+        // 智能根据设备判断默认支付人（若在手机或浏览器本地记忆过，则优先使用本地，否则根据设备特征或默认小星）
         const defaultUser = localStorage.getItem('lastActiveUser') || '小星';
         
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
@@ -691,6 +753,7 @@
           '固定月费 Subscriptions', '零星杂费 Sundries', '其他 Miscellaneous'
         ];
 
+        /* Kuromi 酷洛米炫紫粉主题配色 */
         const categoryColors = {
           '日常伙食 Daily Meal': '#e879f9', '餐厅聚餐 Restaurant': '#f43f5e', '交通出行 Transport': '#38bdf8',
           '购物消费 Shopping': '#fb7185', '休闲娱乐 Fun': '#34d399', '居住房租 Housing': '#a855f7',
@@ -712,6 +775,7 @@
           if (cat.includes('娱乐')) return 'fa-solid fa-gamepad text-emerald-400';
           if (cat.includes('居住房租')) return 'fa-solid fa-house text-purple-400';
           if (cat.includes('固定月费')) return 'fa-solid fa-receipt text-indigo-400';
+          if (cat.includes('零星杂费')) return 'fa-solid fa-star text-pink-300';
           return 'fa-solid fa-heart text-rose-400';
         };
 
@@ -823,6 +887,7 @@
 
         const form = reactive({ payer: defaultUser, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
 
+        // 监听表单 payer 切换并持久化到本地记忆
         watch(() => form.payer, (val) => {
           if (val) localStorage.setItem('lastActiveUser', val);
         });
@@ -1082,8 +1147,7 @@
           const currentPayer = form.payer;
 
           try {
-            // 构造基础插入对象（包含完整字段以防数据库校验失败）
-            const recordData = { 
+            await supabaseClient.from('starry_ledger').insert([{ 
               date: form.date, 
               amount: finalSGD, 
               original_amount: form.amount, 
@@ -1092,18 +1156,14 @@
               payer: form.payer, 
               remark: form.remark, 
               exchange_rate: activeRate 
-            };
+            }]);
 
-            const { error: insertError } = await supabaseClient.from('starry_ledger').insert([recordData]);
-            if (insertError) throw insertError; // 如果 Supabase 拒绝写入，直接抛出错误
-
-            // 如果选择了固定月费，自动生成 30 天后的续流记录
             if (form.category.includes('固定月费')) {
               const baseDate = new Date(form.date);
               baseDate.setDate(baseDate.getDate() + 30);
               const autoFutureDateStr = baseDate.toISOString().split('T')[0];
 
-              const subRecordData = { 
+              await supabaseClient.from('starry_ledger').insert([{ 
                 date: autoFutureDateStr, 
                 amount: finalSGD, 
                 original_amount: form.amount, 
@@ -1112,39 +1172,28 @@
                 payer: form.payer, 
                 remark: form.remark ? `${form.remark} (30天自动续流)` : '(30天自动续流)', 
                 exchange_rate: activeRate 
-              };
-
-              const { error: subInsertError } = await supabaseClient.from('starry_ledger').insert([subRecordData]);
-              if (subInsertError) throw subInsertError;
+              }]);
             }
             
-            // 重置表单并刷新账目列表
             form.amount = null; 
             form.remark = ''; 
             form.date = getLocalDateString();
             await fetchRecords();
 
-            // 预算超支弹窗提醒逻辑
             setTimeout(() => {
               if (currentPayer === member1.value && budgetM1.value) {
-                const newTotal = m1TotalNum.value; 
-                const percent = (newTotal / budgetM1.value) * 100; 
+                const newTotal = m1TotalNum.value; const percent = (newTotal / budgetM1.value) * 100; 
                 if (percent >= 100 && (priorM1Total / budgetM1.value) * 100 < 100) {
                   alert(lang.value === 'zh' ? `🚨 预算溢出警告：\n${member1.value} 的本月日常账目已超出预算上限！` : `🚨 Budget Alert:\n${member1.value} has exceeded the monthly budget limit!`);
                 }
               } else if (currentPayer === member2.value && budgetM2.value) {
-                const newTotal = m2TotalNum.value; 
-                const percent = (newTotal / budgetM2.value) * 100;
+                const newTotal = m2TotalNum.value; const percent = (newTotal / budgetM2.value) * 100;
                 if (percent >= 100 && (priorM2Total / budgetM2.value) * 100 < 100) {
                   alert(lang.value === 'zh' ? `🚨 预算溢出警告：\n${member2.value} 的本月日常账目已超出预算上限！` : `🚨 Budget Alert:\n${member2.value} has exceeded the monthly budget limit!`);
                 }
               }
             }, 100);
-
-          } catch (e) { 
-            console.error("保存失败详情:", e);
-            alert((lang.value === 'zh' ? '保存失败: ' : 'Save failed: ') + (e.message || JSON.stringify(e))); 
-          }
+          } catch (e) { alert(e.message); }
         };
 
         const deleteRecord = async (id) => {
@@ -1217,7 +1266,8 @@
           m1Percent, m2Percent, totalRatioSum, exportToCSV, m1TotalNum, m2TotalNum, 
           categoryComparison, chartTotalSum, chartSlices, showDatePicker, activePicker, 
           panelYear, selectedMonthText, toggleDatePicker, changePanelYear, selectPanelMonth, 
-          selectCurrentMonth, isCurrentSelected 
+          selectCurrentMonth, isCurrentSelected, dailyM1Sum, daily2Sum, dailyTotalSum, 
+          dailyM1Percent, dailyM2Percent, updateCloudBudget, exchangeSyncError, allSubscriptions 
         };
       }
     }).mount('#app');

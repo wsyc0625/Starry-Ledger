@@ -1082,7 +1082,8 @@
           const currentPayer = form.payer;
 
           try {
-            await supabaseClient.from('starry_ledger').insert([{ 
+            // 构造基础插入对象（包含完整字段以防数据库校验失败）
+            const recordData = { 
               date: form.date, 
               amount: finalSGD, 
               original_amount: form.amount, 
@@ -1091,14 +1092,18 @@
               payer: form.payer, 
               remark: form.remark, 
               exchange_rate: activeRate 
-            }]);
+            };
 
+            const { error: insertError } = await supabaseClient.from('starry_ledger').insert([recordData]);
+            if (insertError) throw insertError; // 如果 Supabase 拒绝写入，直接抛出错误
+
+            // 如果选择了固定月费，自动生成 30 天后的续流记录
             if (form.category.includes('固定月费')) {
               const baseDate = new Date(form.date);
               baseDate.setDate(baseDate.getDate() + 30);
               const autoFutureDateStr = baseDate.toISOString().split('T')[0];
 
-              await supabaseClient.from('starry_ledger').insert([{ 
+              const subRecordData = { 
                 date: autoFutureDateStr, 
                 amount: finalSGD, 
                 original_amount: form.amount, 
@@ -1107,28 +1112,39 @@
                 payer: form.payer, 
                 remark: form.remark ? `${form.remark} (30天自动续流)` : '(30天自动续流)', 
                 exchange_rate: activeRate 
-              }]);
+              };
+
+              const { error: subInsertError } = await supabaseClient.from('starry_ledger').insert([subRecordData]);
+              if (subInsertError) throw subInsertError;
             }
             
+            // 重置表单并刷新账目列表
             form.amount = null; 
             form.remark = ''; 
             form.date = getLocalDateString();
             await fetchRecords();
 
+            // 预算超支弹窗提醒逻辑
             setTimeout(() => {
               if (currentPayer === member1.value && budgetM1.value) {
-                const newTotal = m1TotalNum.value; const percent = (newTotal / budgetM1.value) * 100; 
+                const newTotal = m1TotalNum.value; 
+                const percent = (newTotal / budgetM1.value) * 100; 
                 if (percent >= 100 && (priorM1Total / budgetM1.value) * 100 < 100) {
                   alert(lang.value === 'zh' ? `🚨 预算溢出警告：\n${member1.value} 的本月日常账目已超出预算上限！` : `🚨 Budget Alert:\n${member1.value} has exceeded the monthly budget limit!`);
                 }
               } else if (currentPayer === member2.value && budgetM2.value) {
-                const newTotal = m2TotalNum.value; const percent = (newTotal / budgetM2.value) * 100;
+                const newTotal = m2TotalNum.value; 
+                const percent = (newTotal / budgetM2.value) * 100;
                 if (percent >= 100 && (priorM2Total / budgetM2.value) * 100 < 100) {
                   alert(lang.value === 'zh' ? `🚨 预算溢出警告：\n${member2.value} 的本月日常账目已超出预算上限！` : `🚨 Budget Alert:\n${member2.value} has exceeded the monthly budget limit!`);
                 }
               }
             }, 100);
-          } catch (e) { alert(e.message); }
+
+          } catch (e) { 
+            console.error("保存失败详情:", e);
+            alert((lang.value === 'zh' ? '保存失败: ' : 'Save failed: ') + (e.message || JSON.stringify(e))); 
+          }
         };
 
         const deleteRecord = async (id) => {

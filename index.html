@@ -144,21 +144,28 @@
     <!-- 顶部导航头 -->
     <header class="flex justify-between items-center mb-4 py-2 border-b border-pink-900/40">
       <div class="flex items-center gap-2">
-        <!-- 酷洛米 Kuromi Icon -->
+        <!-- 酷洛米 Kuromi 精致立体头像 Icon -->
         <div class="w-8 h-8 md:w-10 md:h-10 animate-kuromi-breathe flex items-center justify-center">
-          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-[0_0_10px_rgba(244,63,94,0.9)]">
-            <path d="M20 45 C10 25, 5 10, 28 25 C35 30, 42 38, 50 42 C58 38, 65 30, 72 25 C95 10, 90 25, 80 45 C88 60, 80 85, 50 85 C20 85, 12 60, 20 45 Z" fill="#150724" stroke="#f43f5e" stroke-width="4"/>
-            <circle cx="12" cy="12" r="6" fill="#f43f5e" />
-            <circle cx="88" cy="12" r="6" fill="#f43f5e" />
-            <path d="M30 52 C30 45, 70 45, 70 52 C72 68, 65 78, 50 78 C35 78, 28 68, 30 52 Z" fill="#fce7f3" />
-            <ellipse cx="50" cy="34" rx="7" ry="6" fill="#f43f5e" />
-            <circle cx="47" cy="34" r="1.5" fill="#150724" />
-            <circle cx="53" cy="34" r="1.5" fill="#150724" />
-            <path d="M48 38 L48 40 M50 38 L50 40 M52 38 L52 40" stroke="#150724" stroke-width="1" />
-            <ellipse cx="40" cy="58" rx="2.5" ry="4" fill="#150724" />
-            <ellipse cx="60" cy="58" rx="2.5" ry="4" fill="#150724" />
-            <path d="M37 54 L35 52 M63 54 L65 52" stroke="#150724" stroke-width="1.5" stroke-linecap="round" />
-            <path d="M46 66 Q50 70 54 66" stroke="#f43f5e" stroke-width="2" fill="none" stroke-linecap="round" />
+          <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-[0_0_12px_rgba(244,63,94,0.9)]">
+            <!-- 标志性小飞翼/恶魔耳 -->
+            <path d="M22 35 C10 15, 2 12, 15 28 C22 37, 30 45, 38 48 Z" fill="#150724" stroke="#f43f5e" stroke-width="3"/>
+            <path d="M98 35 C110 15, 118 12, 105 28 C98 37, 90 45, 82 48 Z" fill="#150724" stroke="#f43f5e" stroke-width="3"/>
+            <!-- 酷洛米头骨/脸庞主体 -->
+            <path d="M30 45 C18 30, 22 15, 45 25 C52 28, 60 30, 60 30 C60 30, 68 28, 75 25 C98 15, 102 30, 90 45 C98 62, 95 92, 60 95 C25 92, 22 62, 30 45 Z" fill="#1b0a2a" stroke="#f43f5e" stroke-width="4"/>
+            <!-- 头顶小粉骷髅蝴蝶结/装饰 -->
+            <circle cx="60" cy="22" r="10" fill="#f43f5e"/>
+            <path d="M50 22 L70 22" stroke="#150724" stroke-width="3"/>
+            <!-- 粉红小骷髅头正面经典造型 -->
+            <path d="M42 48 C42 40, 78 40, 78 48 C80 65, 72 78, 60 78 C48 78, 40 65, 42 48 Z" fill="#fce7f3"/>
+            <!-- 眼睛与鼻子 -->
+            <ellipse cx="51" cy="54" rx="4" ry="5.5" fill="#150724"/>
+            <ellipse cx="69" cy="54" rx="4" ry="5.5" fill="#150724"/>
+            <circle cx="60" cy="63" r="2" fill="#150724"/>
+            <!-- 坏笑/傲娇小嘴巴 -->
+            <path d="M54 68 Q60 73 66 68" stroke="#f43f5e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <!-- 两侧恶魔角上的粉红圆点点缀 -->
+            <circle cx="26" cy="24" r="4" fill="#f43f5e"/>
+            <circle cx="94" cy="24" r="4" fill="#f43f5e"/>
           </svg>
         </div>
         <h1 class="text-sm md:text-lg font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-400 to-rose-400 text-glow-pink">
@@ -178,9 +185,8 @@
 
           <!-- 🔴 离线断网：红色Kuromi小头像 -->
           <span v-else class="text-rose-500 animate-bounce flex-shrink-0 flex items-center justify-center w-3 h-3">
-            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
-              <path d="M20 45 C10 25, 5 10, 28 25 C35 30, 42 38, 50 42 C58 38, 65 30, 72 25 C95 10, 90 25, 80 45 C88 60, 80 85, 50 85 C20 85, 12 60, 20 45 Z" fill="#f43f5e"/>
-              <ellipse cx="50" cy="34" rx="7" ry="6" fill="#150724" />
+            <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+              <path d="M30 45 C18 30, 22 15, 45 25 C60 30, 60 30, 60 30 C60 30, 68 28, 75 25 C98 15, 102 30, 90 45 C98 62, 95 92, 60 95 C25 92, 22 62, 30 45 Z" fill="#f43f5e"/>
             </svg>
           </span>
 
@@ -200,10 +206,8 @@
     <!-- 成员管理面板 -->
     <section class="hidden lg:flex glass-card rounded-2xl p-3 mb-4 items-center gap-3 overflow-x-auto whitespace-nowrap">
       <span class="text-xs font-bold text-pink-300 flex-shrink-0 flex items-center gap-1.5">
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-pink-500 animate-kuromi-breathe inline-block">
-          <path d="M20 45 C10 25, 5 10, 28 25 C35 30, 42 38, 50 42 C58 38, 65 30, 72 25 C95 10, 90 25, 80 45 C88 60, 80 85, 50 85 C20 85, 12 60, 20 45 Z" fill="#f43f5e"/>
-          <circle cx="12" cy="12" r="6" fill="#f43f5e" />
-          <circle cx="88" cy="12" r="6" fill="#f43f5e" />
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-pink-500 animate-kuromi-breathe inline-block">
+          <path d="M30 45 C18 30, 22 15, 45 25 C60 30, 60 30, 60 30 C60 30, 68 28, 75 25 C98 15, 102 30, 90 45 C98 62, 95 92, 60 95 C25 92, 22 62, 30 45 Z" fill="#f43f5e"/>
         </svg>{{ t('members') }} ✨:
       </span>
       <div class="flex items-center gap-3">
@@ -268,21 +272,18 @@
               </div>
             </div>
 
-            <!-- 替换骷髅头为 Kuromi 经典头像 SVG 的保存记账按钮 -->
+            <!-- 按钮内使用更新后的精致 Kuromi 头像 SVG -->
             <button type="submit" class="btn-sparkle w-full bg-gradient-to-r from-purple-800 via-pink-600 to-rose-600 hover:from-purple-700 hover:to-rose-500 text-white font-black py-2.5 rounded-xl text-xs md:text-sm tracking-widest shadow-[0_0_18px_rgba(244,63,94,0.5)] transition transform active:scale-95 uppercase flex items-center justify-center gap-2">
-              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline-block drop-shadow-[0_0_6px_rgba(255,255,255,0.8)]">
-                <path d="M20 45 C10 25, 5 10, 28 25 C35 30, 42 38, 50 42 C58 38, 65 30, 72 25 C95 10, 90 25, 80 45 C88 60, 80 85, 50 85 C20 85, 12 60, 20 45 Z" fill="#150724" stroke="#ffffff" stroke-width="5"/>
-                <circle cx="12" cy="12" r="7" fill="#ffffff" />
-                <circle cx="88" cy="12" r="7" fill="#ffffff" />
-                <path d="M30 52 C30 45, 70 45, 70 52 C72 68, 65 78, 50 78 C35 78, 28 68, 30 52 Z" fill="#fce7f3" />
-                <ellipse cx="50" cy="34" rx="7" ry="6" fill="#ffffff" />
-                <circle cx="47" cy="34" r="1.5" fill="#150724" />
-                <circle cx="53" cy="34" r="1.5" fill="#150724" />
-                <path d="M48 38 L48 40 M50 38 L50 40 M52 38 L52 40" stroke="#150724" stroke-width="1" />
-                <ellipse cx="40" cy="58" rx="2.5" ry="4" fill="#150724" />
-                <ellipse cx="60" cy="58" rx="2.5" ry="4" fill="#150724" />
-                <path d="M37 54 L35 52 M63 54 L65 52" stroke="#150724" stroke-width="1.5" stroke-linecap="round" />
-                <path d="M46 66 Q50 70 54 66" stroke="#f43f5e" stroke-width="2" fill="none" stroke-linecap="round" />
+              <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline-block drop-shadow-[0_0_6px_rgba(255,255,255,0.8)]">
+                <path d="M22 35 C10 15, 2 12, 15 28 C22 37, 30 45, 38 48 Z" fill="#150724" stroke="#ffffff" stroke-width="3"/>
+                <path d="M98 35 C110 15, 118 12, 105 28 C98 37, 90 45, 82 48 Z" fill="#150724" stroke="#ffffff" stroke-width="3"/>
+                <path d="M30 45 C18 30, 22 15, 45 25 C52 28, 60 30, 60 30 C60 30, 68 28, 75 25 C98 15, 102 30, 90 45 C98 62, 95 92, 60 95 C25 92, 22 62, 30 45 Z" fill="#1b0a2a" stroke="#ffffff" stroke-width="4"/>
+                <circle cx="60" cy="22" r="10" fill="#ffffff"/>
+                <path d="M42 48 C42 40, 78 40, 78 48 C80 65, 72 78, 60 78 C48 78, 40 65, 42 48 Z" fill="#fce7f3"/>
+                <ellipse cx="51" cy="54" rx="4" ry="5.5" fill="#150724"/>
+                <ellipse cx="69" cy="54" rx="4" ry="5.5" fill="#150724"/>
+                <circle cx="60" cy="63" r="2" fill="#150724"/>
+                <path d="M54 68 Q60 73 66 68" stroke="#f43f5e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
               </svg>
               <span>{{ t('save') }} ✨</span>
             </button>
@@ -731,11 +732,9 @@
         const t = (key) => translations[lang.value][key] || key;
         const toggleLang = () => lang.value = lang.value === 'zh' ? 'en' : 'zh';
 
-        // 默认根据当前设备/身份自动识别或 fallback
         const member1 = ref(localStorage.getItem('member1') || '小星');
         const member2 = ref(localStorage.getItem('member2') || '小辰');
         
-        // 智能根据设备判断默认支付人（若在手机或浏览器本地记忆过，则优先使用本地，否则根据设备特征或默认小星）
         const defaultUser = localStorage.getItem('lastActiveUser') || '小星';
         
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
@@ -753,7 +752,6 @@
           '固定月费 Subscriptions', '零星杂费 Sundries', '其他 Miscellaneous'
         ];
 
-        /* Kuromi 酷洛米炫紫粉主题配色 */
         const categoryColors = {
           '日常伙食 Daily Meal': '#e879f9', '餐厅聚餐 Restaurant': '#f43f5e', '交通出行 Transport': '#38bdf8',
           '购物消费 Shopping': '#fb7185', '休闲娱乐 Fun': '#34d399', '居住房租 Housing': '#a855f7',
@@ -887,7 +885,6 @@
 
         const form = reactive({ payer: defaultUser, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
 
-        // 监听表单 payer 切换并持久化到本地记忆
         watch(() => form.payer, (val) => {
           if (val) localStorage.setItem('lastActiveUser', val);
         });
@@ -1274,3 +1271,4 @@
   </script>
 </body>
 </html>
+```[cite: 12]

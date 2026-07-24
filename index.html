@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>酷洛米星芒账本 | Kuromi Ledger</title>
-  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 180%22><rect width=%22100%%22 height=%22100%%22 rx=%2240%22 fill=%22%23180926%22/><text x=%2250%%22 y=%2255%%22 font-size=%2295%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>💀</text></svg>">
-  <link rel="icon" type="image/png" sizes="32x32" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💀</text></svg>">
+  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 180%22><rect width=%22100%%22 height=%22100%%22 rx=%2240%22 fill=%22%23180926%22/><text x=%2250%%22 y=%2255%%22 font-size=%2295%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>🖤</text></svg>">
+  <link rel="icon" type="image/png" sizes="32x32" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖤</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
@@ -20,7 +20,7 @@
       overflow-x: hidden;
     }
 
-    /* Kuromi 恶魔四角星与骷髅背景粒子 */
+    /* Kuromi 恶魔四角星与背景粒子 */
     .kuromi-bg-stars { 
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
       background-image: 
@@ -166,7 +166,7 @@
         </h1>
       </div>
       
-      <!-- 汇率状态栏（仅图标：🟢 绿色小圆点 / 🔴 红色骷髅） -->
+      <!-- 汇率状态栏（仅图标：🟢 绿色小圆点 / 🔴 红色Kuromi图标） -->
       <div class="flex items-center gap-2 font-mono text-[9px]">
         <div :class="exchangeSyncError ? 'bg-rose-950/90 border-rose-600/80 shadow-[0_0_12px_rgba(244,63,94,0.4)]' : 'bg-purple-950/90 border-emerald-500/60 shadow-[0_0_12px_rgba(52,211,153,0.25)]'" class="flex items-center gap-2 px-2.5 py-1 rounded-full border transition-all">
           
@@ -176,8 +176,13 @@
             <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
 
-          <!-- 🔴 离线断网：红色骷髅 -->
-          <span v-else class="text-rose-500 animate-bounce flex-shrink-0"><i class="fa-solid fa-skull text-[10px]"></i></span>
+          <!-- 🔴 离线断网：红色Kuromi小头像 -->
+          <span v-else class="text-rose-500 animate-bounce flex-shrink-0 flex items-center justify-center w-3 h-3">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+              <path d="M20 45 C10 25, 5 10, 28 25 C35 30, 42 38, 50 42 C58 38, 65 30, 72 25 C95 10, 90 25, 80 45 C88 60, 80 85, 50 85 C20 85, 12 60, 20 45 Z" fill="#f43f5e"/>
+              <ellipse cx="50" cy="34" rx="7" ry="6" fill="#150724" />
+            </svg>
+          </span>
 
           <span class="text-purple-400 font-medium">SGD 1</span>
           <span class="text-pink-900 font-bold">=</span>
@@ -195,7 +200,11 @@
     <!-- 成员管理面板 -->
     <section class="hidden lg:flex glass-card rounded-2xl p-3 mb-4 items-center gap-3 overflow-x-auto whitespace-nowrap">
       <span class="text-xs font-bold text-pink-300 flex-shrink-0 flex items-center gap-1.5">
-        <i class="fa-solid fa-skull text-pink-500 animate-kuromi-breathe"></i>{{ t('members') }} ✨:
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-pink-500 animate-kuromi-breathe inline-block">
+          <path d="M20 45 C10 25, 5 10, 28 25 C35 30, 42 38, 50 42 C58 38, 65 30, 72 25 C95 10, 90 25, 80 45 C88 60, 80 85, 50 85 C20 85, 12 60, 20 45 Z" fill="#f43f5e"/>
+          <circle cx="12" cy="12" r="6" fill="#f43f5e" />
+          <circle cx="88" cy="12" r="6" fill="#f43f5e" />
+        </svg>{{ t('members') }} ✨:
       </span>
       <div class="flex items-center gap-3">
         <input type="text" v-model="member1" class="bg-purple-950/80 text-xs font-bold text-purple-200 w-24 text-center py-1 rounded-xl border border-purple-600/60 focus:outline-none focus:border-purple-400 transition shadow-inner focus:shadow-[0_0_8px_rgba(192,132,252,0.6)]">
@@ -259,8 +268,23 @@
               </div>
             </div>
 
-            <button type="submit" class="btn-sparkle w-full bg-gradient-to-r from-purple-800 via-pink-600 to-rose-600 hover:from-purple-700 hover:to-rose-500 text-white font-black py-2.5 rounded-xl text-xs md:text-sm tracking-widest shadow-[0_0_18px_rgba(244,63,94,0.5)] transition transform active:scale-95 uppercase">
-              💀 {{ t('save') }} ✨
+            <!-- 替换骷髅头为 Kuromi 经典头像 SVG 的保存记账按钮 -->
+            <button type="submit" class="btn-sparkle w-full bg-gradient-to-r from-purple-800 via-pink-600 to-rose-600 hover:from-purple-700 hover:to-rose-500 text-white font-black py-2.5 rounded-xl text-xs md:text-sm tracking-widest shadow-[0_0_18px_rgba(244,63,94,0.5)] transition transform active:scale-95 uppercase flex items-center justify-center gap-2">
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline-block drop-shadow-[0_0_6px_rgba(255,255,255,0.8)]">
+                <path d="M20 45 C10 25, 5 10, 28 25 C35 30, 42 38, 50 42 C58 38, 65 30, 72 25 C95 10, 90 25, 80 45 C88 60, 80 85, 50 85 C20 85, 12 60, 20 45 Z" fill="#150724" stroke="#ffffff" stroke-width="5"/>
+                <circle cx="12" cy="12" r="7" fill="#ffffff" />
+                <circle cx="88" cy="12" r="7" fill="#ffffff" />
+                <path d="M30 52 C30 45, 70 45, 70 52 C72 68, 65 78, 50 78 C35 78, 28 68, 30 52 Z" fill="#fce7f3" />
+                <ellipse cx="50" cy="34" rx="7" ry="6" fill="#ffffff" />
+                <circle cx="47" cy="34" r="1.5" fill="#150724" />
+                <circle cx="53" cy="34" r="1.5" fill="#150724" />
+                <path d="M48 38 L48 40 M50 38 L50 40 M52 38 L52 40" stroke="#150724" stroke-width="1" />
+                <ellipse cx="40" cy="58" rx="2.5" ry="4" fill="#150724" />
+                <ellipse cx="60" cy="58" rx="2.5" ry="4" fill="#150724" />
+                <path d="M37 54 L35 52 M63 54 L65 52" stroke="#150724" stroke-width="1.5" stroke-linecap="round" />
+                <path d="M46 66 Q50 70 54 66" stroke="#f43f5e" stroke-width="2" fill="none" stroke-linecap="round" />
+              </svg>
+              <span>{{ t('save') }} ✨</span>
             </button>
           </form>
         </div>
@@ -707,8 +731,12 @@
         const t = (key) => translations[lang.value][key] || key;
         const toggleLang = () => lang.value = lang.value === 'zh' ? 'en' : 'zh';
 
+        // 默认根据当前设备/身份自动识别或 fallback
         const member1 = ref(localStorage.getItem('member1') || '小星');
         const member2 = ref(localStorage.getItem('member2') || '小辰');
+        
+        // 智能根据设备判断默认支付人（若在手机或浏览器本地记忆过，则优先使用本地，否则根据设备特征或默认小星）
+        const defaultUser = localStorage.getItem('lastActiveUser') || '小星';
         
         const exchangeRate = ref(parseFloat(localStorage.getItem('exchangeRate')) || 3.25);
         const exchangeRateCny = ref(parseFloat(localStorage.getItem('exchangeRateCny')) || 5.25);
@@ -748,7 +776,7 @@
           if (cat.includes('居住房租')) return 'fa-solid fa-house text-purple-400';
           if (cat.includes('固定月费')) return 'fa-solid fa-receipt text-indigo-400';
           if (cat.includes('零星杂费')) return 'fa-solid fa-star text-pink-300';
-          return 'fa-solid fa-skull text-rose-400';
+          return 'fa-solid fa-heart text-rose-400';
         };
 
         const records = ref([]); 
@@ -857,7 +885,12 @@
           sortByAmount: false
         });
 
-        const form = reactive({ payer: member1.value, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
+        const form = reactive({ payer: defaultUser, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
+
+        // 监听表单 payer 切换并持久化到本地记忆
+        watch(() => form.payer, (val) => {
+          if (val) localStorage.setItem('lastActiveUser', val);
+        });
 
         const syncLiveExchangeRates = async () => {
           exchangeSyncError.value = false;

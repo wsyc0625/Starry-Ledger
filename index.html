@@ -116,7 +116,7 @@
       .container { max-width: 90rem !important; }
       .glass-card { padding: 1.5rem !important; border-radius: 1.5rem !important; }
       header { margin-bottom: 2rem !important; padding-top: 1.2rem !important; padding-bottom: 1.2rem !important; }
-      .text-xs { font-size: 1.05rem !important; line-height: 1.5rem !important; }
+      .text-xs { font-size: 1.05rem !important; line-height: 1.75rem !important; }
       .text-sm { font-size: 1.2rem !important; line-height: 1.75rem !important; }
       .text-base { font-size: 1.35rem !important; line-height: 2rem !important; }
       .text-lg { font-size: 1.5rem !important; line-height: 2.25rem !important; }
@@ -658,6 +658,7 @@
               <i class="fa-solid fa-coins text-emerald-400 animate-kuromi-breathe"></i>
               <span>年份存款检索</span>
             </span>
+            <!-- 年份下拉选择选项 -->
             <select v-model="depositSelectedYear" class="bg-purple-950 border border-emerald-500/50 text-emerald-200 font-mono font-bold text-xs px-2.5 py-1 rounded-xl focus:outline-none">
               <option v-for="y in availableDepositYears" :key="y" :value="y">{{ y }} 年</option>
             </select>
@@ -691,20 +692,43 @@
         </div>
       </main>
 
-      <!-- 右侧：存款流水明细列表 -->
-      <section class="lg:col-span-7 space-y-4">
+      <!-- 右侧：存款流水明细列表（仅在 PC 大屏下显示，手机移动端隐藏 class: hidden lg:block） -->
+      <section class="hidden lg:block lg:col-span-7 space-y-4">
         <div class="glass-card rounded-2xl p-3 md:p-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <h2 class="text-xs md:text-base font-bold text-purple-100 flex items-center gap-1.5">
               <i class="fa-solid fa-vault text-pink-400 animate-kuromi-breathe"></i> 存款/提款明细记录 ✨
             </h2>
 
-            <button type="button" @click="exportDepositToCSV" class="bg-emerald-950/60 border border-emerald-600/80 text-emerald-300 px-3 py-1 rounded-xl hover:bg-emerald-900/60 hover:shadow-[0_0_10px_rgba(52,211,153,0.4)] transition flex items-center gap-1 text-[10px] font-bold">
-              <i class="fa-solid fa-arrow-up-from-bracket"></i>导出存款数据 (CSV)
-            </button>
+            <div class="flex items-center gap-2">
+              <!-- 添加年份选择选项 -->
+              <select v-model="depositSelectedYear" class="bg-purple-950 border border-emerald-500/50 text-emerald-200 font-mono font-bold text-[10px] px-2 py-1 rounded-xl focus:outline-none">
+                <option v-for="y in availableDepositYears" :key="y" :value="y">{{ y }} 年</option>
+              </select>
+
+              <button type="button" @click="exportDepositToCSV" class="bg-emerald-950/60 border border-emerald-600/80 text-emerald-300 px-3 py-1 rounded-xl hover:bg-emerald-900/60 hover:shadow-[0_0_10px_rgba(52,211,153,0.4)] transition flex items-center gap-1 text-[10px] font-bold">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i>导出CSV
+              </button>
+            </div>
           </div>
 
-          <div class="space-y-2 max-h-[450px] md:max-h-[550px] overflow-y-auto pr-0.5">
+          <!-- 存款/提款总合统计卡片 -->
+          <div class="grid grid-cols-3 gap-2 mb-3 bg-purple-950/40 p-2.5 rounded-xl border border-emerald-500/30 text-center font-mono">
+            <div class="bg-purple-950/60 p-2 rounded-lg border border-purple-800/40">
+              <span class="text-[9px] text-purple-300/70 block">当年存款</span>
+              <strong class="text-xs md:text-sm text-emerald-400 font-black">+S$ {{ yearlyDepositInTotal.toFixed(2) }}</strong>
+            </div>
+            <div class="bg-purple-950/60 p-2 rounded-lg border border-purple-800/40">
+              <span class="text-[9px] text-purple-300/70 block">当年提款</span>
+              <strong class="text-xs md:text-sm text-rose-400 font-black">-S$ {{ yearlyDepositOutTotal.toFixed(2) }}</strong>
+            </div>
+            <div class="bg-purple-950/60 p-2 rounded-lg border border-purple-800/40">
+              <span class="text-[9px] text-purple-300/70 block">当年存款总合</span>
+              <strong class="text-xs md:text-sm text-teal-300 font-black">S$ {{ yearlyDepositGrossTotal.toFixed(2) }}</strong>
+            </div>
+          </div>
+
+          <div class="space-y-2 max-h-[380px] md:max-h-[480px] overflow-y-auto pr-0.5">
             <div v-if="depositLoading" class="text-center py-6 text-purple-400/50"><i class="fa-solid fa-circle-notch animate-spin text-xs mb-1"></i><p class="text-[9px]">加载存款数据中...</p></div>
             <div v-else-if="filteredDepositRecords.length === 0" class="text-center py-10 text-purple-400/50 text-xs italic">该年份暂无存款记录</div>
             <div v-else v-for="item in filteredDepositRecords" :key="item.id" class="flex items-center justify-between p-2.5 rounded-xl bg-purple-950/40 border border-purple-900/80 hover:border-emerald-500/50 transition">

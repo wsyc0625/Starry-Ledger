@@ -164,7 +164,7 @@
         </div>
         
         <!-- 右上方切换：记账 / 存款 模式 -->
-        <button @click="currentMode = currentMode === 'ledger' ? 'deposit' : 'ledger'" class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white px-3 py-1 rounded-full border border-pink-400/60 transition font-bold tracking-wider hover:shadow-[0_0_12px_rgba(244,63,94,0.8)] flex items-center gap-1.5">
+        <button @click="currentMode = currentMode === 'ledger' ? 'deposits' : 'ledger'" class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white px-3 py-1 rounded-full border border-pink-400/60 transition font-bold tracking-wider hover:shadow-[0_0_12px_rgba(244,63,94,0.8)] flex items-center gap-1.5">
           <i :class="currentMode === 'ledger' ? 'fa-solid fa-piggy-bank' : 'fa-solid fa-receipt'"></i>
           <span>{{ currentMode === 'ledger' ? '存款模式' : '记账模式' }}</span>
         </button>
@@ -597,14 +597,14 @@
           <h2 class="text-xs md:text-base font-bold mb-3 text-pink-200 flex items-center gap-2">
             <i class="fa-solid fa-piggy-bank text-pink-400 animate-kuromi-breathe"></i> 记录每笔转钱 ✨
           </h2>
-          <form @submit.prevent="addDeposit" class="space-y-3">
+          <form @submit.prevent="addDeposits" class="space-y-3">
             <div>
               <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">交易类型</label>
               <div class="grid grid-cols-2 gap-2">
-                <button type="button" @click="depositForm.type = 'deposit'" :class="depositForm.type === 'deposit' ? 'bg-emerald-900/50 border-emerald-500 text-emerald-300 font-bold shadow-[0_0_10px_rgba(52,211,153,0.3)]' : 'bg-purple-950/30 border-purple-900/50 text-purple-400'" class="py-2 rounded-xl border text-xs transition">
-                  🟢 存款 (Deposit)
+                <button type="button" @click="depositsForm.type = 'deposits'" :class="depositsForm.type === 'deposits' ? 'bg-emerald-900/50 border-emerald-500 text-emerald-300 font-bold shadow-[0_0_10px_rgba(52,211,153,0.3)]' : 'bg-purple-950/30 border-purple-900/50 text-purple-400'" class="py-2 rounded-xl border text-xs transition">
+                  🟢 存款 (Deposits)
                 </button>
-                <button type="button" @click="depositForm.type = 'withdraw'" :class="depositForm.type === 'withdraw' ? 'bg-rose-900/50 border-rose-500 text-rose-300 font-bold shadow-[0_0_10px_rgba(244,63,94,0.3)]' : 'bg-purple-950/30 border-purple-900/50 text-purple-400'" class="py-2 rounded-xl border text-xs transition">
+                <button type="button" @click="depositsForm.type = 'withdraw'" :class="depositsForm.type === 'withdraw' ? 'bg-rose-900/50 border-rose-500 text-rose-300 font-bold shadow-[0_0_10px_rgba(244,63,94,0.3)]' : 'bg-purple-950/30 border-purple-900/50 text-purple-400'" class="py-2 rounded-xl border text-xs transition">
                   🔴 提款 (Withdraw)
                 </button>
               </div>
@@ -613,8 +613,8 @@
             <div>
               <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">转钱成员</label>
               <div class="grid grid-cols-2 gap-2">
-                <button type="button" @click="depositForm.person = member1" :class="depositForm.person === member1 ? 'bg-purple-900/50 neon-border-purple text-purple-200 font-bold' : 'bg-purple-950/30 border-purple-900/50 text-purple-400'" class="py-2 rounded-xl border text-xs transition">{{ member1 }}</button>
-                <button type="button" @click="depositForm.person = member2" :class="depositForm.person === member2 ? 'bg-rose-900/50 neon-border-pink text-pink-200 font-bold' : 'bg-purple-950/30 border-purple-900/50 text-purple-400'" class="py-2 rounded-xl border text-xs transition">{{ member2 }}</button>
+                <button type="button" @click="depositsForm.person = member1" :class="depositsForm.person === member1 ? 'bg-purple-900/50 neon-border-purple text-purple-200 font-bold' : 'bg-purple-950/30 border-purple-900/50 text-purple-400'" class="py-2 rounded-xl border text-xs transition">{{ member1 }}</button>
+                <button type="button" @click="depositsForm.person = member2" :class="depositsForm.person === member2 ? 'bg-rose-900/50 neon-border-pink text-pink-200 font-bold' : 'bg-purple-950/30 border-purple-900/50 text-purple-400'" class="py-2 rounded-xl border text-xs transition">{{ member2 }}</button>
               </div>
             </div>
 
@@ -622,10 +622,10 @@
               <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">金额</label>
               <div class="flex gap-2">
                 <div class="relative flex-1">
-                  <span class="absolute left-3 top-1.5 md:top-2 text-pink-400 font-bold text-xs md:text-sm font-mono text-glow-pink">{{ depositForm.currency }}</span>
-                  <input type="number" step="0.01" v-model.number="depositForm.amount" required class="w-full bg-purple-950/90 border border-pink-900/80 rounded-xl py-1 md:py-1.5 pl-14 pr-4 text-white focus:outline-none focus:border-pink-400 font-mono text-sm transition">
+                  <span class="absolute left-3 top-1.5 md:top-2 text-pink-400 font-bold text-xs md:text-sm font-mono text-glow-pink">{{ depositsForm.currency }}</span>
+                  <input type="number" step="0.01" v-model.number="depositsForm.amount" required class="w-full bg-purple-950/90 border border-pink-900/80 rounded-xl py-1 md:py-1.5 pl-14 pr-4 text-white focus:outline-none focus:border-pink-400 font-mono text-sm transition">
                 </div>
-                <select v-model="depositForm.currency" class="bg-purple-950 border border-pink-900/80 rounded-xl px-2.5 text-xs text-pink-200 focus:outline-none focus:border-pink-400 transition font-mono font-bold">
+                <select v-model="depositsForm.currency" class="bg-purple-950 border border-pink-900/80 rounded-xl px-2.5 text-xs text-pink-200 focus:outline-none focus:border-pink-400 transition font-mono font-bold">
                   <option value="SGD">SGD</option>
                   <option value="MYR">MYR</option>
                   <option value="CNY">CNY</option>
@@ -636,11 +636,11 @@
             <div class="grid grid-cols-12 gap-2">
               <div class="col-span-5">
                 <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">日期 (年/月/日)</label>
-                <input type="date" v-model="depositForm.date" required class="w-full bg-purple-950/90 border border-pink-900/80 rounded-xl py-1 md:py-1.5 px-2 text-xs text-purple-200 focus:outline-none focus:border-pink-400 transition font-mono">
+                <input type="date" v-model="depositsForm.date" required class="w-full bg-purple-950/90 border border-pink-900/80 rounded-xl py-1 md:py-1.5 px-2 text-xs text-purple-200 focus:outline-none focus:border-pink-400 transition font-mono">
               </div>
               <div class="col-span-7">
                 <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">备注</label>
-                <input type="text" v-model="depositForm.remark" placeholder="如：每月定存/emergency..." class="w-full bg-purple-950/90 border border-pink-900/80 rounded-xl py-1 md:py-1.5 px-3 text-xs text-purple-200 focus:outline-none focus:border-pink-400 transition">
+                <input type="text" v-model="depositsForm.remark" placeholder="如：每月定存/emergency..." class="w-full bg-purple-950/90 border border-pink-900/80 rounded-xl py-1 md:py-1.5 px-3 text-xs text-purple-200 focus:outline-none focus:border-pink-400 transition">
               </div>
             </div>
 
@@ -659,21 +659,21 @@
               <span>年份存款检索</span>
             </span>
             <!-- 年份下拉选择选项 -->
-            <select v-model="depositSelectedYear" class="bg-purple-950 border border-emerald-500/50 text-emerald-200 font-mono font-bold text-xs px-2.5 py-1 rounded-xl focus:outline-none">
-              <option v-for="y in availableDepositYears" :key="y" :value="y">{{ y }} 年</option>
+            <select v-model="depositsSelectedYear" class="bg-purple-950 border border-emerald-500/50 text-emerald-200 font-mono font-bold text-xs px-2.5 py-1 rounded-xl focus:outline-none">
+              <option v-for="y in availableDepositsYears" :key="y" :value="y">{{ y }} 年</option>
             </select>
           </div>
 
           <!-- 当年存款统计 -->
           <div class="p-3 bg-purple-950/60 rounded-xl border border-purple-800/60 text-center space-y-1">
-            <p class="text-[10px] text-purple-300/70 font-medium">{{ depositSelectedYear }} 年度净存款总额 (S$)</p>
+            <p class="text-[10px] text-purple-300/70 font-medium">{{ depositsSelectedYear }} 年度净存款总额 (S$)</p>
             <p class="text-xl md:text-2xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-pink-300 text-glow-emerald">
-              S$ {{ yearlyDepositNetTotal.toFixed(2) }}
+              S$ {{ yearlyDepositsNetTotal.toFixed(2) }}
             </p>
             <div class="flex justify-around text-[9px] font-mono text-purple-400/80 pt-2 border-t border-purple-900/60">
-              <span>当年存入: <strong class="text-emerald-400">S$ {{ yearlyDepositInTotal.toFixed(2) }}</strong></span>
-              <span>当年取出: <strong class="text-rose-400">S$ {{ yearlyDepositOutTotal.toFixed(2) }}</strong></span>
-              <span>当年总合: <strong class="text-purple-200">S$ {{ yearlyDepositGrossTotal.toFixed(2) }}</strong></span>
+              <span>当年存入: <strong class="text-emerald-400">S$ {{ yearlyDepositsInTotal.toFixed(2) }}</strong></span>
+              <span>当年取出: <strong class="text-rose-400">S$ {{ yearlyDepositsOutTotal.toFixed(2) }}</strong></span>
+              <span>当年总合: <strong class="text-purple-200">S$ {{ yearlyDepositsGrossTotal.toFixed(2) }}</strong></span>
             </div>
           </div>
 
@@ -681,12 +681,12 @@
           <div class="p-2.5 bg-emerald-950/40 rounded-xl border border-emerald-500/30 text-center space-y-1">
             <div class="flex justify-between items-center px-1">
               <span class="text-[10px] font-bold text-emerald-300">🌟 全部存款总合</span>
-              <span class="text-xs font-black font-mono text-emerald-300 text-glow-emerald">S$ {{ allTimeDepositNetTotal.toFixed(2) }}</span>
+              <span class="text-xs font-black font-mono text-emerald-300 text-glow-emerald">S$ {{ allTimeDepositsNetTotal.toFixed(2) }}</span>
             </div>
             <div class="flex justify-around text-[8px] md:text-[9px] font-mono text-purple-300/70 pt-1.5 border-t border-emerald-900/40">
-              <span>全部存入: <strong class="text-emerald-400">S$ {{ allTimeDepositInTotal.toFixed(2) }}</strong></span>
-              <span>全部取出: <strong class="text-rose-400">S$ {{ allTimeDepositOutTotal.toFixed(2) }}</strong></span>
-              <span>存款总和: <strong class="text-teal-300">S$ {{ allTimeDepositGrossTotal.toFixed(2) }}</strong></span>
+              <span>全部存入: <strong class="text-emerald-400">S$ {{ allTimeDepositsInTotal.toFixed(2) }}</strong></span>
+              <span>全部取出: <strong class="text-rose-400">S$ {{ allTimeDepositsOutTotal.toFixed(2) }}</strong></span>
+              <span>存款总和: <strong class="text-teal-300">S$ {{ allTimeDepositsGrossTotal.toFixed(2) }}</strong></span>
             </div>
           </div>
         </div>
@@ -702,11 +702,11 @@
 
             <div class="flex items-center gap-2">
               <!-- 年份选择选项 -->
-              <select v-model="depositSelectedYear" class="bg-purple-950 border border-emerald-500/50 text-emerald-200 font-mono font-bold text-[10px] px-2 py-1 rounded-xl focus:outline-none">
-                <option v-for="y in availableDepositYears" :key="y" :value="y">{{ y }} 年</option>
+              <select v-model="depositsSelectedYear" class="bg-purple-950 border border-emerald-500/50 text-emerald-200 font-mono font-bold text-[10px] px-2 py-1 rounded-xl focus:outline-none">
+                <option v-for="y in availableDepositsYears" :key="y" :value="y">{{ y }} 年</option>
               </select>
 
-              <button type="button" @click="exportDepositToCSV" class="bg-emerald-950/60 border border-emerald-600/80 text-emerald-300 px-3 py-1 rounded-xl hover:bg-emerald-900/60 hover:shadow-[0_0_10px_rgba(52,211,153,0.4)] transition flex items-center gap-1 text-[10px] font-bold">
+              <button type="button" @click="exportDepositsToCSV" class="bg-emerald-950/60 border border-emerald-600/80 text-emerald-300 px-3 py-1 rounded-xl hover:bg-emerald-900/60 hover:shadow-[0_0_10px_rgba(52,211,153,0.4)] transition flex items-center gap-1 text-[10px] font-bold">
                 <i class="fa-solid fa-arrow-up-from-bracket"></i>导出CSV
               </button>
             </div>
@@ -716,22 +716,22 @@
           <div class="grid grid-cols-3 gap-2 mb-3 bg-purple-950/40 p-2.5 rounded-xl border border-emerald-500/30 text-center font-mono">
             <div class="bg-purple-950/60 p-2 rounded-lg border border-purple-800/40">
               <span class="text-[9px] text-purple-300/70 block">当年存款</span>
-              <strong class="text-xs md:text-sm text-emerald-400 font-black">+S$ {{ yearlyDepositInTotal.toFixed(2) }}</strong>
+              <strong class="text-xs md:text-sm text-emerald-400 font-black">+S$ {{ yearlyDepositsInTotal.toFixed(2) }}</strong>
             </div>
             <div class="bg-purple-950/60 p-2 rounded-lg border border-purple-800/40">
               <span class="text-[9px] text-purple-300/70 block">当年提款</span>
-              <strong class="text-xs md:text-sm text-rose-400 font-black">-S$ {{ yearlyDepositOutTotal.toFixed(2) }}</strong>
+              <strong class="text-xs md:text-sm text-rose-400 font-black">-S$ {{ yearlyDepositsOutTotal.toFixed(2) }}</strong>
             </div>
             <div class="bg-purple-950/60 p-2 rounded-lg border border-purple-800/40">
               <span class="text-[9px] text-purple-300/70 block">当年存款总合</span>
-              <strong class="text-xs md:text-sm text-teal-300 font-black">S$ {{ yearlyDepositGrossTotal.toFixed(2) }}</strong>
+              <strong class="text-xs md:text-sm text-teal-300 font-black">S$ {{ yearlyDepositsGrossTotal.toFixed(2) }}</strong>
             </div>
           </div>
 
           <div class="space-y-2 max-h-[380px] md:max-h-[480px] overflow-y-auto pr-0.5">
-            <div v-if="depositLoading" class="text-center py-6 text-purple-400/50"><i class="fa-solid fa-circle-notch animate-spin text-xs mb-1"></i><p class="text-[9px]">加载存款数据中...</p></div>
-            <div v-else-if="filteredDepositRecords.length === 0" class="text-center py-10 text-purple-400/50 text-xs italic">该年份暂无存款记录</div>
-            <div v-else v-for="item in filteredDepositRecords" :key="item.id" class="flex items-center justify-between p-2.5 rounded-xl bg-purple-950/40 border border-purple-900/80 hover:border-emerald-500/50 transition">
+            <div v-if="depositsLoading" class="text-center py-6 text-purple-400/50"><i class="fa-solid fa-circle-notch animate-spin text-xs mb-1"></i><p class="text-[9px]">加载存款数据中...</p></div>
+            <div v-else-if="filteredDepositsRecords.length === 0" class="text-center py-10 text-purple-400/50 text-xs italic">该年份暂无存款记录</div>
+            <div v-else v-for="item in filteredDepositsRecords" :key="item.id" class="flex items-center justify-between p-2.5 rounded-xl bg-purple-950/40 border border-purple-900/80 hover:border-emerald-500/50 transition">
               <div class="flex items-center gap-2.5 truncate">
                 <span :class="item.type === 'withdraw' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'" class="text-[9px] px-2 py-0.5 rounded-full font-bold border flex-shrink-0">
                   {{ item.type === 'withdraw' ? '提款' : '存款' }}
@@ -754,7 +754,7 @@
                     ({{ item.currency === 'MYR' ? 'RM' : '¥' }} {{ Number(item.original_amount).toFixed(2) }})
                   </p>
                 </div>
-                <button type="button" @click="deleteDepositRecord(item.id)" class="text-rose-400/70 p-1 hover:text-rose-400 transition"><i class="fa-regular fa-trash-can text-xs"></i></button>
+                <button type="button" @click="deleteDepositsRecord(item.id)" class="text-rose-400/70 p-1 hover:text-rose-400 transition"><i class="fa-regular fa-trash-can text-xs"></i></button>
               </div>
             </div>
           </div>
@@ -782,7 +782,7 @@
 
     createApp({
       setup() {
-        const currentMode = ref('ledger'); // 'ledger' | 'deposit'
+        const currentMode = ref('ledger'); // 'ledger' | 'deposits'
         const exchangeSyncError = ref(false);
 
         const member1 = ref(localStorage.getItem('member1') || '小星');
@@ -840,7 +840,7 @@
           syncLiveExchangeRates();
           fetchCloudBudget();
           fetchRecords();
-          fetchDepositRecords();
+          fetchDepositsRecords();
         });
 
         const selectedMonthText = computed(() => {
@@ -1139,139 +1139,134 @@
           link.download = `Kuromi_Ledger_${selectedMonth.value}.csv`; link.click();
         };
 
-        // ==================== 存款模式完整逻辑 (用优化后的 addDeposit 覆盖) ====================
-        const depositRecords = ref([]);
-        const depositLoading = ref(false);
-        const depositSelectedYear = ref(new Date().getFullYear());
-        const depositForm = reactive({
-          type: 'deposit', person: defaultUser, amount: null, currency: 'SGD', date: getLocalDateString(), remark: ''
+        // ==================== 存款模式完整逻辑 (全改 deposits) ====================
+        const depositsRecords = ref([]);
+        const depositsLoading = ref(false);
+        const depositsSelectedYear = ref(new Date().getFullYear());
+        const depositsForm = reactive({
+          type: 'deposits', person: defaultUser, amount: null, currency: 'SGD', date: getLocalDateString(), remark: ''
         });
 
-        const fetchDepositRecords = async () => {
-          depositLoading.value = true;
+        const fetchDepositsRecords = async () => {
+          depositsLoading.value = true;
           try {
-            const { data, error } = await supabaseClient.from('starry_deposit').select('*').order('date', { ascending: false });
+            const { data, error } = await supabaseClient.from('starry_deposits').select('*').order('date', { ascending: false });
             if (!error && data) {
-              depositRecords.value = data;
+              depositsRecords.value = data;
               localStorage.setItem('local_starry_deposits', JSON.stringify(data));
             } else {
               const localData = localStorage.getItem('local_starry_deposits');
-              depositRecords.value = localData ? JSON.parse(localData) : [];
+              depositsRecords.value = localData ? JSON.parse(localData) : [];
             }
           } catch (err) {
             const localData = localStorage.getItem('local_starry_deposits');
-            depositRecords.value = localData ? JSON.parse(localData) : [];
+            depositsRecords.value = localData ? JSON.parse(localData) : [];
           } finally {
-            depositLoading.value = false;
+            depositsLoading.value = false;
           }
         };
 
-        const availableDepositYears = computed(() => {
-          const years = new Set(depositRecords.value.map(r => new Date(r.date).getFullYear()));
+        const availableDepositsYears = computed(() => {
+          const years = new Set(depositsRecords.value.map(r => new Date(r.date).getFullYear()));
           years.add(new Date().getFullYear());
           return Array.from(years).sort((a, b) => b - a);
         });
 
-        const filteredDepositRecords = computed(() => {
-          return depositRecords.value.filter(r => new Date(r.date).getFullYear() === Number(depositSelectedYear.value));
+        const filteredDepositsRecords = computed(() => {
+          return depositsRecords.value.filter(r => new Date(r.date).getFullYear() === Number(depositsSelectedYear.value));
         });
 
-        const yearlyDepositInTotal = computed(() => {
-          return filteredDepositRecords.value.filter(r => r.type !== 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
+        const yearlyDepositsInTotal = computed(() => {
+          return filteredDepositsRecords.value.filter(r => r.type !== 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
         });
 
-        const yearlyDepositOutTotal = computed(() => {
-          return filteredDepositRecords.value.filter(r => r.type === 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
+        const yearlyDepositsOutTotal = computed(() => {
+          return filteredDepositsRecords.value.filter(r => r.type === 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
         });
 
-        const yearlyDepositNetTotal = computed(() => yearlyDepositInTotal.value - yearlyDepositOutTotal.value);
-        const yearlyDepositGrossTotal = computed(() => yearlyDepositInTotal.value + yearlyDepositOutTotal.value);
+        const yearlyDepositsNetTotal = computed(() => yearlyDepositsInTotal.value - yearlyDepositsOutTotal.value);
+        const yearlyDepositsGrossTotal = computed(() => yearlyDepositsInTotal.value + yearlyDepositsOutTotal.value);
 
-        const allTimeDepositInTotal = computed(() => {
-          return depositRecords.value.filter(r => r.type !== 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
+        const allTimeDepositsInTotal = computed(() => {
+          return depositsRecords.value.filter(r => r.type !== 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
         });
 
-        const allTimeDepositOutTotal = computed(() => {
-          return depositRecords.value.filter(r => r.type === 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
+        const allTimeDepositsOutTotal = computed(() => {
+          return depositsRecords.value.filter(r => r.type === 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
         });
 
-        const allTimeDepositNetTotal = computed(() => allTimeDepositInTotal.value - allTimeDepositOutTotal.value);
-        const allTimeDepositGrossTotal = computed(() => allTimeDepositInTotal.value + allTimeDepositOutTotal.value);
+        const allTimeDepositsNetTotal = computed(() => allTimeDepositsInTotal.value - allTimeDepositsOutTotal.value);
+        const allTimeDepositsGrossTotal = computed(() => allTimeDepositsInTotal.value + allTimeDepositsOutTotal.value);
 
-        // 优化后的 addDeposit 方法（覆盖部分）
-        const addDeposit = async () => {
-          if (!depositForm.amount) return;
+        const addDeposits = async () => {
+          if (!depositsForm.amount) return;
           
-          let finalSGD = depositForm.amount;
-          let activeRate = 1.0; // 默认 SGD 汇率为 1
+          let finalSGD = depositsForm.amount;
+          let activeRate = 1.0;
 
-          if (depositForm.currency === 'MYR') {
-            finalSGD = parseFloat((depositForm.amount / exchangeRate.value).toFixed(2));
+          if (depositsForm.currency === 'MYR') {
+            finalSGD = parseFloat((depositsForm.amount / exchangeRate.value).toFixed(2));
             activeRate = exchangeRate.value;
-          } else if (depositForm.currency === 'CNY') {
-            finalSGD = parseFloat((depositForm.amount / exchangeRateCny.value).toFixed(2));
+          } else if (depositsForm.currency === 'CNY') {
+            finalSGD = parseFloat((depositsForm.amount / exchangeRateCny.value).toFixed(2));
             activeRate = exchangeRateCny.value;
           }
 
           const newItem = {
-            type: depositForm.type,
-            person: depositForm.person,
+            type: depositsForm.type,
+            person: depositsForm.person,
             amount: finalSGD,
-            original_amount: depositForm.amount,
-            currency: depositForm.currency,
-            date: depositForm.date,
-            remark: depositForm.remark,
-            exchange_rate: activeRate // 补全汇率字段
+            original_amount: depositsForm.amount,
+            currency: depositsForm.currency,
+            date: depositsForm.date,
+            remark: depositsForm.remark,
+            exchange_rate: activeRate
           };
 
           try {
-            // 1. 先异步写入 Supabase
             const { data, error } = await supabaseClient
-              .from('starry_deposit')
+              .from('starry_deposits')
               .insert([newItem])
-              .select(); // select() 可以直接拿到数据库返回的真正 id
+              .select();
 
             if (error) throw error;
 
-            // 2. 成功后再更新本地列表和缓存
             if (data && data.length > 0) {
-              depositRecords.value.unshift(data[0]);
+              depositsRecords.value.unshift(data[0]);
             } else {
-              depositRecords.value.unshift({ ...newItem, id: Date.now().toString() });
+              depositsRecords.value.unshift({ ...newItem, id: Date.now().toString() });
             }
-            localStorage.setItem('local_starry_deposits', JSON.stringify(depositRecords.value));
+            localStorage.setItem('local_starry_deposits', JSON.stringify(depositsRecords.value));
 
-            // 重置表单
-            depositForm.amount = null;
-            depositForm.remark = '';
+            depositsForm.amount = null;
+            depositsForm.remark = '';
           } catch (err) {
             console.error("Supabase 写入失败:", err);
-            // 降级兜底方案：保存到本地
             newItem.id = Date.now().toString();
-            depositRecords.value.unshift(newItem);
-            localStorage.setItem('local_starry_deposits', JSON.stringify(depositRecords.value));
+            depositsRecords.value.unshift(newItem);
+            localStorage.setItem('local_starry_deposits', JSON.stringify(depositsRecords.value));
             
-            depositForm.amount = null;
-            depositForm.remark = '';
+            depositsForm.amount = null;
+            depositsForm.remark = '';
           }
         };
 
-        const deleteDepositRecord = async (id) => {
-          depositRecords.value = depositRecords.value.filter(r => r.id !== id);
-          localStorage.setItem('local_starry_deposits', JSON.stringify(depositRecords.value));
+        const deleteDepositsRecord = async (id) => {
+          depositsRecords.value = depositsRecords.value.filter(r => r.id !== id);
+          localStorage.setItem('local_starry_deposits', JSON.stringify(depositsRecords.value));
           try {
-            await supabaseClient.from('starry_deposit').delete().eq('id', id);
-          } catch (err) { console.log("Supabase deposit delete offline/error."); }
+            await supabaseClient.from('starry_deposits').delete().eq('id', id);
+          } catch (err) { console.log("Supabase deposits delete offline/error."); }
         };
 
-        const exportDepositToCSV = () => {
+        const exportDepositsToCSV = () => {
           let csvStr = '\uFEFF' + '日期,类型,转钱人,金额(SGD),原币种,原金额,备注\n';
-          filteredDepositRecords.value.forEach(r => {
+          filteredDepositsRecords.value.forEach(r => {
             csvStr += `"${r.date}","${r.type === 'withdraw' ? '提款' : '存款'}","${r.person}",${r.amount},"${r.currency || 'SGD'}",${r.original_amount || r.amount},"${r.remark || ''}"\n`;
           });
           const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
           const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-          link.download = `Kuromi_Deposit_${depositSelectedYear.value}.csv`; link.click();
+          link.download = `Kuromi_Deposits_${depositsSelectedYear.value}.csv`; link.click();
         };
 
         return {
@@ -1285,10 +1280,10 @@
           totalThisWeekM1, totalThisWeekM2, m1Percent, m2Percent, totalRatioSum, remainM1, remainM2,
           m1PercentOfBudget, m2PercentOfBudget, totalMonth, getBudgetColorClass, categoryComparison,
           dailyM1Sum, daily2Sum, dailyTotalSum, dailyM1Percent, dailyM2Percent, chartTotalSum, chartSlices,
-          depositRecords, depositLoading, depositSelectedYear, depositForm, availableDepositYears,
-          filteredDepositRecords, yearlyDepositInTotal, yearlyDepositOutTotal, yearlyDepositNetTotal,
-          yearlyDepositGrossTotal, allTimeDepositInTotal, allTimeDepositOutTotal, allTimeDepositNetTotal,
-          allTimeDepositGrossTotal, addDeposit, deleteDepositRecord, exportDepositToCSV, getLocalDateString
+          depositsRecords, depositsLoading, depositsSelectedYear, depositsForm, availableDepositsYears,
+          filteredDepositsRecords, yearlyDepositsInTotal, yearlyDepositsOutTotal, yearlyDepositsNetTotal,
+          yearlyDepositsGrossTotal, allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal,
+          allTimeDepositsGrossTotal, addDeposits, deleteDepositsRecord, exportDepositsToCSV, getLocalDateString
         };
       }
     }).mount('#app');

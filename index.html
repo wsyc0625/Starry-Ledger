@@ -626,11 +626,13 @@
             <div>
               <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">交易类型</label>
               <div class="grid grid-cols-2 gap-2">
-                <button type="button" @click="depositsForm.type = 'deposits'" :class="depositsForm.type === 'deposits' ? 'bg-emerald-900/50 border-emerald-500 text-emerald-300 font-bold shadow-[0_0_10px_rgba(52,211,153,0.3)]' : 'bg-purple-950/30 border-purple-900/50 text-purple-400'" class="py-2 rounded-xl border text-xs transition">
-                  🟢 存款 (Deposits)
+                <button type="button" @click="depositsForm.type = 'deposits'" :class="depositsForm.type === 'deposits' ? 'bg-emerald-900/50 border-emerald-500 text-emerald-300 font-bold shadow-[0_0_10px_rgba(52,211,153,0.3)]' : 'bg-purple-950/30 border-purple-900/50 text-purple-400 hover:bg-purple-900/40'" class="py-2 rounded-xl border text-xs transition flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-arrow-down text-emerald-400"></i>
+                  <span>存款 (Deposits)</span>
                 </button>
-                <button type="button" @click="depositsForm.type = 'withdraw'" :class="depositsForm.type === 'withdraw' ? 'bg-rose-900/50 border-rose-500 text-rose-300 font-bold shadow-[0_0_10px_rgba(244,63,94,0.3)]' : 'bg-purple-950/30 border-purple-900/50 text-purple-400'" class="py-2 rounded-xl border text-xs transition">
-                  🔴 提款 (Withdraw)
+                <button type="button" @click="depositsForm.type = 'withdraw'" :class="depositsForm.type === 'withdraw' ? 'bg-rose-900/50 border-rose-500 text-rose-300 font-bold shadow-[0_0_10px_rgba(244,63,94,0.3)]' : 'bg-purple-950/30 border-purple-900/50 text-purple-400 hover:bg-purple-900/40'" class="py-2 rounded-xl border text-xs transition flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-arrow-up text-rose-400"></i>
+                  <span>提款 (Withdraw)</span>
                 </button>
               </div>
             </div>
@@ -689,7 +691,7 @@
             </select>
           </div>
 
-          <!-- 当年存款总合 (已更新标题为：2026 年度净存款总额 (S$)) -->
+          <!-- 当年存款总合 -->
           <div class="p-3 bg-purple-950/60 rounded-xl border border-purple-800/60 text-center space-y-1">
             <p class="text-[10px] text-purple-300/70 font-medium">{{ depositsSelectedYear }} 年度净存款总额 (S$)</p>
             <p :class="{'text-negative-pulse': yearlyDepositsNetTotal < 0}" class="text-xl md:text-2xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-pink-300 text-glow-emerald">
@@ -719,8 +721,8 @@
         </div>
       </main>
 
-      <!-- 右侧：存款流水明细列表 -->
-      <section class="lg:col-span-7 space-y-4">
+      <!-- 右侧：存款流水明细列表 (在移动端隐藏 hidden, 在 lg 尺寸显示 block) -->
+      <section class="hidden lg:block lg:col-span-7 space-y-4">
         <div class="glass-card rounded-2xl p-3 md:p-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <h2 class="text-xs md:text-base font-bold text-purple-100 flex items-center gap-1.5">
@@ -762,14 +764,15 @@
             <div v-else-if="filteredDepositsRecords.length === 0" class="text-center py-10 text-purple-400/50 text-xs italic">该年份暂无存款记录</div>
             <div v-else v-for="item in filteredDepositsRecords" :key="item.id" class="flex items-center justify-between p-2.5 rounded-xl bg-purple-950/40 border border-purple-900/80 hover:border-emerald-500/50 transition">
               <div class="flex items-center gap-2.5 truncate">
-                <span :class="item.type === 'withdraw' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'" class="text-[9px] px-2 py-0.5 rounded-full font-bold border flex-shrink-0">
-                  {{ item.type === 'withdraw' ? '提款' : '存款' }}
+                <span :class="item.type === 'withdraw' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'" class="text-[9px] px-2 py-0.5 rounded-full font-bold border flex-shrink-0 flex items-center gap-1">
+                  <i :class="item.type === 'withdraw' ? 'fa-solid fa-arrow-up text-rose-400' : 'fa-solid fa-arrow-down text-emerald-400'"></i>
+                  <span>{{ item.type === 'withdraw' ? '提款' : '存款' }}</span>
                 </span>
                 <span :class="item.person === member1 ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-rose-500/20 text-pink-300 border-rose-500/30'" class="text-[9px] px-2 py-0.5 rounded-full font-bold border flex-shrink-0">
                   {{ item.person }}
                 </span>
                 <div class="truncate">
-                  <p class="text-xs font-bold text-purple-100 truncate">{{ item.remark || (item.type === 'withdraw' ? '提款资金' : '存款转钱') }}</p>
+                  <p v-if="item.remark" class="text-xs font-bold text-purple-100 truncate">{{ item.remark }}</p>
                   <p class="text-[8px] md:text-[9px] text-purple-400/50 font-mono">{{ item.date }}</p>
                 </div>
               </div>
@@ -1168,7 +1171,7 @@
           link.download = `Kuromi_Ledger_${selectedMonth.value}.csv`; link.click();
         };
 
-        // ==================== 存款模式逻辑 (存款 - 提款 = 当年总合) ====================
+        // ==================== 存款模式逻辑 ====================
         const depositsRecords = ref([]);
         const depositsLoading = ref(false);
         const depositsSelectedYear = ref(new Date().getFullYear());
@@ -1213,7 +1216,6 @@
           return filteredDepositsRecords.value.filter(r => r.type === 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
         });
 
-        // 当年净存款 (存款 - 提款)
         const yearlyDepositsNetTotal = computed(() => yearlyDepositsInTotal.value - yearlyDepositsOutTotal.value);
 
         const allTimeDepositsInTotal = computed(() => {
@@ -1224,7 +1226,6 @@
           return depositsRecords.value.filter(r => r.type === 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
         });
 
-        // 历年总净存款 (存款 - 提款)
         const allTimeDepositsNetTotal = computed(() => allTimeDepositsInTotal.value - allTimeDepositsOutTotal.value);
 
         const addDeposits = async () => {
@@ -1248,7 +1249,7 @@
             original_amount: depositsForm.amount,
             currency: depositsForm.currency,
             date: depositsForm.date,
-            remark: depositsForm.remark,
+            remark: depositsForm.remark || '',
             exchange_rate: activeRate
           };
 
@@ -1313,7 +1314,6 @@
           totalRatioSum, m1Percent, m2Percent, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget,
           totalMonth, getBudgetColorClass, categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum,
           dailyM1Percent, dailyM2Percent, chartTotalSum, chartSlices, addRecord, deleteRecord, exportToCSV,
-          // 存款模块导出
           depositsRecords, depositsLoading, depositsSelectedYear, depositsForm, fetchDepositsRecords,
           availableDepositsYears, filteredDepositsRecords, yearlyDepositsInTotal, yearlyDepositsOutTotal,
           yearlyDepositsNetTotal, allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal,

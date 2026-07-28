@@ -52,6 +52,31 @@
       }
     }
 
+    /* 负数红色呼吸闪烁动画 */
+    @keyframes redPulse {
+      0% {
+        color: #ff4d4f;
+        text-shadow: 0 0 4px rgba(255, 77, 79, 0.3);
+        opacity: 1;
+      }
+      50% {
+        color: #ff7875;
+        text-shadow: 0 0 16px rgba(255, 77, 79, 0.8), 0 0 24px rgba(255, 77, 79, 0.6);
+        opacity: 0.6;
+      }
+      100% {
+        color: #ff4d4f;
+        text-shadow: 0 0 4px rgba(255, 77, 79, 0.3);
+        opacity: 1;
+      }
+    }
+
+    .text-negative-pulse {
+      animation: redPulse 1.5s infinite ease-in-out !important;
+      color: #ff4d4f !important;
+      font-weight: bold;
+    }
+
     .glass-card { 
       background: rgba(21, 9, 34, 0.82); 
       backdrop-filter: blur(20px); 
@@ -664,29 +689,31 @@
             </select>
           </div>
 
-          <!-- 当年存款统计 -->
+          <!-- 当年存款统计 (算法逻辑：存款 - 提款 = 净存款总额) -->
           <div class="p-3 bg-purple-950/60 rounded-xl border border-purple-800/60 text-center space-y-1">
-            <p class="text-[10px] text-purple-300/70 font-medium">{{ depositsSelectedYear }} 年度净存款总额 (S$)</p>
-            <p class="text-xl md:text-2xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-pink-300 text-glow-emerald">
+            <p class="text-[10px] text-purple-300/70 font-medium">{{ depositsSelectedYear }} 年度净存款总额 (存款 - 提款)</p>
+            <p :class="{'text-negative-pulse': yearlyDepositsNetTotal < 0}" class="text-xl md:text-2xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-pink-300 text-glow-emerald">
               S$ {{ yearlyDepositsNetTotal.toFixed(2) }}
             </p>
             <div class="flex justify-around text-[9px] font-mono text-purple-400/80 pt-2 border-t border-purple-900/60">
-              <span>当年存入: <strong class="text-emerald-400">S$ {{ yearlyDepositsInTotal.toFixed(2) }}</strong></span>
-              <span>当年取出: <strong class="text-rose-400">S$ {{ yearlyDepositsOutTotal.toFixed(2) }}</strong></span>
-              <span>当年总合: <strong class="text-purple-200">S$ {{ yearlyDepositsGrossTotal.toFixed(2) }}</strong></span>
+              <span>当年存入: <strong class="text-emerald-400">+S$ {{ yearlyDepositsInTotal.toFixed(2) }}</strong></span>
+              <span>当年取出: <strong class="text-rose-400">-S$ {{ yearlyDepositsOutTotal.toFixed(2) }}</strong></span>
+              <span>流水规模: <strong class="text-purple-200">S$ {{ yearlyDepositsGrossTotal.toFixed(2) }}</strong></span>
             </div>
           </div>
 
           <!-- 全部存款总合 -->
           <div class="p-2.5 bg-emerald-950/40 rounded-xl border border-emerald-500/30 text-center space-y-1">
             <div class="flex justify-between items-center px-1">
-              <span class="text-[10px] font-bold text-emerald-300">🌟 全部存款总合</span>
-              <span class="text-xs font-black font-mono text-emerald-300 text-glow-emerald">S$ {{ allTimeDepositsNetTotal.toFixed(2) }}</span>
+              <span class="text-[10px] font-bold text-emerald-300">🌟 历年净存款总合</span>
+              <span :class="{'text-negative-pulse': allTimeDepositsNetTotal < 0}" class="text-xs font-black font-mono text-emerald-300 text-glow-emerald">
+                S$ {{ allTimeDepositsNetTotal.toFixed(2) }}
+              </span>
             </div>
             <div class="flex justify-around text-[8px] md:text-[9px] font-mono text-purple-300/70 pt-1.5 border-t border-emerald-900/40">
-              <span>全部存入: <strong class="text-emerald-400">S$ {{ allTimeDepositsInTotal.toFixed(2) }}</strong></span>
-              <span>全部取出: <strong class="text-rose-400">S$ {{ allTimeDepositsOutTotal.toFixed(2) }}</strong></span>
-              <span>存款总和: <strong class="text-teal-300">S$ {{ allTimeDepositsGrossTotal.toFixed(2) }}</strong></span>
+              <span>全部存入: <strong class="text-emerald-400">+S$ {{ allTimeDepositsInTotal.toFixed(2) }}</strong></span>
+              <span>全部取出: <strong class="text-rose-400">-S$ {{ allTimeDepositsOutTotal.toFixed(2) }}</strong></span>
+              <span>总结余: <strong :class="{'text-negative-pulse': allTimeDepositsNetTotal < 0}" class="text-teal-300">S$ {{ allTimeDepositsNetTotal.toFixed(2) }}</strong></span>
             </div>
           </div>
         </div>
@@ -723,8 +750,10 @@
               <strong class="text-xs md:text-sm text-rose-400 font-black">-S$ {{ yearlyDepositsOutTotal.toFixed(2) }}</strong>
             </div>
             <div class="bg-purple-950/60 p-2 rounded-lg border border-purple-800/40">
-              <span class="text-[9px] text-purple-300/70 block">当年存款总合</span>
-              <strong class="text-xs md:text-sm text-teal-300 font-black">S$ {{ yearlyDepositsGrossTotal.toFixed(2) }}</strong>
+              <span class="text-[9px] text-purple-300/70 block">当年净存款</span>
+              <strong :class="{'text-negative-pulse': yearlyDepositsNetTotal < 0}" class="text-xs md:text-sm text-teal-300 font-black">
+                S$ {{ yearlyDepositsNetTotal.toFixed(2) }}
+              </strong>
             </div>
           </div>
 
@@ -1139,7 +1168,7 @@
           link.download = `Kuromi_Ledger_${selectedMonth.value}.csv`; link.click();
         };
 
-        // ==================== 存款模式完整逻辑 (全改 deposits) ====================
+        // ==================== 存款模式完整逻辑 (存款 - 提款 = 总合) ====================
         const depositsRecords = ref([]);
         const depositsLoading = ref(false);
         const depositsSelectedYear = ref(new Date().getFullYear());
@@ -1176,6 +1205,7 @@
           return depositsRecords.value.filter(r => new Date(r.date).getFullYear() === Number(depositsSelectedYear.value));
         });
 
+        // 核心算法调整：分离存款与提款
         const yearlyDepositsInTotal = computed(() => {
           return filteredDepositsRecords.value.filter(r => r.type !== 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
         });
@@ -1184,7 +1214,9 @@
           return filteredDepositsRecords.value.filter(r => r.type === 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
         });
 
+        // 1. 净存款总额 (存款 - 提款)
         const yearlyDepositsNetTotal = computed(() => yearlyDepositsInTotal.value - yearlyDepositsOutTotal.value);
+        // 2. 总流水规模 (存款 + 提款)
         const yearlyDepositsGrossTotal = computed(() => yearlyDepositsInTotal.value + yearlyDepositsOutTotal.value);
 
         const allTimeDepositsInTotal = computed(() => {
@@ -1195,6 +1227,7 @@
           return depositsRecords.value.filter(r => r.type === 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
         });
 
+        // 历年总净存款 (存款 - 提款)
         const allTimeDepositsNetTotal = computed(() => allTimeDepositsInTotal.value - allTimeDepositsOutTotal.value);
         const allTimeDepositsGrossTotal = computed(() => allTimeDepositsInTotal.value + allTimeDepositsOutTotal.value);
 

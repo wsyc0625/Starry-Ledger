@@ -882,9 +882,10 @@
           '固定月费 Subscriptions': '#818cf8', '零星杂费 Sundries': '#c084fc', '其他 Miscellaneous': '#2dd4bf'
         };
 
-        const getCategoryDisplayName = (cat) => cat.split(' ')[0];
+        const getCategoryDisplayName = (cat) => (cat ? cat.split(' ')[0] : '');
 
         const getCategoryIconOnly = (cat) => {
+          if (!cat) return 'fa-solid fa-heart text-rose-400';
           if (cat.includes('日常伙食')) return 'fa-solid fa-utensils text-pink-400';
           if (cat.includes('餐厅')) return 'fa-solid fa-burger text-pink-500';
           if (cat.includes('交通')) return 'fa-solid fa-car text-sky-400';
@@ -1035,14 +1036,13 @@
           } catch (err) { console.error(err); } finally { loading.value = false; }
         };
 
-        // 检查每30天自动扣费记录控制中心功能
+        // 检查每30天自动扣费记录控制中心功能（优化增强版）
         const checkRecurringLedgers = async () => {
           checkingRecurring.value = true;
           try {
             const { data, error } = await supabaseClient
               .from('starry_ledger')
               .select('*')
-              .or('category.ilike.%固定月费%,remark.ilike.%30天自动%')
               .order('date', { ascending: false });
 
             if (!error && data) {
@@ -1050,7 +1050,10 @@
               const overdueItems = [];
               const checkedKeys = new Set();
 
-              for (const item of data) {
+              // 过滤固定月费或带自动标注的记录
+              const targetRecords = data.filter(r => (r.category && r.category.includes('固定月费')) || (r.remark && r.remark.includes('30天自动')));
+
+              for (const item of targetRecords) {
                 const key = `${item.payer}_${item.category}_${item.original_amount}`;
                 if (!checkedKeys.has(key)) {
                   checkedKeys.add(key);
@@ -1236,7 +1239,7 @@
           });
         });
 
-        // 优化版记账添加逻辑
+        // 记账添加逻辑
         const addRecord = async () => {
           if (!form.amount) return;
           let finalSGD = form.amount; let activeRate = 1.0;
@@ -1268,16 +1271,16 @@
             }
 
             form.amount = null; form.remark = '';
-            fetchRecords();
-            checkRecurringLedgers();
+            await fetchRecords();
+            await checkRecurringLedgers();
           } catch (err) { console.error(err); }
         };
 
         const deleteRecord = async (id) => {
           try {
             await supabaseClient.from('starry_ledger').delete().eq('id', id);
-            fetchRecords();
-            checkRecurringLedgers();
+            await fetchRecords();
+            await checkRecurringLedgers();
           } catch (err) { console.error(err); }
         };
 
@@ -1313,8 +1316,9 @@
           } catch (err) {
             const localData = localStorage.getItem('local_starry_deposits');
             depositsRecords.value = localData ? JSON.parse(localData) : [];
-          } font-bold;
-          depositsLoading.value = false;
+          } finally {
+            depositsLoading.value = false;
+          }
         };
 
         const availableDepositsYears = computed(() => {

@@ -1139,7 +1139,7 @@
           link.download = `Kuromi_Ledger_${selectedMonth.value}.csv`; link.click();
         };
 
-        // ==================== 存款模式完整逻辑 (修复补全) ====================
+        // ==================== 存款模式完整逻辑 (用优化后的 addDeposit 覆盖) ====================
         const depositRecords = ref([]);
         const depositLoading = ref(false);
         const depositSelectedYear = ref(new Date().getFullYear());
@@ -1150,13 +1150,11 @@
         const fetchDepositRecords = async () => {
           depositLoading.value = true;
           try {
-            // 尝试连 supabase 表，如果有的话
             const { data, error } = await supabaseClient.from('starry_deposit').select('*').order('date', { ascending: false });
             if (!error && data) {
               depositRecords.value = data;
               localStorage.setItem('local_starry_deposits', JSON.stringify(data));
             } else {
-              // 容错兜底：读取本地缓存
               const localData = localStorage.getItem('local_starry_deposits');
               depositRecords.value = localData ? JSON.parse(localData) : [];
             }
@@ -1200,33 +1198,62 @@
         const allTimeDepositNetTotal = computed(() => allTimeDepositInTotal.value - allTimeDepositOutTotal.value);
         const allTimeDepositGrossTotal = computed(() => allTimeDepositInTotal.value + allTimeDepositOutTotal.value);
 
+        // 优化后的 addDeposit 方法（覆盖部分）
         const addDeposit = async () => {
           if (!depositForm.amount) return;
+          
           let finalSGD = depositForm.amount;
-          if (depositForm.currency === 'MYR') finalSGD = parseFloat((depositForm.amount / exchangeRate.value).toFixed(2));
-          else if (depositForm.currency === 'CNY') finalSGD = parseFloat((depositForm.amount / exchangeRateCny.value).toFixed(2));
+          let activeRate = 1.0; // 默认 SGD 汇率为 1
+
+          if (depositForm.currency === 'MYR') {
+            finalSGD = parseFloat((depositForm.amount / exchangeRate.value).toFixed(2));
+            activeRate = exchangeRate.value;
+          } else if (depositForm.currency === 'CNY') {
+            finalSGD = parseFloat((depositForm.amount / exchangeRateCny.value).toFixed(2));
+            activeRate = exchangeRateCny.value;
+          }
 
           const newItem = {
-            id: Date.now().toString(),
             type: depositForm.type,
             person: depositForm.person,
             amount: finalSGD,
             original_amount: depositForm.amount,
             currency: depositForm.currency,
             date: depositForm.date,
-            remark: depositForm.remark
+            remark: depositForm.remark,
+            exchange_rate: activeRate // 补全汇率字段
           };
 
-          // 保存到本地 state
-          depositRecords.value.unshift(newItem);
-          localStorage.setItem('local_starry_deposits', JSON.stringify(depositRecords.value));
-
-          // 尝试同步 Supabase
           try {
-            await supabaseClient.from('starry_deposit').insert([newItem]);
-          } catch (err) { console.log("Supabase deposit insert offline/error, kept locally."); }
+            // 1. 先异步写入 Supabase
+            const { data, error } = await supabaseClient
+              .from('starry_deposit')
+              .insert([newItem])
+              .select(); // select() 可以直接拿到数据库返回的真正 id
 
-          depositForm.amount = null; depositForm.remark = '';
+            if (error) throw error;
+
+            // 2. 成功后再更新本地列表和缓存
+            if (data && data.length > 0) {
+              depositRecords.value.unshift(data[0]);
+            } else {
+              depositRecords.value.unshift({ ...newItem, id: Date.now().toString() });
+            }
+            localStorage.setItem('local_starry_deposits', JSON.stringify(depositRecords.value));
+
+            // 重置表单
+            depositForm.amount = null;
+            depositForm.remark = '';
+          } catch (err) {
+            console.error("Supabase 写入失败:", err);
+            // 降级兜底方案：保存到本地
+            newItem.id = Date.now().toString();
+            depositRecords.value.unshift(newItem);
+            localStorage.setItem('local_starry_deposits', JSON.stringify(depositRecords.value));
+            
+            depositForm.amount = null;
+            depositForm.remark = '';
+          }
         };
 
         const deleteDepositRecord = async (id) => {

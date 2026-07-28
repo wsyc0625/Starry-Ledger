@@ -374,6 +374,42 @@
             </div>
           </div>
         </div>
+
+        <!-- 每30天自动记账控制中心 / 检查中心 (仅在 PC 端显示，移动端隐藏) -->
+        <div class="hidden lg:block glass-card rounded-2xl p-4 border border-indigo-500/30 bg-gradient-to-br from-indigo-950/30 to-purple-950/50 space-y-3">
+          <div class="flex items-center justify-between border-b border-purple-900/60 pb-2">
+            <h3 class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-rotate text-indigo-400 animate-spin" style="animation-duration: 8s;"></i>
+              <span>每30天自动记账检查中心</span>
+            </h3>
+            <button @click="checkRecurringLedgers" :disabled="checkingRecurring" class="px-2.5 py-1 bg-indigo-900/60 hover:bg-indigo-800/80 text-indigo-200 border border-indigo-500/50 rounded-xl text-[10px] font-bold transition flex items-center gap-1">
+              <i class="fa-solid fa-arrows-rotate" :class="{'animate-spin': checkingRecurring}"></i>
+              <span>{{ checkingRecurring ? '检查中...' : '手动检查' }}</span>
+            </button>
+          </div>
+
+          <div class="space-y-2 text-[11px]">
+            <div v-if="recurringList.length === 0" class="text-center py-3 text-purple-400/60 italic">
+              暂无需要补充的自动扣费记录
+            </div>
+            <div v-else v-for="rec in recurringList" :key="rec.id" class="bg-purple-950/60 p-2.5 rounded-xl border border-indigo-900/50 flex items-center justify-between">
+              <div class="space-y-0.5 truncate">
+                <div class="flex items-center gap-1.5">
+                  <span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[8px] px-1.5 py-0.5 rounded font-bold">{{ rec.payer }}</span>
+                  <span class="font-bold text-purple-100 truncate">{{ rec.remark || getCategoryDisplayName(rec.category) }}</span>
+                </div>
+                <p class="text-[9px] text-purple-400/70 font-mono">
+                  上次记账: {{ rec.date }} <span class="text-rose-400 font-bold">(已超 {{ rec.daysPassed }} 天)</span>
+                </p>
+              </div>
+
+              <button @click="autoProcessRecurring(rec)" class="bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold text-[9px] px-2.5 py-1 rounded-xl shadow-[0_0_8px_rgba(99,102,241,0.5)] transition flex items-center gap-1 shrink-0">
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>补记(+30天)</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </main>
 
       <!-- 右侧明细与高级统计看板 -->
@@ -826,6 +862,10 @@
         
         const budgetM1 = ref(null);
         const budgetM2 = ref(null);
+
+        // 30天自动循环记账相关变量
+        const recurringList = ref([]);
+        const checkingRecurring = ref(false);
         
         watch(member1, (val) => localStorage.setItem('member1', val));
         watch(member2, (val) => localStorage.setItem('member2', val));
@@ -873,6 +913,7 @@
           fetchCloudBudget();
           fetchRecords();
           fetchDepositsRecords();
+          checkRecurringLedgers(); // 页面加载时自动扫描
         });
 
         const selectedMonthText = computed(() => {
@@ -992,6 +1033,69 @@
             const { data, error } = await supabaseClient.from('starry_ledger').select('*').gte('date', start).lte('date', end).order('date', { ascending: false });
             if (!error && data) { records.value = data; }
           } catch (err) { console.error(err); } finally { loading.value = false; }
+        };
+
+        // 检查每30天自动扣费记录控制中心功能
+        const checkRecurringLedgers = async () => {
+          checkingRecurring.value = true;
+          try {
+            const { data, error } = await supabaseClient
+              .from('starry_ledger')
+              .select('*')
+              .or('category.ilike.%固定月费%,remark.ilike.%30天自动%')
+              .order('date', { ascending: false });
+
+            if (!error && data) {
+              const now = new Date();
+              const overdueItems = [];
+              const checkedKeys = new Set();
+
+              for (const item of data) {
+                const key = `${item.payer}_${item.category}_${item.original_amount}`;
+                if (!checkedKeys.has(key)) {
+                  checkedKeys.add(key);
+                  const lastDate = new Date(item.date);
+                  const diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+                  if (diffDays >= 30) {
+                    overdueItems.push({
+                      ...item,
+                      daysPassed: diffDays
+                    });
+                  }
+                }
+              }
+              recurringList.value = overdueItems;
+            }
+          } catch (e) {
+            console.error('检查自动循环账目出错:', e);
+          } finally {
+            checkingRecurring.value = false;
+          }
+        };
+
+        // 自动补充扣款记账(+30天)
+        const autoProcessRecurring = async (item) => {
+          try {
+            const baseDate = new Date(item.date);
+            baseDate.setDate(baseDate.getDate() + 30);
+            const nextDateStr = baseDate.toISOString().split('T')[0];
+
+            await supabaseClient.from('starry_ledger').insert([{
+              date: nextDateStr,
+              amount: item.amount,
+              original_amount: item.original_amount,
+              currency: item.currency || 'SGD',
+              category: item.category,
+              payer: item.payer,
+              remark: item.remark ? (item.remark.includes('30天自动续流') ? item.remark : `${item.remark} (30天自动续流)`) : '(30天自动续流)',
+              exchange_rate: item.exchange_rate || 1.0
+            }]);
+
+            await checkRecurringLedgers();
+            await fetchRecords();
+          } catch (e) {
+            console.error('补充计费记录失败:', e);
+          }
         };
 
         watch(categoryRange, () => { fetchRecords(); });
@@ -1132,6 +1236,7 @@
           });
         });
 
+        // 优化版记账添加逻辑
         const addRecord = async () => {
           if (!form.amount) return;
           let finalSGD = form.amount; let activeRate = 1.0;
@@ -1139,18 +1244,32 @@
           else if (form.currency === 'CNY') { finalSGD = parseFloat((form.amount / exchangeRateCny.value).toFixed(2)); activeRate = exchangeRateCny.value; }
 
           try {
+            // 写入本次交易
             await supabaseClient.from('starry_ledger').insert([{ 
               date: form.date, amount: finalSGD, original_amount: form.amount, currency: form.currency, category: form.category, payer: form.payer, remark: form.remark, exchange_rate: activeRate 
             }]);
 
+            // 若选择固定月费，预派生下一次(30天后)记录
             if (form.category.includes('固定月费')) {
-              const baseDate = new Date(form.date); baseDate.setDate(baseDate.getDate() + 30);
+              const baseDate = new Date(form.date); 
+              baseDate.setDate(baseDate.getDate() + 30);
+              const nextDateStr = baseDate.toISOString().split('T')[0];
+
               await supabaseClient.from('starry_ledger').insert([{ 
-                date: baseDate.toISOString().split('T')[0], amount: finalSGD, original_amount: form.amount, currency: form.currency, category: form.category, payer: form.payer, remark: form.remark ? `${form.remark} (30天自动续流)` : '(30天自动续流)', exchange_rate: activeRate 
+                date: nextDateStr, 
+                amount: finalSGD, 
+                original_amount: form.amount, 
+                currency: form.currency, 
+                category: form.category, 
+                payer: form.payer, 
+                remark: form.remark ? `${form.remark} (30天自动续流)` : '(30天自动续流)', 
+                exchange_rate: activeRate 
               }]);
             }
+
             form.amount = null; form.remark = '';
             fetchRecords();
+            checkRecurringLedgers();
           } catch (err) { console.error(err); }
         };
 
@@ -1158,6 +1277,7 @@
           try {
             await supabaseClient.from('starry_ledger').delete().eq('id', id);
             fetchRecords();
+            checkRecurringLedgers();
           } catch (err) { console.error(err); }
         };
 
@@ -1193,9 +1313,8 @@
           } catch (err) {
             const localData = localStorage.getItem('local_starry_deposits');
             depositsRecords.value = localData ? JSON.parse(localData) : [];
-          } finally {
-            depositsLoading.value = false;
-          }
+          } font-bold;
+          depositsLoading.value = false;
         };
 
         const availableDepositsYears = computed(() => {
@@ -1317,7 +1436,8 @@
           depositsRecords, depositsLoading, depositsSelectedYear, depositsForm, fetchDepositsRecords,
           availableDepositsYears, filteredDepositsRecords, yearlyDepositsInTotal, yearlyDepositsOutTotal,
           yearlyDepositsNetTotal, allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal,
-          addDeposits, deleteDepositsRecord, exportDepositsToCSV, getLocalDateString
+          addDeposits, deleteDepositsRecord, exportDepositsToCSV, getLocalDateString,
+          recurringList, checkingRecurring, checkRecurringLedgers, autoProcessRecurring
         };
       }
     }).mount('#app');

@@ -757,8 +757,8 @@
         </div>
       </main>
 
-      <!-- 右侧：存款流水明细列表 (在移动端隐藏 hidden, 在 lg 尺寸显示 block) -->
-      <section class="hidden lg:block lg:col-span-7 space-y-4">
+      <!-- 右侧：存款流水明细列表 -->
+      <section class="lg:col-span-7 space-y-4">
         <div class="glass-card rounded-2xl p-3 md:p-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <h2 class="text-xs md:text-base font-bold text-purple-100 flex items-center gap-1.5">
@@ -914,7 +914,7 @@
           fetchCloudBudget();
           fetchRecords();
           fetchDepositsRecords();
-          checkRecurringLedgers(); // 页面加载时自动扫描
+          checkRecurringLedgers();
         });
 
         const selectedMonthText = computed(() => {
@@ -1036,7 +1036,6 @@
           } catch (err) { console.error(err); } finally { loading.value = false; }
         };
 
-        // 检查每30天自动扣费记录控制中心功能（优化增强版）
         const checkRecurringLedgers = async () => {
           checkingRecurring.value = true;
           try {
@@ -1050,7 +1049,6 @@
               const overdueItems = [];
               const checkedKeys = new Set();
 
-              // 过滤固定月费或带自动标注的记录
               const targetRecords = data.filter(r => (r.category && r.category.includes('固定月费')) || (r.remark && r.remark.includes('30天自动')));
 
               for (const item of targetRecords) {
@@ -1076,7 +1074,6 @@
           }
         };
 
-        // 自动补充扣款记账(+30天)
         const autoProcessRecurring = async (item) => {
           try {
             const baseDate = new Date(item.date);
@@ -1239,7 +1236,6 @@
           });
         });
 
-        // 记账添加逻辑
         const addRecord = async () => {
           if (!form.amount) return;
           let finalSGD = form.amount; let activeRate = 1.0;
@@ -1247,12 +1243,10 @@
           else if (form.currency === 'CNY') { finalSGD = parseFloat((form.amount / exchangeRateCny.value).toFixed(2)); activeRate = exchangeRateCny.value; }
 
           try {
-            // 写入本次交易
             await supabaseClient.from('starry_ledger').insert([{ 
               date: form.date, amount: finalSGD, original_amount: form.amount, currency: form.currency, category: form.category, payer: form.payer, remark: form.remark, exchange_rate: activeRate 
             }]);
 
-            // 若选择固定月费，预派生下一次(30天后)记录
             if (form.category.includes('固定月费')) {
               const baseDate = new Date(form.date); 
               baseDate.setDate(baseDate.getDate() + 30);
@@ -1353,7 +1347,6 @@
 
         const addDeposits = async () => {
           if (!depositsForm.amount) return;
-          
           let finalSGD = depositsForm.amount;
           let activeRate = 1.0;
 
@@ -1365,83 +1358,71 @@
             activeRate = exchangeRateCny.value;
           }
 
-          const newItem = {
-            type: depositsForm.type,
-            person: depositsForm.person,
-            amount: finalSGD,
-            original_amount: depositsForm.amount,
-            currency: depositsForm.currency,
-            date: depositsForm.date,
-            remark: depositsForm.remark || '',
-            exchange_rate: activeRate
-          };
-
           try {
-            const { data, error } = await supabaseClient
-              .from('starry_deposits')
-              .insert([newItem])
-              .select();
+            await supabaseClient.from('starry_deposits').insert([{
+              type: depositsForm.type,
+              person: depositsForm.person,
+              amount: finalSGD,
+              original_amount: depositsForm.amount,
+              currency: depositsForm.currency,
+              date: depositsForm.date,
+              remark: depositsForm.remark,
+              exchange_rate: activeRate
+            }]);
 
-            if (error) throw error;
-
-            if (data && data.length > 0) {
-              depositsRecords.value.unshift(data[0]);
-            } else {
-              depositsRecords.value.unshift({ ...newItem, id: Date.now().toString() });
-            }
-            localStorage.setItem('local_starry_deposits', JSON.stringify(depositsRecords.value));
             depositsForm.amount = null;
             depositsForm.remark = '';
+            await fetchDepositsRecords();
           } catch (err) {
-            console.error(err);
-            newItem.id = Date.now().toString();
-            depositsRecords.value.unshift(newItem);
-            localStorage.setItem('local_starry_deposits', JSON.stringify(depositsRecords.value));
-            depositsForm.amount = null;
-            depositsForm.remark = '';
+            console.error('存款保存失败:', err);
           }
         };
 
         const deleteDepositsRecord = async (id) => {
           try {
             await supabaseClient.from('starry_deposits').delete().eq('id', id);
+            await fetchDepositsRecords();
           } catch (err) {
-            console.error(err);
-          } finally {
-            depositsRecords.value = depositsRecords.value.filter(r => r.id !== id);
-            localStorage.setItem('local_starry_deposits', JSON.stringify(depositsRecords.value));
+            console.error('删除存款记录失败:', err);
           }
         };
 
         const exportDepositsToCSV = () => {
           let csvStr = '\uFEFF' + '日期,类型,成员,金额(SGD),原币种,原金额,备注\n';
           filteredDepositsRecords.value.forEach(r => {
-            const typeStr = r.type === 'withdraw' ? '提款' : '存款';
-            csvStr += `"${r.date}","${typeStr}","${r.person}",${r.amount},"${r.currency || 'SGD'}",${r.original_amount || r.amount},"${r.remark || ''}"\n`;
+            csvStr += `"${r.date}","${r.type === 'withdraw' ? '提款' : '存款'}","${r.person}",${r.amount},"${r.currency || 'SGD'}",${r.original_amount || r.amount},"${r.remark || ''}"\n`;
           });
           const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = `Kuromi_Savings_${depositsSelectedYear.value}.csv`;
-          link.click();
+          const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+          link.download = `Kuromi_Deposits_${depositsSelectedYear.value}.csv`; link.click();
         };
 
         return {
-          currentMode, exchangeSyncError, member1, member2, exchangeRate, exchangeRateCny,
-          budgetM1, budgetM2, updateCloudBudget, categories, getCategoryDisplayName, getCategoryIconOnly,
-          records, loading, selectedMonth, selectedDay, selectedMonthText, selectedDayText,
-          offsetDay, onDayPicked, resetToToday, showDatePicker, activePicker, panelYear,
-          toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected,
-          filterRange, categoryRange, chartMember, filters, form, offsetMonth, filteredRecords,
-          summaryMetrics, totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2,
-          totalRatioSum, m1Percent, m2Percent, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget,
-          totalMonth, getBudgetColorClass, categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum,
-          dailyM1Percent, dailyM2Percent, chartTotalSum, chartSlices, addRecord, deleteRecord, exportToCSV,
-          depositsRecords, depositsLoading, depositsSelectedYear, depositsForm, fetchDepositsRecords,
-          availableDepositsYears, filteredDepositsRecords, yearlyDepositsInTotal, yearlyDepositsOutTotal,
-          yearlyDepositsNetTotal, allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal,
-          addDeposits, deleteDepositsRecord, exportDepositsToCSV, getLocalDateString,
-          recurringList, checkingRecurring, checkRecurringLedgers, autoProcessRecurring
+          currentMode,
+          exchangeSyncError,
+          member1, member2,
+          exchangeRate, exchangeRateCny,
+          budgetM1, budgetM2, updateCloudBudget,
+          categories, getCategoryDisplayName, getCategoryIconOnly,
+          records, loading,
+          selectedMonth, selectedMonthText,
+          selectedDay, selectedDayText, offsetDay, onDayPicked, resetToToday,
+          showDatePicker, activePicker, panelYear, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected,
+          filterRange, categoryRange, chartMember,
+          filters, form, addRecord, deleteRecord, exportToCSV,
+          summaryMetrics, filteredRecords,
+          totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2,
+          totalRatioSum, m1Percent, m2Percent,
+          remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass,
+          totalMonth, categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum, dailyM1Percent, dailyM2Percent,
+          chartTotalSum, chartSlices, offsetMonth,
+          recurringList, checkingRecurring, checkRecurringLedgers, autoProcessRecurring,
+          getLocalDateString,
+          depositsRecords, depositsLoading, depositsSelectedYear, availableDepositsYears,
+          depositsForm, filteredDepositsRecords,
+          yearlyDepositsInTotal, yearlyDepositsOutTotal, yearlyDepositsNetTotal,
+          allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal,
+          addDeposits, deleteDepositsRecord, exportDepositsToCSV
         };
       }
     }).mount('#app');

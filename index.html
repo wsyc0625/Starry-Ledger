@@ -52,7 +52,6 @@
       }
     }
 
-    /* 负数红色呼吸闪烁动画 */
     @keyframes redPulse {
       0% {
         color: #ff4d4f;
@@ -375,7 +374,7 @@
           </div>
         </div>
 
-        <!-- 每30天自动记账控制中心 / 检查中心 (仅在 PC 端显示，移动端隐藏) -->
+        <!-- 每30天自动记账控制中心 -->
         <div class="hidden lg:block glass-card rounded-2xl p-4 border border-indigo-500/30 bg-gradient-to-br from-indigo-950/30 to-purple-950/50 space-y-3">
           <div class="flex items-center justify-between border-b border-purple-900/60 pb-2">
             <h3 class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
@@ -414,7 +413,7 @@
 
       <!-- 右侧明细与高级统计看板 -->
       <section class="lg:col-span-7 space-y-4">
-        <!-- 品类对比统计看板 (PC端) -->
+        <!-- 品类对比统计看板 -->
         <div class="hidden lg:block glass-card rounded-2xl p-4 space-y-3">
           <div class="flex flex-col gap-2 border-b border-purple-900/60 pb-2.5">
             <div class="flex flex-col gap-0.5">
@@ -721,7 +720,6 @@
               <i class="fa-solid fa-coins text-emerald-400 animate-kuromi-breathe"></i>
               <span>年份存款检索</span>
             </span>
-            <!-- 年份下拉选择选项 -->
             <select v-model="depositsSelectedYear" class="bg-purple-950 border border-emerald-500/50 text-emerald-200 font-mono font-bold text-xs px-2.5 py-1 rounded-xl focus:outline-none">
               <option v-for="y in availableDepositsYears" :key="y" :value="y">{{ y }} 年</option>
             </select>
@@ -766,7 +764,6 @@
             </h2>
 
             <div class="flex items-center gap-2">
-              <!-- 年份选择选项 -->
               <select v-model="depositsSelectedYear" class="bg-purple-950 border border-emerald-500/50 text-emerald-200 font-mono font-bold text-[10px] px-2 py-1 rounded-xl focus:outline-none">
                 <option v-for="y in availableDepositsYears" :key="y" :value="y">{{ y }} 年</option>
               </select>
@@ -1020,16 +1017,20 @@
           } catch (err) { console.error(err); }
         };
 
+        // 核心修复点：精确计算月末与年末日期，防止 31 日因为 ISO/UTC 时区偏移丢失
         const fetchRecords = async () => {
           loading.value = true;
           try {
             let start, end;
+            const [y, m] = selectedMonth.value.split('-').map(Number);
             if (categoryRange.value === 'year') {
-              const currentYear = selectedMonth.value.split('-')[0];
-              start = `${currentYear}-01-01`; end = `${currentYear}-12-31`;
+              start = `${y}-01-01`;
+              end = `${y}-12-31`;
             } else {
               start = `${selectedMonth.value}-01`;
-              end = new Date(parseInt(selectedMonth.value.split('-')[0]), parseInt(selectedMonth.value.split('-')[1]), 0).toISOString().substring(0, 10);
+              // 使用 Date(y, m, 0) 正确获取当月最后一天的真实日期（如 31 日）
+              const lastDay = new Date(y, m, 0).getDate();
+              end = `${selectedMonth.value}-${String(lastDay).padStart(2, '0')}`;
             }
             const { data, error } = await supabaseClient.from('starry_ledger').select('*').gte('date', start).lte('date', end).order('date', { ascending: false });
             if (!error && data) { records.value = data; }
@@ -1288,7 +1289,7 @@
           link.download = `Kuromi_Ledger_${selectedMonth.value}.csv`; link.click();
         };
 
-        // ==================== 存款模式逻辑 ====================
+        // ==================== 存款模式逻辑补全 ====================
         const depositsRecords = ref([]);
         const depositsLoading = ref(false);
         const depositsSelectedYear = ref(new Date().getFullYear());
@@ -1347,25 +1348,18 @@
 
         const addDeposits = async () => {
           if (!depositsForm.amount) return;
-          let finalSGD = depositsForm.amount;
-          let activeRate = 1.0;
-
-          if (depositsForm.currency === 'MYR') {
-            finalSGD = parseFloat((depositsForm.amount / exchangeRate.value).toFixed(2));
-            activeRate = exchangeRate.value;
-          } else if (depositsForm.currency === 'CNY') {
-            finalSGD = parseFloat((depositsForm.amount / exchangeRateCny.value).toFixed(2));
-            activeRate = exchangeRateCny.value;
-          }
+          let finalSGD = depositsForm.amount; let activeRate = 1.0;
+          if (depositsForm.currency === 'MYR') { finalSGD = parseFloat((depositsForm.amount / exchangeRate.value).toFixed(2)); activeRate = exchangeRate.value; }
+          else if (depositsForm.currency === 'CNY') { finalSGD = parseFloat((depositsForm.amount / exchangeRateCny.value).toFixed(2)); activeRate = exchangeRateCny.value; }
 
           try {
             await supabaseClient.from('starry_deposits').insert([{
+              date: depositsForm.date,
               type: depositsForm.type,
               person: depositsForm.person,
               amount: finalSGD,
               original_amount: depositsForm.amount,
               currency: depositsForm.currency,
-              date: depositsForm.date,
               remark: depositsForm.remark,
               exchange_rate: activeRate
             }]);
@@ -1373,8 +1367,8 @@
             depositsForm.amount = null;
             depositsForm.remark = '';
             await fetchDepositsRecords();
-          } catch (err) {
-            console.error('存款保存失败:', err);
+          } catch (e) {
+            console.error('添加存款记录失败:', e);
           }
         };
 
@@ -1382,13 +1376,13 @@
           try {
             await supabaseClient.from('starry_deposits').delete().eq('id', id);
             await fetchDepositsRecords();
-          } catch (err) {
-            console.error('删除存款记录失败:', err);
+          } catch (e) {
+            console.error('删除存款记录失败:', e);
           }
         };
 
         const exportDepositsToCSV = () => {
-          let csvStr = '\uFEFF' + '日期,类型,成员,金额(SGD),原币种,原金额,备注\n';
+          let csvStr = '\uFEFF' + '日期,类型,人员,金额(SGD),原币种,原金额,备注\n';
           filteredDepositsRecords.value.forEach(r => {
             csvStr += `"${r.date}","${r.type === 'withdraw' ? '提款' : '存款'}","${r.person}",${r.amount},"${r.currency || 'SGD'}",${r.original_amount || r.amount},"${r.remark || ''}"\n`;
           });
@@ -1398,31 +1392,21 @@
         };
 
         return {
-          currentMode,
-          exchangeSyncError,
-          member1, member2,
-          exchangeRate, exchangeRateCny,
-          budgetM1, budgetM2, updateCloudBudget,
-          categories, getCategoryDisplayName, getCategoryIconOnly,
-          records, loading,
-          selectedMonth, selectedMonthText,
-          selectedDay, selectedDayText, offsetDay, onDayPicked, resetToToday,
-          showDatePicker, activePicker, panelYear, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected,
-          filterRange, categoryRange, chartMember,
-          filters, form, addRecord, deleteRecord, exportToCSV,
-          summaryMetrics, filteredRecords,
-          totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2,
-          totalRatioSum, m1Percent, m2Percent,
-          remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass,
-          totalMonth, categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum, dailyM1Percent, dailyM2Percent,
-          chartTotalSum, chartSlices, offsetMonth,
-          recurringList, checkingRecurring, checkRecurringLedgers, autoProcessRecurring,
-          getLocalDateString,
-          depositsRecords, depositsLoading, depositsSelectedYear, availableDepositsYears,
-          depositsForm, filteredDepositsRecords,
-          yearlyDepositsInTotal, yearlyDepositsOutTotal, yearlyDepositsNetTotal,
-          allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal,
-          addDeposits, deleteDepositsRecord, exportDepositsToCSV
+          currentMode, exchangeSyncError, member1, member2, exchangeRate, exchangeRateCny,
+          budgetM1, budgetM2, recurringList, checkingRecurring, categories, getCategoryDisplayName,
+          getCategoryIconOnly, records, loading, selectedMonth, selectedDay, showDatePicker,
+          activePicker, panelYear, selectedMonthText, selectedDayText, offsetDay, onDayPicked,
+          resetToToday, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth,
+          isCurrentSelected, filterRange, categoryRange, chartMember, filters, form, updateCloudBudget,
+          checkRecurringLedgers, autoProcessRecurring, offsetMonth, filteredRecords, summaryMetrics,
+          totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalRatioSum, m1Percent, m2Percent,
+          remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, totalMonth, getBudgetColorClass,
+          categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum, dailyM1Percent, dailyM2Percent,
+          chartTotalSum, chartSlices, addRecord, deleteRecord, exportToCSV,
+          depositsRecords, depositsLoading, depositsSelectedYear, depositsForm, availableDepositsYears,
+          filteredDepositsRecords, yearlyDepositsInTotal, yearlyDepositsOutTotal, yearlyDepositsNetTotal,
+          allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal, addDeposits,
+          deleteDepositsRecord, exportDepositsToCSV, getLocalDateString
         };
       }
     }).mount('#app');

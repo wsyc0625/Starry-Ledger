@@ -870,13 +870,13 @@
         const categories = [
           '日常伙食 Daily Meal', '餐厅聚餐 Restaurant', '交通出行 Transport', 
           '购物消费 Shopping', '休闲娱乐 Fun', '居住房租 Housing', 
-          '固定月费 Subscriptions', '零星杂费 Sundries', '其他 Miscellaneous'
+          '固定月费 Subscriptions', 'JB', '其他 Miscellaneous'
         ];
 
         const categoryColors = {
           '日常伙食 Daily Meal': '#e879f9', '餐厅聚餐 Restaurant': '#f43f5e', '交通出行 Transport': '#38bdf8',
           '购物消费 Shopping': '#fb7185', '休闲娱乐 Fun': '#34d399', '居住房租 Housing': '#a855f7',
-          '固定月费 Subscriptions': '#818cf8', '零星杂费 Sundries': '#c084fc', '其他 Miscellaneous': '#2dd4bf'
+          '固定月费 Subscriptions': '#818cf8', 'JB': '#c084fc', '其他 Miscellaneous': '#2dd4bf'
         };
 
         const getCategoryDisplayName = (cat) => (cat ? cat.split(' ')[0] : '');
@@ -890,7 +890,7 @@
           if (cat.includes('娱乐')) return 'fa-solid fa-gamepad text-emerald-400';
           if (cat.includes('居住房租')) return 'fa-solid fa-house text-purple-400';
           if (cat.includes('固定月费')) return 'fa-solid fa-receipt text-indigo-400';
-          if (cat.includes('零星杂费')) return 'fa-solid fa-star text-pink-300';
+          if (cat === 'JB' || cat.includes('JB')) return 'fa-solid fa-location-dot text-pink-300';
           return 'fa-solid fa-heart text-rose-400';
         };
 
@@ -988,6 +988,15 @@
 
         const filters = reactive({ keyword: '', payer: 'all', category: 'all', currency: 'all', sortByAmount: false });
         const form = reactive({ payer: defaultUser, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
+
+        // 监听分类切换：选中 JB 自动变 MYR，其他变 SGD
+        watch(() => form.category, (newCat) => {
+          if (newCat === 'JB') {
+            form.currency = 'MYR';
+          } else {
+            form.currency = 'SGD';
+          }
+        });
 
         watch(() => form.payer, (val) => { if (val) localStorage.setItem('lastActiveUser', val); });
 

@@ -1020,7 +1020,6 @@
         const filters = reactive({ keyword: '', payer: 'all', category: 'all', currency: 'all', sortByAmount: false });
         const form = reactive({ payer: defaultUser, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
 
-        // 监听分类切换：选中 JB 自动变 MYR，其他变 SGD
         watch(() => form.category, (newCat) => {
           if (newCat === 'JB') {
             form.currency = 'MYR';
@@ -1164,13 +1163,12 @@
           return list;
         });
 
-        // 包含转账抵扣的个人消费核心计算算法
         const calcPersonExpense = (recordList, person, otherPerson) => {
           return recordList.reduce((sum, r) => {
             if (r.category && r.category.includes('居住房租')) return sum;
             if (r.category && r.category.includes('转账')) {
-              // 对方发起转账 -> 扣减本人的消费支出!
               if (r.payer === otherPerson) return sum - Number(r.amount);
+              if (r.payer === person) return sum + Number(r.amount);
               return sum;
             }
             if (r.payer === person) return sum + Number(r.amount);
@@ -1181,14 +1179,13 @@
         const summaryMetrics = computed(() => {
           const sum = filteredRecords.value.reduce((acc, item) => {
             if (item.category && item.category.includes('转账')) {
-              return acc - Number(item.amount);
+              return acc;
             }
             return acc + Number(item.amount);
           }, 0);
           return { count: filteredRecords.value.length, sum };
         });
 
-        // 数据看板各时段统计（已融合转账抵扣逻辑）
         const totalTodayM1 = computed(() => calcPersonExpense(records.value.filter(r => r.date === getLocalDateString()), member1.value, member2.value).toFixed(2));
         const totalTodayM2 = computed(() => calcPersonExpense(records.value.filter(r => r.date === getLocalDateString()), member2.value, member1.value).toFixed(2));
         
@@ -1198,7 +1195,6 @@
         const m1TotalNum = computed(() => calcPersonExpense(records.value, member1.value, member2.value));
         const m2TotalNum = computed(() => calcPersonExpense(records.value, member2.value, member1.value));
 
-        // 当月转账扣减小计提示
         const m1TransferDeduction = computed(() => records.value.filter(r => r.payer === member2.value && r.category && r.category.includes('转账')).reduce((s, r) => s + Number(r.amount), 0));
         const m2TransferDeduction = computed(() => records.value.filter(r => r.payer === member1.value && r.category && r.category.includes('转账')).reduce((s, r) => s + Number(r.amount), 0));
 
@@ -1242,8 +1238,8 @@
             if (cat.includes('转账')) {
               const m2ToM1 = catRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
               const m1ToM2 = catRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
-              m1Sum = -m2ToM1;
-              m2Sum = -m1ToM2;
+              m1Sum = m1ToM2 - m2ToM1;
+              m2Sum = m2ToM1 - m1ToM2;
             } else {
               m1Sum = catRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
               m2Sum = catRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
@@ -1291,8 +1287,7 @@
             let catSum = 0;
             if (chartMember.value === 'all') {
               if (cat.includes('转账')) {
-                const transfers = validRecords.filter(r => r.category === cat).reduce((s, r) => s + Number(r.amount), 0);
-                catSum = -transfers;
+                catSum = 0;
               } else {
                 catSum = validRecords.filter(r => r.category === cat).reduce((s, r) => s + Number(r.amount), 0);
               }
@@ -1300,8 +1295,9 @@
               const p = chartMember.value === 'm1' ? member1.value : member2.value;
               const otherP = chartMember.value === 'm1' ? member2.value : member1.value;
               if (cat.includes('转账')) {
-                const tf = validRecords.filter(r => r.category === cat && r.payer === otherP).reduce((s, r) => s + Number(r.amount), 0);
-                catSum = -tf;
+                const myTf = validRecords.filter(r => r.category === cat && r.payer === p).reduce((s, r) => s + Number(r.amount), 0);
+                const otherTf = validRecords.filter(r => r.category === cat && r.payer === otherP).reduce((s, r) => s + Number(r.amount), 0);
+                catSum = myTf - otherTf;
               } else {
                 catSum = validRecords.filter(r => r.category === cat && r.payer === p).reduce((s, r) => s + Number(r.amount), 0);
               }
@@ -1373,7 +1369,7 @@
           link.download = `Kuromi_Ledger_${selectedMonth.value}.csv`; link.click();
         };
 
-        // ==================== 存款模式逻辑补全 ====================
+        // ==================== 存款模式逻辑 (已补齐) ====================
         const depositsRecords = ref([]);
         const depositsLoading = ref(false);
         const depositsSelectedYear = ref(new Date().getFullYear());
@@ -1400,50 +1396,27 @@
           }
         };
 
-        const availableDepositsYears = computed(() => {
-          const years = new Set(depositsRecords.value.map(r => new Date(r.date).getFullYear()));
-          years.add(new Date().getFullYear());
-          return Array.from(years).sort((a, b) => b - a);
-        });
-
-        const filteredDepositsRecords = computed(() => {
-          return depositsRecords.value.filter(r => new Date(r.date).getFullYear() === Number(depositsSelectedYear.value));
-        });
-
-        const yearlyDepositsInTotal = computed(() => {
-          return filteredDepositsRecords.value.filter(r => r.type !== 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
-        });
-
-        const yearlyDepositsOutTotal = computed(() => {
-          return filteredDepositsRecords.value.filter(r => r.type === 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
-        });
-
-        const yearlyDepositsNetTotal = computed(() => yearlyDepositsInTotal.value - yearlyDepositsOutTotal.value);
-
-        const allTimeDepositsInTotal = computed(() => {
-          return depositsRecords.value.filter(r => r.type !== 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
-        });
-
-        const allTimeDepositsOutTotal = computed(() => {
-          return depositsRecords.value.filter(r => r.type === 'withdraw').reduce((s, r) => s + Number(r.amount), 0);
-        });
-
-        const allTimeDepositsNetTotal = computed(() => allTimeDepositsInTotal.value - allTimeDepositsOutTotal.value);
-
         const addDeposits = async () => {
           if (!depositsForm.amount) return;
-          let finalSGD = depositsForm.amount; let activeRate = 1.0;
-          if (depositsForm.currency === 'MYR') { finalSGD = parseFloat((depositsForm.amount / exchangeRate.value).toFixed(2)); activeRate = exchangeRate.value; }
-          else if (depositsForm.currency === 'CNY') { finalSGD = parseFloat((depositsForm.amount / exchangeRateCny.value).toFixed(2)); activeRate = exchangeRateCny.value; }
+          let finalSGD = depositsForm.amount;
+          let activeRate = 1.0;
+
+          if (depositsForm.currency === 'MYR') {
+            finalSGD = parseFloat((depositsForm.amount / exchangeRate.value).toFixed(2));
+            activeRate = exchangeRate.value;
+          } else if (depositsForm.currency === 'CNY') {
+            finalSGD = parseFloat((depositsForm.amount / exchangeRateCny.value).toFixed(2));
+            activeRate = exchangeRateCny.value;
+          }
 
           try {
             await supabaseClient.from('starry_deposits').insert([{
-              date: depositsForm.date,
               type: depositsForm.type,
               person: depositsForm.person,
               amount: finalSGD,
               original_amount: depositsForm.amount,
               currency: depositsForm.currency,
+              date: depositsForm.date,
               remark: depositsForm.remark,
               exchange_rate: activeRate
             }]);
@@ -1451,8 +1424,8 @@
             depositsForm.amount = null;
             depositsForm.remark = '';
             await fetchDepositsRecords();
-          } catch (e) {
-            console.error('添加存款记录失败:', e);
+          } catch (err) {
+            console.error('添加存款记录出错:', err);
           }
         };
 
@@ -1460,15 +1433,66 @@
           try {
             await supabaseClient.from('starry_deposits').delete().eq('id', id);
             await fetchDepositsRecords();
-          } catch (e) {
-            console.error('删除存款记录失败:', e);
+          } catch (err) {
+            console.error('删除存款记录出错:', err);
           }
         };
 
+        const availableDepositsYears = computed(() => {
+          const yearsSet = new Set([new Date().getFullYear()]);
+          depositsRecords.value.forEach(r => {
+            if (r.date) {
+              const yr = parseInt(r.date.split('-')[0]);
+              if (!isNaN(yr)) yearsSet.add(yr);
+            }
+          });
+          return Array.from(yearsSet).sort((a, b) => b - a);
+        });
+
+        const filteredDepositsRecords = computed(() => {
+          return depositsRecords.value.filter(r => {
+            if (!r.date) return false;
+            return parseInt(r.date.split('-')[0]) === parseInt(depositsSelectedYear.value);
+          });
+        });
+
+        const yearlyDepositsInTotal = computed(() => {
+          return filteredDepositsRecords.value
+            .filter(r => r.type === 'deposits' || !r.type)
+            .reduce((s, r) => s + Number(r.amount), 0);
+        });
+
+        const yearlyDepositsOutTotal = computed(() => {
+          return filteredDepositsRecords.value
+            .filter(r => r.type === 'withdraw')
+            .reduce((s, r) => s + Number(r.amount), 0);
+        });
+
+        const yearlyDepositsNetTotal = computed(() => {
+          return yearlyDepositsInTotal.value - yearlyDepositsOutTotal.value;
+        });
+
+        const allTimeDepositsInTotal = computed(() => {
+          return depositsRecords.value
+            .filter(r => r.type === 'deposits' || !r.type)
+            .reduce((s, r) => s + Number(r.amount), 0);
+        });
+
+        const allTimeDepositsOutTotal = computed(() => {
+          return depositsRecords.value
+            .filter(r => r.type === 'withdraw')
+            .reduce((s, r) => s + Number(r.amount), 0);
+        });
+
+        const allTimeDepositsNetTotal = computed(() => {
+          return allTimeDepositsInTotal.value - allTimeDepositsOutTotal.value;
+        });
+
         const exportDepositsToCSV = () => {
-          let csvStr = '\uFEFF' + '日期,类型,人员,金额(SGD),原币种,原金额,备注\n';
+          let csvStr = '\uFEFF' + '日期,类型,转钱成员,金额(SGD),原币种,原金额,备注\n';
           filteredDepositsRecords.value.forEach(r => {
-            csvStr += `"${r.date}","${r.type === 'withdraw' ? '提款' : '存款'}","${r.person}",${r.amount},"${r.currency || 'SGD'}",${r.original_amount || r.amount},"${r.remark || ''}"\n`;
+            const typeStr = r.type === 'withdraw' ? '提款' : '存款';
+            csvStr += `"${r.date}","${typeStr}","${r.person}",${r.amount},"${r.currency || 'SGD'}",${r.original_amount || r.amount},"${r.remark || ''}"\n`;
           });
           const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
           const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
@@ -1476,21 +1500,91 @@
         };
 
         return {
-          currentMode, exchangeSyncError, member1, member2, getOtherMember, exchangeRate, exchangeRateCny,
-          budgetM1, budgetM2, recurringList, checkingRecurring, categories, getCategoryDisplayName,
-          getCategoryIconOnly, records, loading, selectedMonth, selectedDay, showDatePicker,
-          activePicker, panelYear, selectedMonthText, selectedDayText, offsetDay, onDayPicked,
-          resetToToday, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth,
-          isCurrentSelected, filterRange, categoryRange, chartMember, filters, form, updateCloudBudget,
-          checkRecurringLedgers, autoProcessRecurring, offsetMonth, filteredRecords, summaryMetrics,
-          totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, m1TransferDeduction, m2TransferDeduction,
-          totalRatioSum, m1Percent, m2Percent, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget,
-          totalMonth, getBudgetColorClass, categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum,
-          dailyM1Percent, dailyM2Percent, chartTotalSum, chartSlices, addRecord, deleteRecord, exportToCSV,
-          depositsRecords, depositsLoading, depositsSelectedYear, depositsForm, availableDepositsYears,
-          filteredDepositsRecords, yearlyDepositsInTotal, yearlyDepositsOutTotal, yearlyDepositsNetTotal,
-          allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal, addDeposits,
-          deleteDepositsRecord, exportDepositsToCSV, getLocalDateString
+          currentMode,
+          exchangeSyncError,
+          member1,
+          member2,
+          exchangeRate,
+          exchangeRateCny,
+          budgetM1,
+          budgetM2,
+          getOtherMember,
+          categories,
+          getCategoryDisplayName,
+          getCategoryIconOnly,
+          records,
+          loading,
+          selectedMonth,
+          selectedDay,
+          showDatePicker,
+          activePicker,
+          panelYear,
+          selectedMonthText,
+          selectedDayText,
+          offsetDay,
+          onDayPicked,
+          resetToToday,
+          toggleDatePicker,
+          changePanelYear,
+          selectPanelMonth,
+          selectCurrentMonth,
+          isCurrentSelected,
+          filterRange,
+          categoryRange,
+          chartMember,
+          filters,
+          form,
+          updateCloudBudget,
+          recurringList,
+          checkingRecurring,
+          checkRecurringLedgers,
+          autoProcessRecurring,
+          offsetMonth,
+          filteredRecords,
+          summaryMetrics,
+          totalTodayM1,
+          totalTodayM2,
+          totalThisWeekM1,
+          totalThisWeekM2,
+          m1TransferDeduction,
+          m2TransferDeduction,
+          totalRatioSum,
+          m1Percent,
+          m2Percent,
+          remainM1,
+          remainM2,
+          m1PercentOfBudget,
+          m2PercentOfBudget,
+          totalMonth,
+          getBudgetColorClass,
+          categoryComparison,
+          dailyM1Sum,
+          daily2Sum,
+          dailyTotalSum,
+          dailyM1Percent,
+          dailyM2Percent,
+          chartTotalSum,
+          chartSlices,
+          addRecord,
+          deleteRecord,
+          exportToCSV,
+          // 存款模式导出
+          depositsRecords,
+          depositsLoading,
+          depositsSelectedYear,
+          depositsForm,
+          addDeposits,
+          deleteDepositsRecord,
+          availableDepositsYears,
+          filteredDepositsRecords,
+          yearlyDepositsInTotal,
+          yearlyDepositsOutTotal,
+          yearlyDepositsNetTotal,
+          allTimeDepositsInTotal,
+          allTimeDepositsOutTotal,
+          allTimeDepositsNetTotal,
+          exportDepositsToCSV,
+          getLocalDateString
         };
       }
     }).mount('#app');

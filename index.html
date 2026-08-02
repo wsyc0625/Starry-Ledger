@@ -247,7 +247,6 @@
                 <label class="block text-[10px] md:text-[11px] text-pink-300/80 font-medium">选择分类</label>
                 <span v-if="form.category.includes('转账')" class="text-[9px] text-amber-300 font-bold animate-pulse">💡 自动减少 {{ getOtherMember(form.payer) }} 消费 $</span>
               </div>
-              <!-- 手机端 5列对称完美排布 -->
               <div class="grid grid-cols-5 gap-1.5">
                 <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
                   :class="form.category === cat ? (cat.includes('转账') ? 'bg-amber-950/90 border-amber-400 text-amber-200 font-bold shadow-[0_0_12px_rgba(245,158,11,0.5)]' : 'bg-pink-950/80 border-pink-400 text-pink-200 font-bold shadow-[0_0_12px_rgba(244,63,94,0.4)]') : 'bg-purple-950/30 border-purple-900/40 text-purple-300/70 hover:bg-purple-950/60'" class="flex flex-col items-center justify-center py-2 rounded-xl border transition group">
@@ -389,8 +388,8 @@
           </div>
         </div>
 
-        <!-- 每30天自动记账检查中心 (优化支持：修改 & 删除) -->
-        <div class="glass-card rounded-2xl p-4 border border-indigo-500/30 bg-gradient-to-br from-indigo-950/30 to-purple-950/50 space-y-3">
+        <!-- 每30天自动记账检查中心 -->
+        <div class="hidden lg:block glass-card rounded-2xl p-4 border border-indigo-500/30 bg-gradient-to-br from-indigo-950/30 to-purple-950/50 space-y-3">
           <div class="flex items-center justify-between border-b border-purple-900/60 pb-2">
             <h3 class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
               <i class="fa-solid fa-rotate text-indigo-400 animate-spin" style="animation-duration: 8s;"></i>
@@ -418,7 +417,6 @@
                 </p>
               </div>
 
-              <!-- 操作按钮组：修改、删除、补记 -->
               <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
                 <button @click="editRecurringItem(rec)" class="bg-purple-900/80 hover:bg-purple-800 text-purple-200 border border-purple-600/50 text-[9px] px-2 py-1 rounded-xl transition flex items-center gap-1">
                   <i class="fa-solid fa-pen-to-square"></i>
@@ -1145,6 +1143,49 @@
           } catch (err) { console.error(err); } finally { loading.value = false; }
         };
 
+        const addRecord = async () => {
+          if (!form.amount || form.amount <= 0) return;
+          let finalSGD = form.amount;
+          let activeRate = 1.0;
+
+          if (form.currency === 'MYR') {
+            finalSGD = parseFloat((form.amount / exchangeRate.value).toFixed(2));
+            activeRate = exchangeRate.value;
+          } else if (form.currency === 'CNY') {
+            finalSGD = parseFloat((form.amount / exchangeRateCny.value).toFixed(2));
+            activeRate = exchangeRateCny.value;
+          }
+
+          try {
+            await supabaseClient.from('starry_ledger').insert([{
+              date: form.date,
+              amount: finalSGD,
+              original_amount: form.amount,
+              currency: form.currency,
+              category: form.category,
+              payer: form.payer,
+              remark: form.remark,
+              exchange_rate: activeRate
+            }]);
+            form.amount = null;
+            form.remark = '';
+            await fetchRecords();
+            await checkRecurringLedgers();
+          } catch (e) {
+            console.error('添加记录失败:', e);
+          }
+        };
+
+        const deleteRecord = async (id) => {
+          try {
+            await supabaseClient.from('starry_ledger').delete().eq('id', id);
+            await fetchRecords();
+            await checkRecurringLedgers();
+          } catch (e) {
+            console.error('删除记录失败:', e);
+          }
+        };
+
         const checkRecurringLedgers = async () => {
           checkingRecurring.value = true;
           try {
@@ -1207,7 +1248,6 @@
           }
         };
 
-        // 编辑修改中心项目
         const editRecurringItem = (item) => {
           editForm.id = item.id;
           editForm.payer = item.payer;
@@ -1387,137 +1427,88 @@
           return calcPersonExpense(filteredBase, member2.value, member1.value);
         });
 
-        const dailyTotalSum = computed(() => chartMember.value === 'm1' ? dailyM1Sum.value : (chartMember.value === 'm2' ? daily2Sum.value : dailyM1Sum.value + daily2Sum.value));
-        const dailyM1Percent = computed(() => (dailyM1Sum.value + daily2Sum.value) > 0 ? Math.round((dailyM1Sum.value / (dailyM1Sum.value + daily2Sum.value)) * 100) : 0);
-        const dailyM2Percent = computed(() => (dailyM1Sum.value + daily2Sum.value) > 0 ? 100 - dailyM1Percent.value : 0);
+        const dailyTotalSum = computed(() => dailyM1Sum.value + daily2Sum.value);
+        const dailyM1Percent = computed(() => dailyTotalSum.value > 0 ? Math.round((Math.max(0, dailyM1Sum.value) / dailyTotalSum.value) * 100) : 0);
+        const dailyM2Percent = computed(() => dailyTotalSum.value > 0 ? 100 - dailyM1Percent.value : 0);
 
         const chartTotalSum = computed(() => {
-          return dailyTotalSum.value.toFixed(2);
+          let sum = 0;
+          categoryComparison.value.forEach(item => { sum += item.total; });
+          return sum.toFixed(2);
         });
 
         const chartSlices = computed(() => {
-          const totalSumVal = Math.abs(parseFloat(chartTotalSum.value)) || 1; const circumference = 345.57;
-          let rawSlices = [];
-          let filteredBase = records.value;
-          if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
-          else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
-          const validRecords = filteredBase.filter(r => r.category !== '居住房租 Housing');
+          const total = parseFloat(chartTotalSum.value);
+          if (total <= 0) return [];
 
-          categories.filter(c => c !== '居住房租 Housing').forEach(cat => {
-            let catSum = 0;
-            if (chartMember.value === 'all') {
-              if (cat.includes('转账')) {
-                catSum = 0;
-              } else {
-                catSum = validRecords.filter(r => r.category === cat).reduce((s, r) => s + Number(r.amount), 0);
-              }
-            } else {
-              const p = chartMember.value === 'm1' ? member1.value : member2.value;
-              const otherP = chartMember.value === 'm1' ? member2.value : member1.value;
-              if (cat.includes('转账')) {
-                const myTf = validRecords.filter(r => r.category === cat && r.payer === p).reduce((s, r) => s + Number(r.amount), 0);
-                const otherTf = validRecords.filter(r => r.category === cat && r.payer === otherP).reduce((s, r) => s + Number(r.amount), 0);
-                catSum = myTf - otherTf;
-              } else {
-                catSum = validRecords.filter(r => r.category === cat && r.payer === p).reduce((s, r) => s + Number(r.amount), 0);
-              }
-            }
-            if (catSum !== 0) rawSlices.push({ id: cat, displayName: getCategoryDisplayName(cat), total: catSum, color: categoryColors[cat] || '#ffffff' });
-          });
+          let accumulatedOffset = 0;
+          const circumference = 2 * Math.PI * 55; // SVG r=55
 
-          rawSlices.sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
-          let accumulatedPercent = 0;
-          return rawSlices.map(slice => {
-            const percent = Math.abs(slice.total) / totalSumVal; const percentageText = Math.round(percent * 100);
-            const offset = circumference - (accumulatedPercent * circumference);
-            const strokeLength = percent * circumference;
-            const dashArray = `${strokeLength} ${circumference - strokeLength}`;
-            accumulatedPercent += percent;
-            return { ...slice, percentage: percentageText, dashArray: dashArray, offset: offset };
+          return categoryComparison.value.map((item, idx) => {
+            const pct = Math.max(0, item.total) / total;
+            const strokeDash = pct * circumference;
+            const dashArray = `${strokeDash} ${circumference}`;
+            const offset = -accumulatedOffset;
+            accumulatedOffset += strokeDash;
+
+            return {
+              id: idx,
+              displayName: getCategoryDisplayName(item.cat),
+              percentage: Math.round(pct * 100),
+              color: categoryColors[item.cat] || '#ec4899',
+              dashArray,
+              offset
+            };
           });
         });
 
-        const addRecord = async () => {
-          if (!form.amount) return;
-          let finalSGD = form.amount; let activeRate = 1.0;
-          if (form.currency === 'MYR') { finalSGD = parseFloat((form.amount / exchangeRate.value).toFixed(2)); activeRate = exchangeRate.value; }
-          else if (form.currency === 'CNY') { finalSGD = parseFloat((form.amount / exchangeRateCny.value).toFixed(2)); activeRate = exchangeRateCny.value; }
-
-          try {
-            await supabaseClient.from('starry_ledger').insert([{ 
-              date: form.date, amount: finalSGD, original_amount: form.amount, currency: form.currency, category: form.category, payer: form.payer, remark: form.remark, exchange_rate: activeRate 
-            }]);
-
-            if (form.category.includes('固定月费')) {
-              const baseDate = new Date(form.date); 
-              baseDate.setDate(baseDate.getDate() + 30);
-              const nextDateStr = baseDate.toISOString().split('T')[0];
-
-              await supabaseClient.from('starry_ledger').insert([{ 
-                date: nextDateStr, 
-                amount: finalSGD, 
-                original_amount: form.amount, 
-                currency: form.currency, 
-                category: form.category, 
-                payer: form.payer, 
-                remark: form.remark ? `${form.remark} (30天自动续流)` : '(30天自动续流)', 
-                exchange_rate: activeRate 
-              }]);
-            }
-
-            form.amount = null; form.remark = '';
-            await fetchRecords();
-            await checkRecurringLedgers();
-          } catch (err) { console.error(err); }
-        };
-
-        const deleteRecord = async (id) => {
-          try {
-            await supabaseClient.from('starry_ledger').delete().eq('id', id);
-            await fetchRecords();
-            await checkRecurringLedgers();
-          } catch (err) { console.error(err); }
-        };
-
         const exportToCSV = () => {
-          let csvStr = '\uFEFF' + '日期,支付人,金额(SGD),原币种,原金额,分类,备注\n';
+          if (filteredRecords.value.length === 0) return;
+          let csv = '日期,支付人,分类,金额(SGD),原金额,原币种,备注\n';
           filteredRecords.value.forEach(r => {
-            csvStr += `"${r.date}","${r.payer}",${r.amount},"${r.currency || 'SGD'}",${r.original_amount || r.amount},"${r.category}","${r.remark || ''}"\n`;
+            csv += `"${r.date}","${r.payer}","${r.category}","${r.amount}","${r.original_amount || r.amount}","${r.currency || 'SGD'}","${r.remark || ''}"\n`;
           });
-          const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-          link.download = `Kuromi_Ledger_${selectedMonth.value}.csv`; link.click();
+          const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `kuromi_ledger_${getLocalDateString()}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         };
 
-        // ==================== 存款模式逻辑 ====================
+        // ------------------ 2. 存款模式相关 ------------------
         const depositsRecords = ref([]);
         const depositsLoading = ref(false);
         const depositsSelectedYear = ref(new Date().getFullYear());
+
         const depositsForm = reactive({
-          type: 'deposits', person: defaultUser, amount: null, currency: 'SGD', date: getLocalDateString(), remark: ''
+          type: 'deposits',
+          person: defaultUser,
+          amount: null,
+          currency: 'SGD',
+          date: getLocalDateString(),
+          remark: ''
         });
 
         const fetchDepositsRecords = async () => {
           depositsLoading.value = true;
           try {
-            const { data, error } = await supabaseClient.from('starry_deposits').select('*').order('date', { ascending: false });
-            if (!error && data) {
-              depositsRecords.value = data;
-              localStorage.setItem('local_starry_deposits', JSON.stringify(data));
-            } else {
-              const localData = localStorage.getItem('local_starry_deposits');
-              depositsRecords.value = localData ? JSON.parse(localData) : [];
-            }
-          } catch (err) {
-            const localData = localStorage.getItem('local_starry_deposits');
-            depositsRecords.value = localData ? JSON.parse(localData) : [];
+            const { data, error } = await supabaseClient
+              .from('starry_deposits')
+              .select('*')
+              .order('date', { ascending: false });
+            if (!error && data) { depositsRecords.value = data; }
+          } catch (e) {
+            console.error('获取存款数据失败:', e);
           } finally {
             depositsLoading.value = false;
           }
         };
 
         const addDeposits = async () => {
-          if (!depositsForm.amount) return;
+          if (!depositsForm.amount || depositsForm.amount <= 0) return;
           let finalSGD = depositsForm.amount;
           let activeRate = 1.0;
 
@@ -1530,23 +1521,21 @@
           }
 
           try {
-            const record = {
+            await supabaseClient.from('starry_deposits').insert([{
+              date: depositsForm.date,
               type: depositsForm.type,
               person: depositsForm.person,
               amount: finalSGD,
               original_amount: depositsForm.amount,
               currency: depositsForm.currency,
-              date: depositsForm.date,
               remark: depositsForm.remark,
               exchange_rate: activeRate
-            };
-
-            await supabaseClient.from('starry_deposits').insert([record]);
+            }]);
             depositsForm.amount = null;
             depositsForm.remark = '';
             await fetchDepositsRecords();
-          } catch (err) {
-            console.error(err);
+          } catch (e) {
+            console.error('保存存款失败:', e);
           }
         };
 
@@ -1554,8 +1543,8 @@
           try {
             await supabaseClient.from('starry_deposits').delete().eq('id', id);
             await fetchDepositsRecords();
-          } catch (err) {
-            console.error(err);
+          } catch (e) {
+            console.error('删除存款记录失败:', e);
           }
         };
 
@@ -1566,49 +1555,71 @@
         });
 
         const filteredDepositsRecords = computed(() => {
-          return depositsRecords.value.filter(r => new Date(r.date).getFullYear() === depositsSelectedYear.value);
+          return depositsRecords.value.filter(r => new Date(r.date).getFullYear() === Number(depositsSelectedYear.value));
         });
 
-        const yearlyDepositsInTotal = computed(() => filteredDepositsRecords.value.filter(r => r.type === 'deposits').reduce((sum, r) => sum + Number(r.amount), 0));
-        const yearlyDepositsOutTotal = computed(() => filteredDepositsRecords.value.filter(r => r.type === 'withdraw').reduce((sum, r) => sum + Number(r.amount), 0));
+        const yearlyDepositsInTotal = computed(() => {
+          return filteredDepositsRecords.value.filter(r => r.type !== 'withdraw').reduce((sum, r) => sum + Number(r.amount), 0);
+        });
+
+        const yearlyDepositsOutTotal = computed(() => {
+          return filteredDepositsRecords.value.filter(r => r.type === 'withdraw').reduce((sum, r) => sum + Number(r.amount), 0);
+        });
+
         const yearlyDepositsNetTotal = computed(() => yearlyDepositsInTotal.value - yearlyDepositsOutTotal.value);
 
-        const allTimeDepositsInTotal = computed(() => depositsRecords.value.filter(r => r.type === 'deposits').reduce((sum, r) => sum + Number(r.amount), 0));
-        const allTimeDepositsOutTotal = computed(() => depositsRecords.value.filter(r => r.type === 'withdraw').reduce((sum, r) => sum + Number(r.amount), 0));
+        const allTimeDepositsInTotal = computed(() => {
+          return depositsRecords.value.filter(r => r.type !== 'withdraw').reduce((sum, r) => sum + Number(r.amount), 0);
+        });
+
+        const allTimeDepositsOutTotal = computed(() => {
+          return depositsRecords.value.filter(r => r.type === 'withdraw').reduce((sum, r) => sum + Number(r.amount), 0);
+        });
+
         const allTimeDepositsNetTotal = computed(() => allTimeDepositsInTotal.value - allTimeDepositsOutTotal.value);
 
         const exportDepositsToCSV = () => {
-          let csvStr = '\uFEFF' + '日期,类型,人员,金额(SGD),原币种,原金额,备注\n';
+          if (filteredDepositsRecords.value.length === 0) return;
+          let csv = '日期,类型,人员,金额(SGD),原金额,币种,备注\n';
           filteredDepositsRecords.value.forEach(r => {
-            csvStr += `"${r.date}","${r.type === 'deposits' ? '存款' : '提款'}","${r.person}",${r.amount},"${r.currency || 'SGD'}",${r.original_amount || r.amount},"${r.remark || ''}"\n`;
+            csv += `"${r.date}","${r.type === 'withdraw' ? '提款' : '存款'}","${r.person}","${r.amount}","${r.original_amount || r.amount}","${r.currency || 'SGD'}","${r.remark || ''}"\n`;
           });
-          const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-          link.download = `Kuromi_Deposits_${depositsSelectedYear.value}.csv`; link.click();
+          const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `kuromi_deposits_${depositsSelectedYear.value}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         };
 
         return {
-          currentMode, exchangeSyncError, member1, member2, getOtherMember,
-          exchangeRate, exchangeRateCny, budgetM1, budgetM2, updateCloudBudget,
-          categories, getCategoryDisplayName, getCategoryIconOnly,
-          records, loading, selectedMonth, selectedDay, selectedMonthText, selectedDayText,
-          showDatePicker, activePicker, panelYear, toggleDatePicker, changePanelYear,
-          selectPanelMonth, selectCurrentMonth, isCurrentSelected,
+          currentMode,
+          exchangeSyncError,
+          member1, member2,
+          exchangeRate, exchangeRateCny,
+          budgetM1, budgetM2,
+          getOtherMember, categories, getCategoryDisplayName, getCategoryIconOnly,
+          records, loading, selectedMonth, selectedDay,
+          selectedMonthText, selectedDayText, offsetDay, onDayPicked, resetToToday,
+          showDatePicker, activePicker, panelYear, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected,
           filterRange, categoryRange, chartMember, filters, form,
-          addRecord, deleteRecord, exportToCSV, offsetMonth, offsetDay, onDayPicked, resetToToday,
-          filteredRecords, summaryMetrics,
-          totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2,
-          m1TransferDeduction, m2TransferDeduction, totalRatioSum, m1Percent, m2Percent,
-          remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, totalMonth,
-          getBudgetColorClass, categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum,
-          dailyM1Percent, dailyM2Percent, chartTotalSum, chartSlices,
+          getLocalDateString, updateCloudBudget,
+          addRecord, deleteRecord,
           recurringList, checkingRecurring, checkRecurringLedgers, autoProcessRecurring,
           showEditModal, editForm, editRecurringItem, editRecordItem, submitEditRecord,
+          offsetMonth, filteredRecords, summaryMetrics,
+          totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2,
+          m1TransferDeduction, m2TransferDeduction, totalRatioSum, m1Percent, m2Percent,
+          remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, totalMonth, getBudgetColorClass,
+          categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum, dailyM1Percent, dailyM2Percent,
+          chartTotalSum, chartSlices, exportToCSV,
+          // 存款模式
           depositsRecords, depositsLoading, depositsSelectedYear, depositsForm,
-          fetchDepositsRecords, addDeposits, deleteDepositsRecord, availableDepositsYears,
-          filteredDepositsRecords, yearlyDepositsInTotal, yearlyDepositsOutTotal,
-          yearlyDepositsNetTotal, allTimeDepositsInTotal, allTimeDepositsOutTotal,
-          allTimeDepositsNetTotal, exportDepositsToCSV, getLocalDateString
+          addDeposits, deleteDepositsRecord, availableDepositsYears, filteredDepositsRecords,
+          yearlyDepositsInTotal, yearlyDepositsOutTotal, yearlyDepositsNetTotal,
+          allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal, exportDepositsToCSV
         };
       }
     }).mount('#app');

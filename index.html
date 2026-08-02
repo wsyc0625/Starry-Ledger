@@ -229,7 +229,7 @@
             </div>
 
             <div>
-              <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">消费金额</label>
+              <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">消费/转账金额</label>
               <div class="flex gap-2">
                 <div class="relative flex-1">
                   <span class="absolute left-3 top-1.5 md:top-2 text-pink-400 font-bold text-xs md:text-sm font-mono text-glow-pink">{{ form.currency }}</span>
@@ -244,10 +244,13 @@
             </div>
 
             <div>
-              <label class="block text-[10px] md:text-[11px] text-pink-300/80 mb-1 font-medium">选择分类</label>
-              <div class="grid grid-cols-3 gap-1.5">
+              <div class="flex justify-between items-center mb-1">
+                <label class="block text-[10px] md:text-[11px] text-pink-300/80 font-medium">选择分类</label>
+                <span v-if="form.category.includes('转账')" class="text-[9px] text-amber-300 font-bold animate-pulse">💡 自动减少 {{ getOtherMember(form.payer) }} 消费 $</span>
+              </div>
+              <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
                 <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
-                  :class="form.category === cat ? 'bg-pink-950/80 border-pink-400 text-pink-200 font-bold shadow-[0_0_12px_rgba(244,63,94,0.4)]' : 'bg-purple-950/30 border-purple-900/40 text-purple-300/70 hover:bg-purple-950/60'" class="flex flex-col items-center justify-center py-2 rounded-xl border transition group">
+                  :class="form.category === cat ? (cat.includes('转账') ? 'bg-amber-950/90 border-amber-400 text-amber-200 font-bold shadow-[0_0_12px_rgba(245,158,11,0.5)]' : 'bg-pink-950/80 border-pink-400 text-pink-200 font-bold shadow-[0_0_12px_rgba(244,63,94,0.4)]') : 'bg-purple-950/30 border-purple-900/40 text-purple-300/70 hover:bg-purple-950/60'" class="flex flex-col items-center justify-center py-2 rounded-xl border transition group">
                   <i :class="getCategoryIconOnly(cat)" class="text-sm md:text-base mb-1 transition-transform group-hover:scale-125 group-hover:drop-shadow-[0_0_6px_rgba(244,63,94,0.8)]"></i>
                   <span class="text-[9px] truncate w-full text-center px-0.5 font-medium tracking-tight">{{ getCategoryDisplayName(cat) }}</span>
                 </button>
@@ -276,13 +279,20 @@
         <div class="glass-card rounded-2xl p-3 md:p-4 space-y-3">
           <h3 class="text-xs font-bold text-pink-200 flex items-center gap-1.5">
             <i class="fa-solid fa-chart-pie text-pink-400 animate-kuromi-breathe"></i>数据汇总看板
-            <span class="text-[9px] text-purple-400/60 font-normal ml-auto">(不含房租)</span>
+            <span class="text-[9px] text-amber-400/90 font-medium ml-auto flex items-center gap-1">
+              <i class="fa-solid fa-circle-info"></i>转账已自动抵扣对方消费
+            </span>
           </h3>
           
           <div class="space-y-2">
             <div class="bg-purple-950/40 p-2.5 rounded-xl border border-purple-800/50 space-y-1.5 shadow-[inset_0_0_10px_rgba(192,132,252,0.08)]">
               <div class="flex justify-between items-center">
-                <span class="text-xs font-bold text-purple-300 text-glow-purple">{{ member1 }}</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-purple-300 text-glow-purple">{{ member1 }}</span>
+                  <span v-if="m1TransferDeduction > 0" class="text-[8px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 py-0.2 rounded font-sans">
+                    💡 转账扣减 -S$ {{ m1TransferDeduction.toFixed(2) }}
+                  </span>
+                </div>
                 <div class="text-[9px] md:text-[10px] text-purple-400/80 flex items-center gap-1">
                   <span>每月预算:</span>
                   <div class="flex items-center gap-0.5 font-mono text-purple-200 font-bold bg-purple-950/90 px-1.5 py-0.5 rounded border border-purple-700/80">
@@ -307,7 +317,12 @@
 
             <div class="bg-rose-950/30 p-2.5 rounded-xl border border-rose-900/50 space-y-1.5 shadow-[inset_0_0_10px_rgba(244,63,94,0.08)]">
               <div class="flex justify-between items-center">
-                <span class="text-xs font-bold text-pink-300 text-glow-pink">{{ member2 }}</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-pink-300 text-glow-pink">{{ member2 }}</span>
+                  <span v-if="m2TransferDeduction > 0" class="text-[8px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 py-0.2 rounded font-sans">
+                    💡 转账扣减 -S$ {{ m2TransferDeduction.toFixed(2) }}
+                  </span>
+                </div>
                 <div class="text-[9px] md:text-[10px] text-purple-400/80 flex items-center gap-1">
                   <span>每月预算:</span>
                   <div class="flex items-center gap-0.5 font-mono text-pink-200 font-bold bg-purple-950/90 px-1.5 py-0.5 rounded border border-rose-800/80">
@@ -368,7 +383,7 @@
             </div>
             
             <div class="text-right">
-              <span class="text-[9px] md:text-[10px] text-purple-400/60 font-medium">当月账轨总计:</span>
+              <span class="text-[9px] md:text-[10px] text-purple-400/60 font-medium">当月净消费支出:</span>
               <p class="text-xs md:text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-300 font-mono text-glow-pink">S$ {{ totalMonth }}</p>
             </div>
           </div>
@@ -474,7 +489,7 @@
                   cx="75" cy="75" r="55" fill="transparent" :stroke="slice.color" stroke-width="12" :stroke-dasharray="slice.dashArray" :stroke-dashoffset="slice.offset" class="chart-ring" />
               </svg>
               <div class="absolute inset-0 flex flex-col justify-center items-center text-center">
-                <span class="text-[9px] text-purple-400/60 uppercase tracking-widest font-bold truncate max-w-[80px]">{{ chartMember === 'all' ? '总支出' : (chartMember === 'm1' ? member1 : member2) }}</span>
+                <span class="text-[9px] text-purple-400/60 uppercase tracking-widest font-bold truncate max-w-[80px]">{{ chartMember === 'all' ? '总净支出' : (chartMember === 'm1' ? member1 : member2) }}</span>
                 <span class="text-base font-black text-purple-100 font-mono mt-0.5 text-glow-pink">S$ {{ chartTotalSum }}</span>
               </div>
             </div>
@@ -485,6 +500,7 @@
                 <div class="flex items-center gap-1.5 truncate w-[75%]">
                   <span class="w-2 h-2 rounded-full flex-shrink-0 animate-pulse" :style="{ backgroundColor: slice.color, boxShadow: `0 0 6px ${slice.color}` }"></span>
                   <span class="text-purple-200 font-medium truncate">{{ slice.displayName }}</span>
+                  <span v-if="slice.displayName.includes('转账')" class="text-[8px] text-amber-400/90 font-sans">(抵扣)</span>
                 </div>
                 <span class="font-mono text-purple-400 font-bold w-[25%] text-right">{{ slice.percentage }}%</span>
               </div>
@@ -507,15 +523,22 @@
                   <td colspan="5" class="py-4 text-center text-purple-400/50 italic">暂无星芒记录</td>
                 </tr>
                 <template v-else>
-                  <tr v-for="row in categoryComparison" :key="row.cat" class="border-b border-purple-900/40 hover:bg-purple-900/30 transition" :class="{'opacity-50 italic bg-purple-950/20': row.cat.includes('居住房租')}">
+                  <tr v-for="row in categoryComparison" :key="row.cat" class="border-b border-purple-900/40 hover:bg-purple-900/30 transition" :class="{'opacity-50 italic bg-purple-950/20': row.cat.includes('居住房租'), 'bg-amber-950/20': row.cat.includes('转账')}">
                     <td class="py-2 text-left flex items-center gap-1.5">
                       <i :class="getCategoryIconOnly(row.cat)" class="text-xs"></i>
                       <span class="font-bold text-purple-100">{{ getCategoryDisplayName(row.cat) }}</span>
                       <span v-if="row.cat.includes('居住房租')" class="px-1.5 py-0.2 rounded bg-rose-500/10 border border-rose-500/30 text-[8px] text-rose-400 font-sans tracking-tight scale-90">不计入日常预算</span>
+                      <span v-if="row.cat.includes('转账')" class="px-1.5 py-0.2 rounded bg-amber-500/20 border border-amber-500/40 text-[8px] text-amber-300 font-sans tracking-tight scale-90">⇄ 扣账抵扣</span>
                     </td>
-                    <td class="py-2 text-right font-mono text-purple-300" :class="{'font-black text-glow-purple': chartMember === 'm1'}">S$ {{ row.m1.toFixed(2) }}</td>
-                    <td class="py-2 text-right font-mono text-pink-300" :class="{'font-black text-glow-pink': chartMember === 'm2'}">S$ {{ row.m2.toFixed(2) }}</td>
-                    <td class="py-2 text-right font-mono font-bold text-purple-100">S$ {{ row.total.toFixed(2) }}</td>
+                    <td class="py-2 text-right font-mono" :class="[row.m1 < 0 ? 'text-amber-400 font-bold' : 'text-purple-300', chartMember === 'm1' ? 'font-black text-glow-purple' : '']">
+                      S$ {{ row.m1.toFixed(2) }}
+                    </td>
+                    <td class="py-2 text-right font-mono" :class="[row.m2 < 0 ? 'text-amber-400 font-bold' : 'text-pink-300', chartMember === 'm2' ? 'font-black text-glow-pink' : '']">
+                      S$ {{ row.m2.toFixed(2) }}
+                    </td>
+                    <td class="py-2 text-right font-mono font-bold" :class="row.total < 0 ? 'text-amber-400' : 'text-purple-100'">
+                      S$ {{ row.total.toFixed(2) }}
+                    </td>
                     <td class="py-2 text-right font-mono text-[9px] text-purple-400/60 font-bold">{{ row.ratio }}%</td>
                   </tr>
 
@@ -610,7 +633,7 @@
             <div class="bg-purple-950/40 px-3 py-1.5 rounded-xl border border-purple-900/60 flex justify-between items-center text-[10px] md:text-[11px] font-mono shadow-inner">
               <span class="text-purple-400/60 font-medium">{{ summaryMetrics.count }} 笔记录</span>
               <div class="flex items-center gap-1">
-                <span class="text-purple-400/60">选项总合:</span>
+                <span class="text-purple-400/60">净支出总合:</span>
                 <span class="text-pink-400 font-black text-xs md:text-sm text-glow-pink">S$ {{ summaryMetrics.sum.toFixed(2) }}</span>
               </div>
             </div>
@@ -620,7 +643,7 @@
           <div class="space-y-2 max-h-[350px] md:max-h-[440px] overflow-y-auto pr-0.5">
             <div v-if="loading" class="text-center py-4 text-purple-400/50"><i class="fa-solid fa-circle-notch animate-spin text-xs mb-1"></i><p class="text-[9px]">正在同步云端...</p></div>
             <div v-else-if="filteredRecords.length === 0" class="text-center py-6 text-purple-400/50 text-xs italic">暂无星芒记录</div>
-            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex items-center justify-between p-2 md:p-2.5 rounded-xl bg-purple-950/40 border border-purple-900/80 hover:border-pink-600/60 transition hover:shadow-[0_0_12px_rgba(244,63,94,0.2)]" :class="{'border-rose-900/60 bg-rose-950/10': item.category.includes('居住房租')}">
+            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex items-center justify-between p-2 md:p-2.5 rounded-xl bg-purple-950/40 border border-purple-900/80 hover:border-pink-600/60 transition hover:shadow-[0_0_12px_rgba(244,63,94,0.2)]" :class="{'border-rose-900/60 bg-rose-950/10': item.category.includes('居住房租'), 'border-amber-500/40 bg-amber-950/10': item.category.includes('转账')}">
               <div class="flex items-center gap-2 truncate">
                 <span :class="item.payer === member1 ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-rose-500/20 text-pink-300 border-rose-500/30'" class="text-[8px] md:text-[9px] px-2 py-0.5 rounded-full font-bold border flex-shrink-0">{{ item.payer }}</span>
                 <div class="truncate">
@@ -628,6 +651,9 @@
                     <i :class="getCategoryIconOnly(item.category)" class="text-xs"></i>
                     <span class="text-xs font-bold text-purple-100">{{ getCategoryDisplayName(item.category) }}</span>
                     <span v-if="item.category.includes('居住房租')" class="text-[8px] text-rose-400/70 scale-90 origin-left">(不计入日常预算)</span>
+                    <span v-if="item.category.includes('转账')" class="text-[8px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 py-0.2 rounded font-sans">
+                      ⇄ 扣除 {{ getOtherMember(item.payer) }} 消费
+                    </span>
                     <span v-if="item.remark" class="text-[9px] md:text-[10px] text-purple-300/60 font-medium truncate max-w-[120px] sm:max-w-none"> - {{ item.remark }}</span>
                   </div>
                   <p class="text-[8px] md:text-[9px] text-purple-400/50 font-mono">{{ item.date }}</p>
@@ -635,7 +661,9 @@
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
                 <div class="text-right">
-                  <p class="text-xs font-black text-purple-100 font-mono">S$ {{ Number(item.amount).toFixed(2) }}</p>
+                  <p :class="item.category.includes('转账') ? 'text-amber-300 font-bold' : 'text-purple-100'" class="text-xs font-black font-mono">
+                    {{ item.category.includes('转账') ? '-' : '' }}S$ {{ Number(item.amount).toFixed(2) }}
+                  </p>
                   <p v-if="item.currency && item.currency !== 'SGD'" class="text-[8px] md:text-[9px] font-mono font-bold" :class="item.currency === 'CNY' ? 'text-rose-400/80' : 'text-pink-400/80'">
                     ({{ item.currency === 'MYR' ? 'RM' : '¥' }} {{ Number(item.original_amount).toFixed(2) }})
                   </p>
@@ -867,16 +895,18 @@
         watch(member1, (val) => localStorage.setItem('member1', val));
         watch(member2, (val) => localStorage.setItem('member2', val));
 
+        const getOtherMember = (p) => (p === member1.value ? member2.value : member1.value);
+
         const categories = [
           '日常伙食 Daily Meal', '餐厅聚餐 Restaurant', '交通出行 Transport', 
           '购物消费 Shopping', '休闲娱乐 Fun', '居住房租 Housing', 
-          '固定月费 Subscriptions', 'JB', '其他 Miscellaneous'
+          '固定月费 Subscriptions', 'JB', '转账 Transfer', '其他 Miscellaneous'
         ];
 
         const categoryColors = {
           '日常伙食 Daily Meal': '#e879f9', '餐厅聚餐 Restaurant': '#f43f5e', '交通出行 Transport': '#38bdf8',
           '购物消费 Shopping': '#fb7185', '休闲娱乐 Fun': '#34d399', '居住房租 Housing': '#a855f7',
-          '固定月费 Subscriptions': '#818cf8', 'JB': '#c084fc', '其他 Miscellaneous': '#2dd4bf'
+          '固定月费 Subscriptions': '#818cf8', 'JB': '#c084fc', '转账 Transfer': '#f59e0b', '其他 Miscellaneous': '#2dd4bf'
         };
 
         const getCategoryDisplayName = (cat) => (cat ? cat.split(' ')[0] : '');
@@ -890,6 +920,7 @@
           if (cat.includes('娱乐')) return 'fa-solid fa-gamepad text-emerald-400';
           if (cat.includes('居住房租')) return 'fa-solid fa-house text-purple-400';
           if (cat.includes('固定月费')) return 'fa-solid fa-receipt text-indigo-400';
+          if (cat.includes('转账')) return 'fa-solid fa-money-bill-transfer text-amber-400';
           if (cat === 'JB' || cat.includes('JB')) return 'fa-solid fa-location-dot text-pink-300';
           return 'fa-solid fa-heart text-rose-400';
         };
@@ -1026,7 +1057,6 @@
           } catch (err) { console.error(err); }
         };
 
-        // 核心修复点：精确计算月末与年末日期，防止 31 日因为 ISO/UTC 时区偏移丢失
         const fetchRecords = async () => {
           loading.value = true;
           try {
@@ -1037,7 +1067,6 @@
               end = `${y}-12-31`;
             } else {
               start = `${selectedMonth.value}-01`;
-              // 使用 Date(y, m, 0) 正确获取当月最后一天的真实日期（如 31 日）
               const lastDay = new Date(y, m, 0).getDate();
               end = `${selectedMonth.value}-${String(lastDay).padStart(2, '0')}`;
             }
@@ -1135,17 +1164,46 @@
           return list;
         });
 
-        const summaryMetrics = computed(() => ({ count: filteredRecords.value.length, sum: filteredRecords.value.reduce((acc, item) => acc + Number(item.amount), 0) }));
+        // 包含转账抵扣的个人消费核心计算算法
+        const calcPersonExpense = (recordList, person, otherPerson) => {
+          return recordList.reduce((sum, r) => {
+            if (r.category && r.category.includes('居住房租')) return sum;
+            if (r.category && r.category.includes('转账')) {
+              // 对方发起转账 -> 扣减本人的消费支出!
+              if (r.payer === otherPerson) return sum - Number(r.amount);
+              return sum;
+            }
+            if (r.payer === person) return sum + Number(r.amount);
+            return sum;
+          }, 0);
+        };
 
-        const totalTodayM1 = computed(() => records.value.filter(r => r.payer === member1.value && r.date === getLocalDateString() && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
-        const totalTodayM2 = computed(() => records.value.filter(r => r.payer === member2.value && r.date === getLocalDateString() && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
-        const totalThisWeekM1 = computed(() => records.value.filter(r => r.payer === member1.value && r.date >= getMondayOfThisWeek() && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
-        const totalThisWeekM2 = computed(() => records.value.filter(r => r.payer === member2.value && r.date >= getMondayOfThisWeek() && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+        const summaryMetrics = computed(() => {
+          const sum = filteredRecords.value.reduce((acc, item) => {
+            if (item.category && item.category.includes('转账')) {
+              return acc - Number(item.amount);
+            }
+            return acc + Number(item.amount);
+          }, 0);
+          return { count: filteredRecords.value.length, sum };
+        });
 
-        const m1TotalNum = computed(() => records.value.filter(r => r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0));
-        const m2TotalNum = computed(() => records.value.filter(r => r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0));
-        const totalRatioSum = computed(() => m1TotalNum.value + m2TotalNum.value);
-        const m1Percent = computed(() => totalRatioSum.value > 0 ? Math.round((m1TotalNum.value / totalRatioSum.value) * 100) : 50);
+        // 数据看板各时段统计（已融合转账抵扣逻辑）
+        const totalTodayM1 = computed(() => calcPersonExpense(records.value.filter(r => r.date === getLocalDateString()), member1.value, member2.value).toFixed(2));
+        const totalTodayM2 = computed(() => calcPersonExpense(records.value.filter(r => r.date === getLocalDateString()), member2.value, member1.value).toFixed(2));
+        
+        const totalThisWeekM1 = computed(() => calcPersonExpense(records.value.filter(r => r.date >= getMondayOfThisWeek()), member1.value, member2.value).toFixed(2));
+        const totalThisWeekM2 = computed(() => calcPersonExpense(records.value.filter(r => r.date >= getMondayOfThisWeek()), member2.value, member1.value).toFixed(2));
+
+        const m1TotalNum = computed(() => calcPersonExpense(records.value, member1.value, member2.value));
+        const m2TotalNum = computed(() => calcPersonExpense(records.value, member2.value, member1.value));
+
+        // 当月转账扣减小计提示
+        const m1TransferDeduction = computed(() => records.value.filter(r => r.payer === member2.value && r.category && r.category.includes('转账')).reduce((s, r) => s + Number(r.amount), 0));
+        const m2TransferDeduction = computed(() => records.value.filter(r => r.payer === member1.value && r.category && r.category.includes('转账')).reduce((s, r) => s + Number(r.amount), 0));
+
+        const totalRatioSum = computed(() => Math.max(0, m1TotalNum.value) + Math.max(0, m2TotalNum.value));
+        const m1Percent = computed(() => totalRatioSum.value > 0 ? Math.round((Math.max(0, m1TotalNum.value) / totalRatioSum.value) * 100) : 50);
         const m2Percent = computed(() => totalRatioSum.value > 0 ? 100 - m1Percent.value : 50);
 
         const remainM1 = computed(() => ((budgetM1.value || 0) - m1TotalNum.value).toFixed(2));
@@ -1154,7 +1212,7 @@
         const m1PercentOfBudget = computed(() => budgetM1.value ? Math.round((m1TotalNum.value / budgetM1.value) * 100) : 0);
         const m2PercentOfBudget = computed(() => budgetM2.value ? Math.round((m2TotalNum.value / budgetM2.value) * 100) : 0);
 
-        const totalMonth = computed(() => records.value.reduce((s, r) => s + Number(r.amount), 0).toFixed(2));
+        const totalMonth = computed(() => (m1TotalNum.value + m2TotalNum.value).toFixed(2));
 
         const getBudgetColorClass = (percent, budget) => {
           if (!budget) return 'text-purple-200'; 
@@ -1168,34 +1226,49 @@
           if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
           else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
 
-          let totalRangeSum = 0;
-          if (chartMember.value === 'all') totalRangeSum = filteredBase.reduce((s, r) => s + Number(r.amount), 0) || 1;
-          else if (chartMember.value === 'm1') totalRangeSum = filteredBase.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0) || 1;
-          else if (chartMember.value === 'm2') totalRangeSum = filteredBase.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0) || 1;
+          const m1TotalExp = calcPersonExpense(filteredBase, member1.value, member2.value);
+          const m2TotalExp = calcPersonExpense(filteredBase, member2.value, member1.value);
+
+          let totalRangeSum = 1;
+          if (chartMember.value === 'all') totalRangeSum = (m1TotalExp + m2TotalExp) || 1;
+          else if (chartMember.value === 'm1') totalRangeSum = m1TotalExp || 1;
+          else if (chartMember.value === 'm2') totalRangeSum = m2TotalExp || 1;
 
           return categories.map(cat => {
             const catRecords = filteredBase.filter(r => r.category === cat);
-            const m1Sum = catRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
-            const m2Sum = catRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
+            let m1Sum = 0;
+            let m2Sum = 0;
+
+            if (cat.includes('转账')) {
+              const m2ToM1 = catRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
+              const m1ToM2 = catRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
+              m1Sum = -m2ToM1;
+              m2Sum = -m1ToM2;
+            } else {
+              m1Sum = catRecords.filter(r => r.payer === member1.value).reduce((s, r) => s + Number(r.amount), 0);
+              m2Sum = catRecords.filter(r => r.payer === member2.value).reduce((s, r) => s + Number(r.amount), 0);
+            }
+
             let displayedTotal = m1Sum + m2Sum;
             if (chartMember.value === 'm1') displayedTotal = m1Sum;
             if (chartMember.value === 'm2') displayedTotal = m2Sum;
-            return { cat, m1: m1Sum, m2: m2Sum, total: displayedTotal, ratio: Math.round((displayedTotal / totalRangeSum) * 100) };
-          }).filter(item => item.total > 0).sort((a, b) => b.total - a.total);
+
+            return { cat, m1: m1Sum, m2: m2Sum, total: displayedTotal, ratio: Math.round((Math.abs(displayedTotal) / Math.abs(totalRangeSum)) * 100) || 0 };
+          }).filter(item => item.m1 !== 0 || item.m2 !== 0 || item.total !== 0).sort((a, b) => b.total - a.total);
         });
 
         const dailyM1Sum = computed(() => {
           let filteredBase = records.value;
           if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
           else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
-          return filteredBase.filter(r => r.payer === member1.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0);
+          return calcPersonExpense(filteredBase, member1.value, member2.value);
         });
 
         const daily2Sum = computed(() => {
           let filteredBase = records.value;
           if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
           else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
-          return filteredBase.filter(r => r.payer === member2.value && r.category !== '居住房租 Housing').reduce((s, r) => s + Number(r.amount), 0);
+          return calcPersonExpense(filteredBase, member2.value, member1.value);
         });
 
         const dailyTotalSum = computed(() => chartMember.value === 'm1' ? dailyM1Sum.value : (chartMember.value === 'm2' ? daily2Sum.value : dailyM1Sum.value + daily2Sum.value));
@@ -1203,41 +1276,43 @@
         const dailyM2Percent = computed(() => (dailyM1Sum.value + daily2Sum.value) > 0 ? 100 - dailyM1Percent.value : 0);
 
         const chartTotalSum = computed(() => {
-          if (chartMember.value === 'all') {
-            let filteredBase = records.value;
-            if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
-            else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
-            return filteredBase.filter(r => r.category !== '居住房租 Housing').reduce((sum, r) => sum + Number(r.amount), 0).toFixed(2);
-          }
-          return categoryComparison.value.filter(item => item.cat !== '居住房租 Housing').reduce((sum, item) => sum + item.total, 0).toFixed(2);
+          return dailyTotalSum.value.toFixed(2);
         });
 
         const chartSlices = computed(() => {
-          const totalSumVal = parseFloat(chartTotalSum.value) || 1; const circumference = 345.57;
+          const totalSumVal = Math.abs(parseFloat(chartTotalSum.value)) || 1; const circumference = 345.57;
           let rawSlices = [];
           let filteredBase = records.value;
           if (categoryRange.value === 'today') filteredBase = records.value.filter(r => r.date === getLocalDateString());
           else if (categoryRange.value === 'week') filteredBase = records.value.filter(r => r.date >= getMondayOfThisWeek());
           const validRecords = filteredBase.filter(r => r.category !== '居住房租 Housing');
 
-          if (chartMember.value === 'all') {
-            categories.filter(c => c !== '居住房租 Housing').forEach(cat => {
-              const catSum = validRecords.filter(r => r.category === cat).reduce((sum, r) => sum + Number(r.amount), 0);
-              if (catSum > 0) rawSlices.push({ id: cat, displayName: getCategoryDisplayName(cat), total: catSum, color: categoryColors[cat] || '#ffffff' });
-            });
-          } else {
-            const activeMember = chartMember.value === 'm1' ? member1.value : member2.value;
-            const memberRecords = validRecords.filter(r => r.payer === activeMember);
-            categories.filter(c => c !== '居住房租 Housing').forEach(cat => {
-              const catSum = memberRecords.filter(r => r.category === cat).reduce((sum, r) => sum + Number(r.amount), 0);
-              if (catSum > 0) rawSlices.push({ id: cat, displayName: getCategoryDisplayName(cat), total: catSum, color: categoryColors[cat] || '#ffffff' });
-            });
-          }
+          categories.filter(c => c !== '居住房租 Housing').forEach(cat => {
+            let catSum = 0;
+            if (chartMember.value === 'all') {
+              if (cat.includes('转账')) {
+                const transfers = validRecords.filter(r => r.category === cat).reduce((s, r) => s + Number(r.amount), 0);
+                catSum = -transfers;
+              } else {
+                catSum = validRecords.filter(r => r.category === cat).reduce((s, r) => s + Number(r.amount), 0);
+              }
+            } else {
+              const p = chartMember.value === 'm1' ? member1.value : member2.value;
+              const otherP = chartMember.value === 'm1' ? member2.value : member1.value;
+              if (cat.includes('转账')) {
+                const tf = validRecords.filter(r => r.category === cat && r.payer === otherP).reduce((s, r) => s + Number(r.amount), 0);
+                catSum = -tf;
+              } else {
+                catSum = validRecords.filter(r => r.category === cat && r.payer === p).reduce((s, r) => s + Number(r.amount), 0);
+              }
+            }
+            if (catSum !== 0) rawSlices.push({ id: cat, displayName: getCategoryDisplayName(cat), total: catSum, color: categoryColors[cat] || '#ffffff' });
+          });
 
-          rawSlices.sort((a, b) => b.total - a.total);
+          rawSlices.sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
           let accumulatedPercent = 0;
           return rawSlices.map(slice => {
-            const percent = slice.total / totalSumVal; const percentageText = Math.round(percent * 100);
+            const percent = Math.abs(slice.total) / totalSumVal; const percentageText = Math.round(percent * 100);
             const offset = circumference - (accumulatedPercent * circumference);
             const strokeLength = percent * circumference;
             const dashArray = `${strokeLength} ${circumference - strokeLength}`;
@@ -1401,17 +1476,17 @@
         };
 
         return {
-          currentMode, exchangeSyncError, member1, member2, exchangeRate, exchangeRateCny,
+          currentMode, exchangeSyncError, member1, member2, getOtherMember, exchangeRate, exchangeRateCny,
           budgetM1, budgetM2, recurringList, checkingRecurring, categories, getCategoryDisplayName,
           getCategoryIconOnly, records, loading, selectedMonth, selectedDay, showDatePicker,
           activePicker, panelYear, selectedMonthText, selectedDayText, offsetDay, onDayPicked,
           resetToToday, toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth,
           isCurrentSelected, filterRange, categoryRange, chartMember, filters, form, updateCloudBudget,
           checkRecurringLedgers, autoProcessRecurring, offsetMonth, filteredRecords, summaryMetrics,
-          totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, totalRatioSum, m1Percent, m2Percent,
-          remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, totalMonth, getBudgetColorClass,
-          categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum, dailyM1Percent, dailyM2Percent,
-          chartTotalSum, chartSlices, addRecord, deleteRecord, exportToCSV,
+          totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2, m1TransferDeduction, m2TransferDeduction,
+          totalRatioSum, m1Percent, m2Percent, remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget,
+          totalMonth, getBudgetColorClass, categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum,
+          dailyM1Percent, dailyM2Percent, chartTotalSum, chartSlices, addRecord, deleteRecord, exportToCSV,
           depositsRecords, depositsLoading, depositsSelectedYear, depositsForm, availableDepositsYears,
           filteredDepositsRecords, yearlyDepositsInTotal, yearlyDepositsOutTotal, yearlyDepositsNetTotal,
           allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal, addDeposits,

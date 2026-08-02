@@ -187,7 +187,6 @@
           <span class="text-rose-300 font-bold">CNY {{ exchangeRateCny.toFixed(2) }}</span>
         </div>
         
-        <!-- 右上方切换：记账 / 存款 模式 -->
         <button @click="currentMode = currentMode === 'ledger' ? 'deposits' : 'ledger'" class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white px-3 py-1 rounded-full border border-pink-400/60 transition font-bold tracking-wider hover:shadow-[0_0_12px_rgba(244,63,94,0.8)] flex items-center gap-1.5">
           <i :class="currentMode === 'ledger' ? 'fa-solid fa-piggy-bank' : 'fa-solid fa-receipt'"></i>
           <span>{{ currentMode === 'ledger' ? '存款模式' : '记账模式' }}</span>
@@ -248,7 +247,8 @@
                 <label class="block text-[10px] md:text-[11px] text-pink-300/80 font-medium">选择分类</label>
                 <span v-if="form.category.includes('转账')" class="text-[9px] text-amber-300 font-bold animate-pulse">💡 自动减少 {{ getOtherMember(form.payer) }} 消费 $</span>
               </div>
-              <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+              <!-- 手机端 5列对称完美排布 -->
+              <div class="grid grid-cols-5 gap-1.5">
                 <button v-for="cat in categories" :key="cat" type="button" @click="form.category = cat" 
                   :class="form.category === cat ? (cat.includes('转账') ? 'bg-amber-950/90 border-amber-400 text-amber-200 font-bold shadow-[0_0_12px_rgba(245,158,11,0.5)]' : 'bg-pink-950/80 border-pink-400 text-pink-200 font-bold shadow-[0_0_12px_rgba(244,63,94,0.4)]') : 'bg-purple-950/30 border-purple-900/40 text-purple-300/70 hover:bg-purple-950/60'" class="flex flex-col items-center justify-center py-2 rounded-xl border transition group">
                   <i :class="getCategoryIconOnly(cat)" class="text-sm md:text-base mb-1 transition-transform group-hover:scale-125 group-hover:drop-shadow-[0_0_6px_rgba(244,63,94,0.8)]"></i>
@@ -389,8 +389,8 @@
           </div>
         </div>
 
-        <!-- 每30天自动记账控制中心 -->
-        <div class="hidden lg:block glass-card rounded-2xl p-4 border border-indigo-500/30 bg-gradient-to-br from-indigo-950/30 to-purple-950/50 space-y-3">
+        <!-- 每30天自动记账检查中心 (优化支持：修改 & 删除) -->
+        <div class="glass-card rounded-2xl p-4 border border-indigo-500/30 bg-gradient-to-br from-indigo-950/30 to-purple-950/50 space-y-3">
           <div class="flex items-center justify-between border-b border-purple-900/60 pb-2">
             <h3 class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
               <i class="fa-solid fa-rotate text-indigo-400 animate-spin" style="animation-duration: 8s;"></i>
@@ -406,21 +406,33 @@
             <div v-if="recurringList.length === 0" class="text-center py-3 text-purple-400/60 italic">
               暂无需要补充的自动扣费记录
             </div>
-            <div v-else v-for="rec in recurringList" :key="rec.id" class="bg-purple-950/60 p-2.5 rounded-xl border border-indigo-900/50 flex items-center justify-between">
+            <div v-else v-for="rec in recurringList" :key="rec.id" class="bg-purple-950/60 p-2.5 rounded-xl border border-indigo-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div class="space-y-0.5 truncate">
                 <div class="flex items-center gap-1.5">
                   <span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[8px] px-1.5 py-0.5 rounded font-bold">{{ rec.payer }}</span>
                   <span class="font-bold text-purple-100 truncate">{{ rec.remark || getCategoryDisplayName(rec.category) }}</span>
+                  <span class="text-pink-300 font-mono font-bold">S$ {{ Number(rec.amount).toFixed(2) }}</span>
                 </div>
                 <p class="text-[9px] text-purple-400/70 font-mono">
                   上次记账: {{ rec.date }} <span class="text-rose-400 font-bold">(已超 {{ rec.daysPassed }} 天)</span>
                 </p>
               </div>
 
-              <button @click="autoProcessRecurring(rec)" class="bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold text-[9px] px-2.5 py-1 rounded-xl shadow-[0_0_8px_rgba(99,102,241,0.5)] transition flex items-center gap-1 shrink-0">
-                <i class="fa-solid fa-plus-circle"></i>
-                <span>补记(+30天)</span>
-              </button>
+              <!-- 操作按钮组：修改、删除、补记 -->
+              <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                <button @click="editRecurringItem(rec)" class="bg-purple-900/80 hover:bg-purple-800 text-purple-200 border border-purple-600/50 text-[9px] px-2 py-1 rounded-xl transition flex items-center gap-1">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                  <span>修改</span>
+                </button>
+                <button @click="deleteRecord(rec.id)" class="bg-rose-950/80 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 text-[9px] px-2 py-1 rounded-xl transition flex items-center gap-1">
+                  <i class="fa-solid fa-trash-can"></i>
+                  <span>删除</span>
+                </button>
+                <button @click="autoProcessRecurring(rec)" class="bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold text-[9px] px-2.5 py-1 rounded-xl shadow-[0_0_8px_rgba(99,102,241,0.5)] transition flex items-center gap-1">
+                  <i class="fa-solid fa-plus-circle"></i>
+                  <span>补记(+30天)</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -668,7 +680,8 @@
                     ({{ item.currency === 'MYR' ? 'RM' : '¥' }} {{ Number(item.original_amount).toFixed(2) }})
                   </p>
                 </div>
-                <button type="button" @click="deleteRecord(item.id)" class="text-rose-400/70 p-1 hover:text-rose-400 transition"><i class="fa-regular fa-trash-can text-xs"></i></button>
+                <button type="button" @click="editRecordItem(item)" class="text-purple-400 hover:text-purple-200 transition p-1" title="修改"><i class="fa-solid fa-pen-to-square text-xs"></i></button>
+                <button type="button" @click="deleteRecord(item.id)" class="text-rose-400/70 p-1 hover:text-rose-400 transition" title="删除"><i class="fa-regular fa-trash-can text-xs"></i></button>
               </div>
             </div>
           </div>
@@ -678,9 +691,7 @@
 
     <!-- ==================== 2. 存款模式视图 ==================== -->
     <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-      <!-- 左侧：新增存款记录与年度控制 -->
       <main class="lg:col-span-5 space-y-4">
-        <!-- 新增存款表单 -->
         <div class="glass-card rounded-2xl p-3 md:p-4">
           <h2 class="text-xs md:text-base font-bold mb-3 text-pink-200 flex items-center gap-2">
             <i class="fa-solid fa-piggy-bank text-pink-400 animate-kuromi-breathe"></i> 记录每笔转钱 ✨
@@ -741,7 +752,6 @@
           </form>
         </div>
 
-        <!-- 存款总和与年份快捷查询 -->
         <div class="glass-card rounded-2xl p-4 border border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 to-purple-950/40 space-y-3">
           <div class="flex justify-between items-center">
             <span class="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
@@ -753,7 +763,6 @@
             </select>
           </div>
 
-          <!-- 当年存款总合 -->
           <div class="p-3 bg-purple-950/60 rounded-xl border border-purple-800/60 text-center space-y-1">
             <p class="text-[10px] text-purple-300/70 font-medium">{{ depositsSelectedYear }} 年度净存款总额 (S$)</p>
             <p :class="{'text-negative-pulse': yearlyDepositsNetTotal < 0}" class="text-xl md:text-2xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-pink-300 text-glow-emerald">
@@ -766,7 +775,6 @@
             </div>
           </div>
 
-          <!-- 全部存款总合 -->
           <div class="p-2.5 bg-emerald-950/40 rounded-xl border border-emerald-500/30 text-center space-y-1">
             <div class="flex justify-between items-center px-1">
               <span class="text-[10px] font-bold text-emerald-300">🌟 历年净存款总合</span>
@@ -783,7 +791,6 @@
         </div>
       </main>
 
-      <!-- 右侧：存款流水明细列表 -->
       <section class="lg:col-span-7 space-y-4">
         <div class="glass-card rounded-2xl p-3 md:p-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
@@ -802,7 +809,6 @@
             </div>
           </div>
 
-          <!-- 存款/提款总合统计卡片 -->
           <div class="grid grid-cols-3 gap-2 mb-3 bg-purple-950/40 p-2.5 rounded-xl border border-emerald-500/30 text-center font-mono">
             <div class="bg-purple-950/60 p-2 rounded-lg border border-purple-800/40">
               <span class="text-[9px] text-purple-300/70 block">当年存款</span>
@@ -854,6 +860,69 @@
         </div>
       </section>
     </div>
+
+    <!-- 全局编辑/修改弹窗对话框 -->
+    <transition name="fade">
+      <div v-if="showEditModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl p-5 w-full max-w-md border border-pink-500/50 space-y-4 shadow-2xl bg-purple-950/95">
+          <div class="flex justify-between items-center border-b border-purple-800/80 pb-2">
+            <h3 class="text-sm font-bold text-pink-200 flex items-center gap-2">
+              <i class="fa-solid fa-pen-to-square text-pink-400"></i> 修改账目明细
+            </h3>
+            <button @click="showEditModal = false" class="text-purple-400 hover:text-white text-base">✕</button>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block text-[10px] text-purple-300 mb-1 font-medium">支付人</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" @click="editForm.payer = member1" :class="editForm.payer === member1 ? 'bg-purple-900/80 border-purple-400 text-purple-200 font-bold' : 'bg-purple-950/40 text-purple-400 border-purple-900/60'" class="py-1.5 rounded-xl border text-xs">
+                  {{ member1 }}
+                </button>
+                <button type="button" @click="editForm.payer = member2" :class="editForm.payer === member2 ? 'bg-rose-900/80 border-rose-400 text-pink-200 font-bold' : 'bg-purple-950/40 text-purple-400 border-purple-900/60'" class="py-1.5 rounded-xl border text-xs">
+                  {{ member2 }}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] text-purple-300 mb-1 font-medium">金额与币种</label>
+              <div class="flex gap-2">
+                <input type="number" step="0.01" v-model.number="editForm.amount" required class="flex-1 bg-purple-900/60 border border-purple-700/80 rounded-xl px-3 py-1.5 text-white font-mono focus:outline-none focus:border-pink-400">
+                <select v-model="editForm.currency" class="bg-purple-900/60 border border-purple-700/80 rounded-xl px-2 font-mono text-purple-200">
+                  <option value="SGD">SGD</option>
+                  <option value="MYR">MYR</option>
+                  <option value="CNY">CNY</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] text-purple-300 mb-1 font-medium">分类</label>
+              <select v-model="editForm.category" class="w-full bg-purple-900/60 border border-purple-700/80 rounded-xl px-3 py-1.5 text-purple-200">
+                <option v-for="cat in categories" :key="cat" :value="cat">{{ getCategoryDisplayName(cat) }}</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2">
+              <div class="col-span-5">
+                <label class="block text-[10px] text-purple-300 mb-1 font-medium">日期</label>
+                <input type="date" v-model="editForm.date" class="w-full bg-purple-900/60 border border-purple-700/80 rounded-xl px-2 py-1.5 text-purple-200 font-mono">
+              </div>
+              <div class="col-span-7">
+                <label class="block text-[10px] text-purple-300 mb-1 font-medium">备注</label>
+                <input type="text" v-model="editForm.remark" class="w-full bg-purple-900/60 border border-purple-700/80 rounded-xl px-3 py-1.5 text-purple-200">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-2 pt-2">
+            <button type="button" @click="showEditModal = false" class="flex-1 bg-purple-950 border border-purple-800 text-purple-300 py-2 rounded-xl text-xs font-bold">取消</button>
+            <button type="button" @click="submitEditRecord" class="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white py-2 rounded-xl text-xs font-bold shadow-[0_0_12px_rgba(244,63,94,0.5)]">保存修改</button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 
   <script>
@@ -875,7 +944,7 @@
 
     createApp({
       setup() {
-        const currentMode = ref('ledger'); // 'ledger' | 'deposits'
+        const currentMode = ref('ledger');
         const exchangeSyncError = ref(false);
 
         const member1 = ref(localStorage.getItem('member1') || '小星');
@@ -888,10 +957,12 @@
         const budgetM1 = ref(null);
         const budgetM2 = ref(null);
 
-        // 30天自动循环记账相关变量
+        // 30天自动循环记账相关变量与编辑弹窗
         const recurringList = ref([]);
         const checkingRecurring = ref(false);
-        
+        const showEditModal = ref(false);
+        const editForm = reactive({ id: null, payer: '', amount: null, currency: 'SGD', category: '', date: '', remark: '' });
+
         watch(member1, (val) => localStorage.setItem('member1', val));
         watch(member2, (val) => localStorage.setItem('member2', val));
 
@@ -1090,7 +1161,7 @@
               const targetRecords = data.filter(r => (r.category && r.category.includes('固定月费')) || (r.remark && r.remark.includes('30天自动')));
 
               for (const item of targetRecords) {
-                const key = `${item.payer}_${item.category}_${item.original_amount}`;
+                const key = `${item.payer}_${item.category}_${item.original_amount || item.amount}`;
                 if (!checkedKeys.has(key)) {
                   checkedKeys.add(key);
                   const lastDate = new Date(item.date);
@@ -1121,7 +1192,7 @@
             await supabaseClient.from('starry_ledger').insert([{
               date: nextDateStr,
               amount: item.amount,
-              original_amount: item.original_amount,
+              original_amount: item.original_amount || item.amount,
               currency: item.currency || 'SGD',
               category: item.category,
               payer: item.payer,
@@ -1133,6 +1204,55 @@
             await fetchRecords();
           } catch (e) {
             console.error('补充计费记录失败:', e);
+          }
+        };
+
+        // 编辑修改中心项目
+        const editRecurringItem = (item) => {
+          editForm.id = item.id;
+          editForm.payer = item.payer;
+          editForm.amount = item.original_amount || item.amount;
+          editForm.currency = item.currency || 'SGD';
+          editForm.category = item.category;
+          editForm.date = item.date;
+          editForm.remark = item.remark || '';
+          showEditModal.value = true;
+        };
+
+        const editRecordItem = (item) => {
+          editRecurringItem(item);
+        };
+
+        const submitEditRecord = async () => {
+          if (!editForm.id || !editForm.amount) return;
+          let finalSGD = editForm.amount;
+          let activeRate = 1.0;
+
+          if (editForm.currency === 'MYR') {
+            finalSGD = parseFloat((editForm.amount / exchangeRate.value).toFixed(2));
+            activeRate = exchangeRate.value;
+          } else if (editForm.currency === 'CNY') {
+            finalSGD = parseFloat((editForm.amount / exchangeRateCny.value).toFixed(2));
+            activeRate = exchangeRateCny.value;
+          }
+
+          try {
+            await supabaseClient.from('starry_ledger').update({
+              payer: editForm.payer,
+              amount: finalSGD,
+              original_amount: editForm.amount,
+              currency: editForm.currency,
+              category: editForm.category,
+              date: editForm.date,
+              remark: editForm.remark,
+              exchange_rate: activeRate
+            }).eq('id', editForm.id);
+
+            showEditModal.value = false;
+            await fetchRecords();
+            await checkRecurringLedgers();
+          } catch (e) {
+            console.error('修改记录失败:', e);
           }
         };
 
@@ -1369,7 +1489,7 @@
           link.download = `Kuromi_Ledger_${selectedMonth.value}.csv`; link.click();
         };
 
-        // ==================== 存款模式逻辑 (已补齐) ====================
+        // ==================== 存款模式逻辑 ====================
         const depositsRecords = ref([]);
         const depositsLoading = ref(false);
         const depositsSelectedYear = ref(new Date().getFullYear());
@@ -1410,7 +1530,7 @@
           }
 
           try {
-            await supabaseClient.from('starry_deposits').insert([{
+            const record = {
               type: depositsForm.type,
               person: depositsForm.person,
               amount: finalSGD,
@@ -1419,13 +1539,14 @@
               date: depositsForm.date,
               remark: depositsForm.remark,
               exchange_rate: activeRate
-            }]);
+            };
 
+            await supabaseClient.from('starry_deposits').insert([record]);
             depositsForm.amount = null;
             depositsForm.remark = '';
             await fetchDepositsRecords();
           } catch (err) {
-            console.error('添加存款记录出错:', err);
+            console.error(err);
           }
         };
 
@@ -1434,65 +1555,32 @@
             await supabaseClient.from('starry_deposits').delete().eq('id', id);
             await fetchDepositsRecords();
           } catch (err) {
-            console.error('删除存款记录出错:', err);
+            console.error(err);
           }
         };
 
         const availableDepositsYears = computed(() => {
-          const yearsSet = new Set([new Date().getFullYear()]);
-          depositsRecords.value.forEach(r => {
-            if (r.date) {
-              const yr = parseInt(r.date.split('-')[0]);
-              if (!isNaN(yr)) yearsSet.add(yr);
-            }
-          });
-          return Array.from(yearsSet).sort((a, b) => b - a);
+          const years = new Set(depositsRecords.value.map(r => new Date(r.date).getFullYear()));
+          years.add(new Date().getFullYear());
+          return Array.from(years).sort((a, b) => b - a);
         });
 
         const filteredDepositsRecords = computed(() => {
-          return depositsRecords.value.filter(r => {
-            if (!r.date) return false;
-            return parseInt(r.date.split('-')[0]) === parseInt(depositsSelectedYear.value);
-          });
+          return depositsRecords.value.filter(r => new Date(r.date).getFullYear() === depositsSelectedYear.value);
         });
 
-        const yearlyDepositsInTotal = computed(() => {
-          return filteredDepositsRecords.value
-            .filter(r => r.type === 'deposits' || !r.type)
-            .reduce((s, r) => s + Number(r.amount), 0);
-        });
+        const yearlyDepositsInTotal = computed(() => filteredDepositsRecords.value.filter(r => r.type === 'deposits').reduce((sum, r) => sum + Number(r.amount), 0));
+        const yearlyDepositsOutTotal = computed(() => filteredDepositsRecords.value.filter(r => r.type === 'withdraw').reduce((sum, r) => sum + Number(r.amount), 0));
+        const yearlyDepositsNetTotal = computed(() => yearlyDepositsInTotal.value - yearlyDepositsOutTotal.value);
 
-        const yearlyDepositsOutTotal = computed(() => {
-          return filteredDepositsRecords.value
-            .filter(r => r.type === 'withdraw')
-            .reduce((s, r) => s + Number(r.amount), 0);
-        });
-
-        const yearlyDepositsNetTotal = computed(() => {
-          return yearlyDepositsInTotal.value - yearlyDepositsOutTotal.value;
-        });
-
-        const allTimeDepositsInTotal = computed(() => {
-          return depositsRecords.value
-            .filter(r => r.type === 'deposits' || !r.type)
-            .reduce((s, r) => s + Number(r.amount), 0);
-        });
-
-        const allTimeDepositsOutTotal = computed(() => {
-          return depositsRecords.value
-            .filter(r => r.type === 'withdraw')
-            .reduce((s, r) => s + Number(r.amount), 0);
-        });
-
-        const allTimeDepositsNetTotal = computed(() => {
-          return allTimeDepositsInTotal.value - allTimeDepositsOutTotal.value;
-        });
+        const allTimeDepositsInTotal = computed(() => depositsRecords.value.filter(r => r.type === 'deposits').reduce((sum, r) => sum + Number(r.amount), 0));
+        const allTimeDepositsOutTotal = computed(() => depositsRecords.value.filter(r => r.type === 'withdraw').reduce((sum, r) => sum + Number(r.amount), 0));
+        const allTimeDepositsNetTotal = computed(() => allTimeDepositsInTotal.value - allTimeDepositsOutTotal.value);
 
         const exportDepositsToCSV = () => {
-          let csvStr = '\uFEFF' + '日期,类型,转钱成员,金额(SGD),原币种,原金额,备注\n';
+          let csvStr = '\uFEFF' + '日期,类型,人员,金额(SGD),原币种,原金额,备注\n';
           filteredDepositsRecords.value.forEach(r => {
-            const typeStr = r.type === 'withdraw' ? '提款' : '存款';
-            csvStr += `"${r.date}","${typeStr}","${r.person}",${r.amount},"${r.currency || 'SGD'}",${r.original_amount || r.amount},"${r.remark || ''}"\n`;
+            csvStr += `"${r.date}","${r.type === 'deposits' ? '存款' : '提款'}","${r.person}",${r.amount},"${r.currency || 'SGD'}",${r.original_amount || r.amount},"${r.remark || ''}"\n`;
           });
           const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
           const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
@@ -1500,91 +1588,27 @@
         };
 
         return {
-          currentMode,
-          exchangeSyncError,
-          member1,
-          member2,
-          exchangeRate,
-          exchangeRateCny,
-          budgetM1,
-          budgetM2,
-          getOtherMember,
-          categories,
-          getCategoryDisplayName,
-          getCategoryIconOnly,
-          records,
-          loading,
-          selectedMonth,
-          selectedDay,
-          showDatePicker,
-          activePicker,
-          panelYear,
-          selectedMonthText,
-          selectedDayText,
-          offsetDay,
-          onDayPicked,
-          resetToToday,
-          toggleDatePicker,
-          changePanelYear,
-          selectPanelMonth,
-          selectCurrentMonth,
-          isCurrentSelected,
-          filterRange,
-          categoryRange,
-          chartMember,
-          filters,
-          form,
-          updateCloudBudget,
-          recurringList,
-          checkingRecurring,
-          checkRecurringLedgers,
-          autoProcessRecurring,
-          offsetMonth,
-          filteredRecords,
-          summaryMetrics,
-          totalTodayM1,
-          totalTodayM2,
-          totalThisWeekM1,
-          totalThisWeekM2,
-          m1TransferDeduction,
-          m2TransferDeduction,
-          totalRatioSum,
-          m1Percent,
-          m2Percent,
-          remainM1,
-          remainM2,
-          m1PercentOfBudget,
-          m2PercentOfBudget,
-          totalMonth,
-          getBudgetColorClass,
-          categoryComparison,
-          dailyM1Sum,
-          daily2Sum,
-          dailyTotalSum,
-          dailyM1Percent,
-          dailyM2Percent,
-          chartTotalSum,
-          chartSlices,
-          addRecord,
-          deleteRecord,
-          exportToCSV,
-          // 存款模式导出
-          depositsRecords,
-          depositsLoading,
-          depositsSelectedYear,
-          depositsForm,
-          addDeposits,
-          deleteDepositsRecord,
-          availableDepositsYears,
-          filteredDepositsRecords,
-          yearlyDepositsInTotal,
-          yearlyDepositsOutTotal,
-          yearlyDepositsNetTotal,
-          allTimeDepositsInTotal,
-          allTimeDepositsOutTotal,
-          allTimeDepositsNetTotal,
-          exportDepositsToCSV,
-          getLocalDateString
+          currentMode, exchangeSyncError, member1, member2, getOtherMember,
+          exchangeRate, exchangeRateCny, budgetM1, budgetM2, updateCloudBudget,
+          categories, getCategoryDisplayName, getCategoryIconOnly,
+          records, loading, selectedMonth, selectedDay, selectedMonthText, selectedDayText,
+          showDatePicker, activePicker, panelYear, toggleDatePicker, changePanelYear,
+          selectPanelMonth, selectCurrentMonth, isCurrentSelected,
+          filterRange, categoryRange, chartMember, filters, form,
+          addRecord, deleteRecord, exportToCSV, offsetMonth, offsetDay, onDayPicked, resetToToday,
+          filteredRecords, summaryMetrics,
+          totalTodayM1, totalTodayM2, totalThisWeekM1, totalThisWeekM2,
+          m1TransferDeduction, m2TransferDeduction, totalRatioSum, m1Percent, m2Percent,
+          remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, totalMonth,
+          getBudgetColorClass, categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum,
+          dailyM1Percent, dailyM2Percent, chartTotalSum, chartSlices,
+          recurringList, checkingRecurring, checkRecurringLedgers, autoProcessRecurring,
+          showEditModal, editForm, editRecurringItem, editRecordItem, submitEditRecord,
+          depositsRecords, depositsLoading, depositsSelectedYear, depositsForm,
+          fetchDepositsRecords, addDeposits, deleteDepositsRecord, availableDepositsYears,
+          filteredDepositsRecords, yearlyDepositsInTotal, yearlyDepositsOutTotal,
+          yearlyDepositsNetTotal, allTimeDepositsInTotal, allTimeDepositsOutTotal,
+          allTimeDepositsNetTotal, exportDepositsToCSV, getLocalDateString
         };
       }
     }).mount('#app');

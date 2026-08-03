@@ -214,6 +214,74 @@
   }
 }
 
+.analytics-studio-title {
+  line-height: 1;
+  max-width: 100%;
+}
+
+.analytics-controls {
+  min-width: 0;
+}
+
+.analytics-control {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.analytics-control button {
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.analytics-chart-panel {
+  min-width: 0;
+}
+
+.analytics-chart-panel svg {
+  flex: 0 1 150px;
+  width: 150px;
+  min-width: 92px;
+}
+
+.chart-legend {
+  min-width: 0;
+}
+
+.chart-legend > div {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .analytics-studio-title {
+    font-size: 0.5rem !important;
+    letter-spacing: 0.04em !important;
+  }
+
+  .analytics-controls {
+    gap: 0.3rem !important;
+  }
+
+  .analytics-control {
+    max-width: 100%;
+    transform: scale(0.92);
+    transform-origin: left center;
+  }
+
+  .analytics-chart-panel svg {
+    width: 96px;
+    min-width: 96px;
+  }
+
+  .chart-legend {
+    font-size: 0.55rem !important;
+  }
+
+  .chart-legend span {
+    font-size: 0.55rem !important;
+  }
+}
+
+
   </style>
 </head>
 <body>
@@ -526,16 +594,18 @@
         <div class="glass-card rounded-2xl p-4 space-y-3">
           <div class="flex flex-col gap-2 border-b border-purple-900/60 pb-2.5">
             <div class="flex flex-col gap-0.5">
-              <h2 class="text-[10px] font-bold text-pink-400 tracking-widest uppercase flex items-center gap-1">
-                <span>Kuromi Analytics Studio</span> ✨
+              <h2 class="analytics-studio-title text-[8px] md:text-[10px] font-bold text-pink-400 tracking-[0.08em] uppercase flex items-center gap-1 min-w-0">
+                <span class="truncate">Kuromi Analytics Studio</span>
+                <span class="flex-shrink-0">✨</span>
               </h2>
+
               <h2 class="text-base font-black text-purple-100 flex items-center gap-1.5 leading-tight">
                 <i class="fa-solid fa-chart-line text-pink-400 animate-kuromi-breathe"></i>品类对比深度查询
               </h2>
             </div>
             
-            <div class="flex items-center gap-1.5 text-[10px]">
-              <div class="relative flex items-center bg-purple-950/90 px-1 py-0.5 rounded-xl border border-pink-900/80 h-6">
+            <div class="analytics-controls flex flex-wrap items-center gap-1.5 text-[9px] w-full min-w-0">
+              <div class="analytics-control relative flex items-center bg-purple-950/90 px-1 py-0.5 rounded-xl border border-pink-900/80 h-6 max-w-full">
                 <button type="button" @click="offsetMonth(-1)" class="text-purple-400 hover:text-pink-400 px-1.5 transition text-xs">◀</button>
                 <button type="button" @click.stop="toggleDatePicker('top')" class="px-1.5 font-bold font-mono text-purple-200 hover:text-pink-400 transition flex items-center gap-1">
                   <span>{{ selectedMonthText }}</span>
@@ -560,22 +630,22 @@
                 </transition>
               </div>
 
-              <div class="flex bg-purple-950/90 p-0.5 rounded-xl border border-purple-800/80 h-6 items-center">
+              <div class="analytics-control flex bg-purple-950/90 p-0.5 rounded-xl border border-purple-800/80 h-6 items-center max-w-full">
                 <button type="button" @click="chartMember = 'all'" :class="chartMember === 'all' ? 'bg-purple-900 text-purple-200 shadow-[0_0_6px_rgba(255,255,255,0.2)]' : 'text-purple-400/60 hover:text-purple-300'" class="px-2 py-0.5 rounded-lg transition font-bold">全部</button>
                 <button type="button" @click="chartMember = 'm1'" :class="chartMember === 'm1' ? 'bg-purple-600/30 text-purple-300 border border-purple-500/40 shadow-[0_0_6px_rgba(192,132,252,0.3)]' : 'text-purple-400/60 hover:text-purple-300'" class="px-2 py-0.5 rounded-lg transition font-bold truncate max-w-[55px]">{{ member1 }}</button>
                 <button type="button" @click="chartMember = 'm2'" :class="chartMember === 'm2' ? 'bg-rose-600/30 text-pink-300 border border-rose-500/40 shadow-[0_0_6px_rgba(244,63,94,0.3)]' : 'text-purple-400/60 hover:text-purple-300'" class="px-2 py-0.5 rounded-lg transition font-bold truncate max-w-[55px]">{{ member2 }}</button>
               </div>
 
-              <div class="flex bg-purple-950/90 p-0.5 rounded-xl border border-purple-800/80 h-6 items-center font-bold">
+              <div class="analytics-control flex bg-purple-950/90 p-0.5 rounded-xl border border-purple-800/80 h-6 items-center font-bold max-w-full">
                 <button type="button" @click="categoryRange = 'month'" :class="categoryRange === 'month' ? 'bg-pink-600/30 text-pink-300 border border-pink-500/40' : 'text-purple-400/60'" class="px-2 py-0.5 rounded-lg transition">本月</button>
                 <button type="button" @click="categoryRange = 'year'" :class="categoryRange === 'year' ? 'bg-pink-600/30 text-pink-300 border border-pink-500/40' : 'text-purple-400/60'" class="px-2 py-0.5 rounded-lg transition">全年</button>
               </div>
             </div>
           </div>
 
-          <div class="analytics-chart-panel flex items-center gap-4 bg-purple-950/40 p-3 rounded-xl border border-purple-900/60 shadow-inner">
+          <div class="analytics-chart-panel flex items-center gap-2 sm:gap-4 bg-purple-950/40 p-2 sm:p-3 rounded-xl border border-purple-900/60 shadow-inner min-w-0 overflow-hidden">
             <div class="w-2/5 flex justify-center relative flex-shrink-0">
-              <svg width="150" height="150" viewBox="0 0 150 150" class="transform -rotate-90">
+              <svg width="150" height="150" viewBox="0 0 150 150" class="transform -rotate-90 max-w-full h-auto">
                 <circle cx="75" cy="75" r="55" fill="transparent" stroke="#1c092c" stroke-width="12" />
                 <circle v-for="(slice, index) in chartSlices" :key="index"
                   cx="75" cy="75" r="55" fill="transparent" :stroke="slice.color" stroke-width="12" :stroke-dasharray="slice.dashArray" :stroke-dashoffset="slice.offset" class="chart-ring" />
@@ -586,15 +656,15 @@
               </div>
             </div>
 
-            <div class="chart-legend w-3/5 space-y-1 max-h-[140px] overflow-y-auto pr-1">
+            <div class="chart-legend w-3/5 min-w-0 space-y-1 max-h-[140px] overflow-y-auto pr-1">
               <div v-if="chartSlices.length === 0" class="text-center text-purple-400/50 text-[10px] py-6 italic">暂无星芒记录</div>
-              <div v-else v-for="slice in chartSlices" :key="slice.id" class="flex items-center justify-between text-[11px] py-0.5 px-1.5 rounded hover:bg-purple-900/40 transition">
-                <div class="flex items-center gap-1.5 truncate w-[75%]">
+              <div v-else v-for="slice in chartSlices" :key="slice.id" class="flex items-center justify-between gap-1 text-[10px] py-0.5 px-1 rounded hover:bg-purple-900/40 transition min-w-0">
+                <div class="flex items-center gap-1 truncate min-w-0 flex-1">
                   <span class="w-2 h-2 rounded-full flex-shrink-0 animate-pulse" :style="{ backgroundColor: slice.color, boxShadow: `0 0 6px ${slice.color}` }"></span>
                   <span class="text-purple-200 font-medium truncate">{{ slice.displayName }}</span>
                   <span v-if="slice.displayName.includes('转账')" class="text-[8px] text-amber-400/90 font-sans">(抵扣)</span>
                 </div>
-                <span class="font-mono text-purple-400 font-bold w-[25%] text-right">{{ slice.percentage }}%</span>
+                <span class="font-mono text-purple-400 font-bold flex-shrink-0 text-right text-[9px]">{{ slice.percentage }}%</span>
               </div>
             </div>
           </div>

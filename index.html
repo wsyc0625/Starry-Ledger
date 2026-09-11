@@ -229,8 +229,8 @@
       <!-- 左侧控制面板 -->
       <main class="lg:col-span-5 space-y-4">
         
-        <!-- 每30天自动记账检查中心 (优先显示) -->
-        <div class="glass-card rounded-2xl p-4 border border-indigo-500/40 bg-gradient-to-br from-indigo-950/40 to-purple-950/60 space-y-3 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
+        <!-- 每30天自动记账检查中心 (手机端隐藏, 桌面端保留) -->
+        <div class="hidden lg:block glass-card rounded-2xl p-4 border border-indigo-500/40 bg-gradient-to-br from-indigo-950/40 to-purple-950/60 space-y-3 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
           <div class="flex items-center justify-between border-b border-indigo-500/30 pb-2">
             <h3 class="text-xs md:text-sm font-bold text-indigo-300 flex items-center gap-2">
               <i class="fa-solid fa-rotate text-indigo-400 animate-spin" style="animation-duration: 8s;"></i>
@@ -1045,6 +1045,28 @@
         const activePicker = ref('top');
         const panelYear = ref(parseInt(selectedMonth.value.split('-')[0]));
 
+        const filterRange = ref('month');
+        const chartMember = ref('all');
+        const categoryRange = ref('month');
+
+        const filters = reactive({
+          keyword: '',
+          payer: 'all',
+          category: 'all',
+          currency: 'all',
+          sortByAmount: false
+        });
+
+        const form = reactive({
+          payer: defaultUser,
+          amount: null,
+          currency: 'SGD',
+          category: '日常伙食 Daily Meal',
+          transferCategory: '日常伙食 Daily Meal',
+          date: getLocalDateString(),
+          remark: ''
+        });
+
         // 存款模式数据结构与逻辑
         const depositsRecords = ref([]);
         const depositsLoading = ref(false);
@@ -1066,6 +1088,65 @@
           remark: ''
         });
 
+        const syncLiveExchangeRates = async () => {
+          try {
+            const res = await fetch('https://open.er-api.com/v6/latest/SGD');
+            const data = await res.json();
+            if (data && data.rates) {
+              if (data.rates.MYR) {
+                exchangeRate.value = data.rates.MYR;
+                localStorage.setItem('exchangeRate', data.rates.MYR);
+              }
+              if (data.rates.CNY) {
+                exchangeRateCny.value = data.rates.CNY;
+                localStorage.setItem('exchangeRateCny', data.rates.CNY);
+              }
+              exchangeSyncError.value = false;
+            }
+          } catch (e) {
+            console.warn('汇率获取失败，使用本地缓存', e);
+            exchangeSyncError.value = true;
+          }
+        };
+
+        const fetchCloudBudget = async () => {
+          try {
+            const { data } = await supabaseClient.from('starry_budgets').select('*');
+            if (data && data.length) {
+              data.forEach(b => {
+                if (b.person === 'M1') budgetM1.value = b.budget;
+                if (b.person === 'M2') budgetM2.value = b.budget;
+              });
+            }
+          } catch (e) { console.error('预算拉取失败', e); }
+        };
+
+        const updateCloudBudget = async () => {
+          try {
+            await supabaseClient.from('starry_budgets').upsert([
+              { person: 'M1', budget: budgetM1.value || 0 },
+              { person: 'M2', budget: budgetM2.value || 0 }
+            ]);
+          } catch (e) { console.error('预算更新失败', e); }
+        };
+
+        const fetchRecords = async () => {
+          loading.value = true;
+          try {
+            const { data, error } = await supabaseClient
+              .from('starry_ledger')
+              .select('*')
+              .order('date', { ascending: false });
+            if (!error && data) {
+              records.value = data;
+            }
+          } catch (e) {
+            console.error('获取流水失败:', e);
+          } finally {
+            loading.value = false;
+          }
+        };
+
         const fetchDepositsRecords = async () => {
           depositsLoading.value = true;
           try {
@@ -1081,6 +1162,149 @@
           } finally {
             depositsLoading.value = false;
           }
+        };
+
+        const addRecord = async () => {
+          if (!form.amount || form.amount <= 0) return;
+          let finalSGD = form.amount;
+          if (form.currency === 'MYR') {
+            finalSGD = parseFloat((form.amount / exchangeRate.value).toFixed(2));
+          } else if (form.currency === 'CNY') {
+            finalSGD = parseFloat((form.amount / exchangeRateCny.value).toFixed(2));
+          }
+
+          localStorage.setItem('lastActiveUser', form.payer);
+
+          try {
+            await supabaseClient.from('starry_ledger').insert([{
+              payer: form.payer,
+              amount: finalSGD,
+              original_amount: form.amount,
+              currency: form.currency,
+              category: form.category,
+              transfer_category: form.category.includes('转账') ? form.transferCategory : null,
+              date: form.date,
+              remark: form.remark
+            }]);
+
+            form.amount = null;
+            form.remark = '';
+            await fetchRecords();
+            checkRecurringLedgers();
+          } catch (e) {
+            console.error('新增记录失败:', e);
+          }
+        };
+
+        const deleteRecord = async (id) => {
+          try {
+            await supabaseClient.from('starry_ledger').delete().eq('id', id);
+            await fetchRecords();
+            checkRecurringLedgers();
+          } catch (e) {
+            console.error('删除记录失败:', e);
+          }
+        };
+
+        const editRecordItem = (item) => {
+          editForm.id = item.id;
+          editForm.payer = item.payer;
+          editForm.amount = item.original_amount || item.amount;
+          editForm.currency = item.currency || 'SGD';
+          editForm.category = item.category;
+          editForm.date = item.date;
+          editForm.remark = item.remark || '';
+          showEditModal.value = true;
+        };
+
+        const submitEditRecord = async () => {
+          if (!editForm.amount || editForm.amount <= 0) return;
+          let finalSGD = editForm.amount;
+          if (editForm.currency === 'MYR') {
+            finalSGD = parseFloat((editForm.amount / exchangeRate.value).toFixed(2));
+          } else if (editForm.currency === 'CNY') {
+            finalSGD = parseFloat((editForm.amount / exchangeRateCny.value).toFixed(2));
+          }
+
+          try {
+            await supabaseClient.from('starry_ledger').update({
+              payer: editForm.payer,
+              amount: finalSGD,
+              original_amount: editForm.amount,
+              currency: editForm.currency,
+              category: editForm.category,
+              date: editForm.date,
+              remark: editForm.remark
+            }).eq('id', editForm.id);
+
+            showEditModal.value = false;
+            await fetchRecords();
+            checkRecurringLedgers();
+          } catch (e) {
+            console.error('更新记录失败:', e);
+          }
+        };
+
+        // 每30天自动循环记账逻辑
+        const checkRecurringLedgers = () => {
+          checkingRecurring.value = true;
+          const subList = records.value.filter(r => r.category && r.category.includes('固定月费'));
+          const grouped = {};
+          
+          subList.forEach(r => {
+            const key = `${r.payer}_${r.remark || '订阅'}`;
+            if (!grouped[key] || new Date(r.date) > new Date(grouped[key].date)) {
+              grouped[key] = r;
+            }
+          });
+
+          const now = new Date(getLocalDateString());
+          const activeList = [];
+
+          Object.values(grouped).forEach(item => {
+            const lastDate = new Date(item.date);
+            const diffTime = Math.abs(now - lastDate);
+            const daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            activeList.push({
+              ...item,
+              daysPassed
+            });
+          });
+
+          activeSubscriptions.value = activeList;
+          checkingRecurring.value = false;
+        };
+
+        const activeSubscriptionTotal = computed(() => {
+          return activeSubscriptions.value.reduce((s, r) => s + Number(r.amount), 0);
+        });
+
+        const autoProcessRecurring = async (rec) => {
+          const lastDate = new Date(rec.date);
+          lastDate.setDate(lastDate.getDate() + 30);
+          const nextDateStr = lastDate.toISOString().split('T')[0];
+
+          try {
+            await supabaseClient.from('starry_ledger').insert([{
+              payer: rec.payer,
+              amount: rec.amount,
+              original_amount: rec.original_amount || rec.amount,
+              currency: rec.currency || 'SGD',
+              category: rec.category,
+              date: nextDateStr,
+              remark: rec.remark
+            }]);
+
+            await fetchRecords();
+            checkRecurringLedgers();
+          } catch (e) {
+            console.error('自动续期失败:', e);
+          }
+        };
+
+        const editRecurringItem = (rec) => {
+          editRecordItem(rec);
         };
 
         const addDeposits = async () => {
@@ -1164,6 +1388,226 @@
           link.click();
         };
 
+        // 各种日期控制与面板逻辑
+        const toggleDatePicker = (position) => {
+          if (showDatePicker.value && activePicker.value === position) {
+            showDatePicker.value = false;
+          } else {
+            activePicker.value = position;
+            showDatePicker.value = true;
+          }
+        };
+
+        const changePanelYear = (delta) => { panelYear.value += delta; };
+        const selectPanelMonth = (m) => {
+          const monthStr = String(m).padStart(2, '0');
+          selectedMonth.value = `${panelYear.value}-${monthStr}`;
+          showDatePicker.value = false;
+        };
+        const isCurrentSelected = (m) => {
+          const [yr, mo] = selectedMonth.value.split('-');
+          return parseInt(yr) === panelYear.value && parseInt(mo) === m;
+        };
+        const selectCurrentMonth = () => {
+          selectedMonth.value = getLocalDateString().substring(0, 7);
+          panelYear.value = parseInt(selectedMonth.value.split('-')[0]);
+          showDatePicker.value = false;
+        };
+
+        const offsetMonth = (delta) => {
+          const [yr, mo] = selectedMonth.value.split('-').map(Number);
+          const d = new Date(yr, mo - 1 + delta, 1);
+          const yStr = d.getFullYear();
+          const mStr = String(d.getMonth() + 1).padStart(2, '0');
+          selectedMonth.value = `${yStr}-${mStr}`;
+        };
+
+        const onDayPicked = () => { filterRange.value = 'today'; };
+        const resetToToday = () => {
+          selectedDay.value = getLocalDateString();
+          filterRange.value = 'today';
+        };
+
+        // 各种费用计算逻辑
+        const currentMonthRecords = computed(() => records.value.filter(r => r.date && r.date.startsWith(selectedMonth.value)));
+
+        const m1TransferDeduction = computed(() => {
+          return currentMonthRecords.value
+            .filter(r => r.payer === member2.value && r.category && r.category.includes('转账'))
+            .reduce((s, r) => s + Number(r.amount), 0);
+        });
+
+        const m2TransferDeduction = computed(() => {
+          return currentMonthRecords.value
+            .filter(r => r.payer === member1.value && r.category && r.category.includes('转账'))
+            .reduce((s, r) => s + Number(r.amount), 0);
+        });
+
+        const totalTodayM1 = computed(() => {
+          return records.value
+            .filter(r => r.payer === member1.value && r.date === getLocalDateString())
+            .reduce((s, r) => s + Number(r.amount), 0).toFixed(2);
+        });
+
+        const totalTodayM2 = computed(() => {
+          return records.value
+            .filter(r => r.payer === member2.value && r.date === getLocalDateString())
+            .reduce((s, r) => s + Number(r.amount), 0).toFixed(2);
+        });
+
+        const totalThisMonthM1 = computed(() => {
+          const gross = currentMonthRecords.value
+            .filter(r => r.payer === member1.value && !r.category.includes('居住房租'))
+            .reduce((s, r) => s + (r.category.includes('转账') ? -Number(r.amount) : Number(r.amount)), 0);
+          return (gross - m1TransferDeduction.value).toFixed(2);
+        });
+
+        const totalThisMonthM2 = computed(() => {
+          const gross = currentMonthRecords.value
+            .filter(r => r.payer === member2.value && !r.category.includes('居住房租'))
+            .reduce((s, r) => s + (r.category.includes('转账') ? -Number(r.amount) : Number(r.amount)), 0);
+          return (gross - m2TransferDeduction.value).toFixed(2);
+        });
+
+        const remainM1 = computed(() => budgetM1.value ? (budgetM1.value - parseFloat(totalThisMonthM1.value)).toFixed(2) : '∞');
+        const remainM2 = computed(() => budgetM2.value ? (budgetM2.value - parseFloat(totalThisMonthM2.value)).toFixed(2) : '∞');
+
+        const m1PercentOfBudget = computed(() => budgetM1.value ? (parseFloat(totalThisMonthM1.value) / budgetM1.value) * 100 : 0);
+        const m2PercentOfBudget = computed(() => budgetM2.value ? (parseFloat(totalThisMonthM2.value) / budgetM2.value) * 100 : 0);
+
+        const getBudgetColorClass = (pct, bVal) => {
+          if (!bVal) return 'text-purple-200';
+          if (pct >= 100) return 'text-rose-500 font-black';
+          if (pct >= 80) return 'text-pink-400 font-bold';
+          return 'text-emerald-400 font-bold';
+        };
+
+        const totalMonth = computed(() => (parseFloat(totalThisMonthM1.value) + parseFloat(totalThisMonthM2.value)).toFixed(2));
+
+        const totalRatioSum = computed(() => Math.max(0, parseFloat(totalThisMonthM1.value)) + Math.max(0, parseFloat(totalThisMonthM2.value)));
+        const m1Percent = computed(() => totalRatioSum.value > 0 ? Math.round((Math.max(0, parseFloat(totalThisMonthM1.value)) / totalRatioSum.value) * 100) : 50);
+        const m2Percent = computed(() => 100 - m1Percent.value);
+
+        // 筛选列表与数据表对比
+        const filteredRecords = computed(() => {
+          return records.value.filter(r => {
+            if (!r.date) return false;
+            
+            if (filterRange.value === 'today' && r.date !== selectedDay.value) return false;
+            if (filterRange.value === 'week') {
+              const monday = getMondayOfThisWeek();
+              if (r.date < monday || r.date > getLocalDateString()) return false;
+            }
+            if (filterRange.value === 'month' && !r.date.startsWith(selectedMonth.value)) return false;
+
+            if (filters.payer !== 'all' && r.payer !== filters.payer) return false;
+            if (filters.category !== 'all' && r.category !== filters.category) return false;
+            if (filters.currency !== 'all' && (r.currency || 'SGD') !== filters.currency) return false;
+            if (filters.keyword && (!r.remark || !r.remark.toLowerCase().includes(filters.keyword.toLowerCase()))) return false;
+
+            return true;
+          }).sort((a, b) => {
+            if (filters.sortByAmount) return Number(b.amount) - Number(a.amount);
+            return new Date(b.date) - new Date(a.date);
+          });
+        });
+
+        const summaryMetrics = computed(() => {
+          const sum = filteredRecords.value.reduce((s, r) => s + (r.category && r.category.includes('转账') ? -Number(r.amount) : Number(r.amount)), 0);
+          return { count: filteredRecords.value.length, sum };
+        });
+
+        const categoryComparison = computed(() => {
+          const currentYr = selectedMonth.value.split('-')[0];
+          const baseRecords = records.value.filter(r => {
+            if (!r.date) return false;
+            return categoryRange.value === 'month' ? r.date.startsWith(selectedMonth.value) : r.date.startsWith(currentYr);
+          });
+
+          const map = {};
+          categories.forEach(cat => { map[cat] = { cat, m1: 0, m2: 0, total: 0 }; });
+
+          baseRecords.forEach(r => {
+            if (map[r.category]) {
+              const val = r.category.includes('转账') ? -Number(r.amount) : Number(r.amount);
+              if (r.payer === member1.value) map[r.category].m1 += val;
+              if (r.payer === member2.value) map[r.category].m2 += val;
+            }
+          });
+
+          let allNetTotal = 0;
+          Object.values(map).forEach(row => {
+            row.total = row.m1 + row.m2;
+            if (row.total > 0) allNetTotal += row.total;
+          });
+
+          return Object.values(map)
+            .filter(row => row.m1 !== 0 || row.m2 !== 0)
+            .map(row => ({
+              ...row,
+              ratio: allNetTotal > 0 && row.total > 0 ? ((row.total / allNetTotal) * 100).toFixed(1) : '0.0'
+            }))
+            .sort((a, b) => b.total - a.total);
+        });
+
+        const dailyM1Sum = computed(() => categoryComparison.value.filter(r => !r.cat.includes('居住房租')).reduce((s, r) => s + r.m1, 0));
+        const daily2Sum = computed(() => categoryComparison.value.filter(r => !r.cat.includes('居住房租')).reduce((s, r) => s + r.m2, 0));
+        const dailyTotalSum = computed(() => dailyM1Sum.value + daily2Sum.value);
+
+        // 环形图数据计算
+        const chartTotalSum = computed(() => {
+          let sum = 0;
+          categoryComparison.value.forEach(r => {
+            if (chartMember.value === 'all') sum += r.total;
+            else if (chartMember.value === 'm1') sum += r.m1;
+            else if (chartMember.value === 'm2') sum += r.m2;
+          });
+          return sum > 0 ? sum.toFixed(2) : '0.00';
+        });
+
+        const chartSlices = computed(() => {
+          const total = parseFloat(chartTotalSum.value);
+          if (total <= 0) return [];
+
+          let accumulated = 0;
+          const C = 2 * Math.PI * 55; // 周长
+
+          return categoryComparison.value.map((r, idx) => {
+            let val = 0;
+            if (chartMember.value === 'all') val = r.total;
+            else if (chartMember.value === 'm1') val = r.m1;
+            else if (chartMember.value === 'm2') val = r.m2;
+
+            if (val <= 0) return null;
+
+            const pct = val / total;
+            const strokeDash = pct * C;
+            const offset = -accumulated * C;
+            accumulated += pct;
+
+            return {
+              id: r.cat,
+              displayName: getCategoryDisplayName(r.cat),
+              color: categoryColors[r.cat] || '#f43f5e',
+              percentage: (pct * 100).toFixed(1),
+              dashArray: `${strokeDash} ${C - strokeDash}`,
+              offset
+            };
+          }).filter(Boolean);
+        });
+
+        const exportToCSV = () => {
+          let csv = '日期,支付人,分类,转账目标,金额(SGD),原金额,原币种,备注\n';
+          filteredRecords.value.forEach(r => {
+            csv += `${r.date},${r.payer},${getCategoryDisplayName(r.category)},${r.transfer_category ? getCategoryDisplayName(r.transfer_category) : ''},${r.amount},${r.original_amount || r.amount},${r.currency || 'SGD'},"${r.remark || ''}"\n`;
+          });
+          const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = `Ledger_${selectedMonth.value}.csv`;
+          link.click();
+        };
+
         watch(selectedMonth, () => { fetchRecords(); });
 
         onMounted(() => {
@@ -1189,455 +1633,30 @@
           const [yr, mo, da] = selectedDay.value.split('-').map(Number);
           const current = new Date(yr, mo - 1, da);
           current.setDate(current.getDate() + days);
-          const y = current.getFullYear();
-          const m = String(current.getMonth() + 1).padStart(2, '0');
-          const d = String(current.getDate()).padStart(2, '0');
-          selectedDay.value = `${y}-${m}-${d}`;
+          const yStr = current.getFullYear();
+          const mStr = String(current.getMonth() + 1).padStart(2, '0');
+          const dStr = String(current.getDate()).padStart(2, '0');
+          selectedDay.value = `${yStr}-${mStr}-${dStr}`;
           filterRange.value = 'today';
-          const targetMonth = `${y}-${m}`;
-          if (targetMonth !== selectedMonth.value) selectedMonth.value = targetMonth;
         };
-
-        const onDayPicked = () => {
-          filterRange.value = 'today';
-          const targetMonth = selectedDay.value.substring(0, 7);
-          if (targetMonth !== selectedMonth.value) selectedMonth.value = targetMonth;
-        };
-
-        const resetToToday = () => {
-          selectedDay.value = getLocalDateString();
-          filterRange.value = 'today';
-          const targetMonth = selectedDay.value.substring(0, 7);
-          if (targetMonth !== selectedMonth.value) selectedMonth.value = targetMonth;
-        };
-
-        const toggleDatePicker = (position) => {
-          if (activePicker.value === position && showDatePicker.value) {
-            showDatePicker.value = false;
-          } else {
-            activePicker.value = position;
-            panelYear.value = parseInt(selectedMonth.value.split('-')[0]);
-            showDatePicker.value = true;
-          }
-        };
-
-        const changePanelYear = (offset) => { panelYear.value += offset; };
-
-        const selectPanelMonth = (month) => {
-          const formattedMonth = String(month).padStart(2, '0');
-          selectedMonth.value = `${panelYear.value}-${formattedMonth}`;
-          showDatePicker.value = false;
-          filterRange.value = 'month';
-        };
-
-        const selectCurrentMonth = () => {
-          const current = getLocalDateString().substring(0, 7);
-          selectedMonth.value = current;
-          panelYear.value = parseInt(current.split('-')[0]);
-          showDatePicker.value = false;
-          filterRange.value = 'month';
-        };
-
-        const isCurrentSelected = (month) => {
-          const [yr, mo] = selectedMonth.value.split('-');
-          return parseInt(yr) === panelYear.value && parseInt(mo) === month;
-        };
-
-        const filterRange = ref('today');
-        const categoryRange = ref('month');
-        const chartMember = ref('all');
-
-        const filters = reactive({ keyword: '', payer: 'all', category: 'all', currency: 'all', sortByAmount: false });
-        const form = reactive({payer: defaultUser, amount: null, currency: 'SGD', category: '日常伙食 Daily Meal', transferCategory: '日常伙食 Daily Meal', date: getLocalDateString(), remark: '' });
-
-        watch(() => form.category, (newCat) => {
-          if (newCat === 'JB') {
-            form.currency = 'MYR';
-          } else {
-            form.currency = 'SGD';
-          }
-        });
-
-        watch(() => form.payer, (val) => { if (val) localStorage.setItem('lastActiveUser', val); });
-
-        const syncLiveExchangeRates = async () => {
-          exchangeSyncError.value = false;
-          try {
-            const res = await fetch('https://open.er-api.com/v6/latest/SGD');
-            if (!res.ok) throw new Error('Network error');
-            const data = await res.json();
-            if (data && data.rates) {
-              if (data.rates.MYR) { exchangeRate.value = data.rates.MYR; localStorage.setItem('exchangeRate', data.rates.MYR); }
-              if (data.rates.CNY) { exchangeRateCny.value = data.rates.CNY; localStorage.setItem('exchangeRateCny', data.rates.CNY); }
-            } else { exchangeSyncError.value = true; }
-          } catch (err) { exchangeSyncError.value = true; }
-        };
-
-        const fetchCloudBudget = async () => {
-          try {
-            const { data } = await supabaseClient.from('starry_budget').select('*').eq('id', 'default_budget').single();
-            if (data) { budgetM1.value = data.budget_m1; budgetM2.value = data.budget_m2; }
-          } catch (err) { console.error(err); }
-        };
-
-        const updateCloudBudget = async () => {
-          try {
-            await supabaseClient.from('starry_budget').upsert({ id: 'default_budget', budget_m1: budgetM1.value, budget_m2: budgetM2.value, updated_at: new Date().toISOString() });
-          } catch (err) { console.error(err); }
-        };
-
-        const fetchRecords = async () => {
-          loading.value = true;
-          try {
-            let start, end;
-            const [y, m] = selectedMonth.value.split('-').map(Number);
-            if (categoryRange.value === 'year') {
-              start = `${y}-01-01`;
-              end = `${y}-12-31`;
-            } else {
-              start = `${selectedMonth.value}-01`;
-              const lastDay = new Date(y, m, 0).getDate();
-              end = `${selectedMonth.value}-${String(lastDay).padStart(2, '0')}`;
-            }
-            const { data, error } = await supabaseClient.from('starry_ledger').select('*').gte('date', start).lte('date', end).order('date', { ascending: false });
-            if (!error && data) { records.value = data; }
-          } catch (err) { console.error(err); } finally { loading.value = false; }
-        };
-
-        const addRecord = async () => {
-          if (!form.amount || form.amount <= 0) return;
-          let finalSGD = form.amount;
-          let activeRate = 1.0;
-
-          if (form.currency === 'MYR') {
-            finalSGD = parseFloat((form.amount / exchangeRate.value).toFixed(2));
-            activeRate = exchangeRate.value;
-          } else if (form.currency === 'CNY') {
-            finalSGD = parseFloat((form.amount / exchangeRateCny.value).toFixed(2));
-            activeRate = exchangeRateCny.value;
-          }
-
-          try {
-            const { error } = await supabaseClient.from('starry_ledger').insert([{
-              date: form.date,
-              amount: finalSGD,
-              original_amount: form.amount,
-              currency: form.currency,
-              category: form.category,
-              transfer_category: form.category.includes('转账')
-                ? form.transferCategory
-                : null,
-              payer: form.payer,
-              remark: form.remark,
-              exchange_rate: activeRate
-            }]);
-
-            form.amount = null;
-            form.remark = '';
-            await fetchRecords();
-            await checkRecurringLedgers();
-          } catch (e) {
-            console.error('添加记录失败:', e);
-          }
-        };
-
-        const deleteRecord = async (id) => {
-          try {
-            await supabaseClient.from('starry_ledger').delete().eq('id', id);
-            await fetchRecords();
-            await checkRecurringLedgers();
-          } catch (e) {
-            console.error('删除记录失败:', e);
-          }
-        };
-
-        // 检查并汇总所有固定月费项目
-        const checkRecurringLedgers = async () => {
-          checkingRecurring.value = true;
-          try {
-            const { data, error } = await supabaseClient
-              .from('starry_ledger')
-              .select('*')
-              .order('date', { ascending: false });
-
-            if (!error && data) {
-              const now = new Date();
-              const subItems = [];
-              const checkedKeys = new Set();
-
-              const targetRecords = data.filter(r => (r.category && r.category.includes('固定月费')) || (r.remark && r.remark.includes('30天自动')));
-
-              for (const item of targetRecords) {
-                const key = `${item.payer}_${item.remark || getCategoryDisplayName(item.category)}`;
-                if (!checkedKeys.has(key)) {
-                  checkedKeys.add(key);
-                  const lastDate = new Date(item.date);
-                  const diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
-                  subItems.push({
-                    ...item,
-                    daysPassed: diffDays
-                  });
-                }
-              }
-              activeSubscriptions.value = subItems;
-            }
-          } catch (e) {
-            console.error('检查自动循环账目出错:', e);
-          } finally {
-            checkingRecurring.value = false;
-          }
-        };
-
-        const activeSubscriptionTotal = computed(() => {
-          return activeSubscriptions.value.reduce((s, r) => s + Number(r.amount), 0);
-        });
-
-        const autoProcessRecurring = async (item) => {
-          try {
-            const baseDate = new Date(item.date);
-            baseDate.setDate(baseDate.getDate() + 30);
-            const nextDateStr = baseDate.toISOString().split('T')[0];
-
-            await supabaseClient.from('starry_ledger').insert([{
-              date: nextDateStr,
-              amount: item.amount,
-              original_amount: item.original_amount || item.amount,
-              currency: item.currency || 'SGD',
-              category: item.category,
-              payer: item.payer,
-              remark: item.remark ? (item.remark.includes('30天自动续流') ? item.remark : `${item.remark} (30天自动续流)`) : '(30天自动续流)',
-              exchange_rate: item.exchange_rate || 1.0
-            }]);
-
-            await checkRecurringLedgers();
-            await fetchRecords();
-          } catch (e) {
-            console.error('补充计费记录失败:', e);
-          }
-        };
-
-        const editRecurringItem = (item) => {
-          editForm.id = item.id;
-          editForm.payer = item.payer;
-          editForm.amount = item.original_amount || item.amount;
-          editForm.currency = item.currency || 'SGD';
-          editForm.category = item.category;
-          editForm.date = item.date;
-          editForm.remark = item.remark || '';
-          showEditModal.value = true;
-        };
-
-        const editRecordItem = (item) => {
-          editRecurringItem(item);
-        };
-
-        const submitEditRecord = async () => {
-          if (!editForm.id || !editForm.amount) return;
-          let finalSGD = editForm.amount;
-          let activeRate = 1.0;
-
-          if (editForm.currency === 'MYR') {
-            finalSGD = parseFloat((editForm.amount / exchangeRate.value).toFixed(2));
-            activeRate = exchangeRate.value;
-          } else if (editForm.currency === 'CNY') {
-            finalSGD = parseFloat((editForm.amount / exchangeRateCny.value).toFixed(2));
-            activeRate = exchangeRateCny.value;
-          }
-
-          try {
-            await supabaseClient.from('starry_ledger').update({
-              payer: editForm.payer,
-              amount: finalSGD,
-              original_amount: editForm.amount,
-              currency: editForm.currency,
-              category: editForm.category,
-              date: editForm.date,
-              remark: editForm.remark,
-              exchange_rate: activeRate
-            }).eq('id', editForm.id);
-
-            showEditModal.value = false;
-            await fetchRecords();
-            await checkRecurringLedgers();
-          } catch (e) {
-            console.error('修改记录失败:', e);
-          }
-        };
-
-        watch(categoryRange, () => { fetchRecords(); });
-
-        const offsetMonth = (steps) => {
-          const [yearStr, monthStr] = selectedMonth.value.split('-');
-          let year = parseInt(yearStr); let month = parseInt(monthStr) - 1 + steps;
-          const newDate = new Date(year, month, 1);
-          const newYear = newDate.getFullYear();
-          const newMonthStr = String(newDate.getMonth() + 1).padStart(2, '0');
-          selectedMonth.value = `${newYear}-${newMonthStr}`; panelYear.value = newYear;
-        };
-
-        const filteredRecords = computed(() => {
-          let list = [...records.value];
-          if (filterRange.value === 'today') list = list.filter(r => r.date === selectedDay.value);
-          else if (filterRange.value === 'week') list = list.filter(r => r.date >= getMondayOfThisWeek());
-
-          if (filters.payer !== 'all') list = list.filter(r => r.payer === filters.payer);
-          if (filters.category !== 'all') list = list.filter(r => r.category === filters.category);
-          if (filters.currency !== 'all') list = list.filter(r => (r.currency || 'SGD') === filters.currency);
-          if (filters.keyword.trim()) list = list.filter(r => (r.remark || '').toLowerCase().includes(filters.keyword.trim().toLowerCase()));
-
-          if (filters.sortByAmount) list.sort((a, b) => Number(b.amount) - Number(a.amount));
-          else list.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-          return list;
-        });
-
-        const calcPersonExpense = (recordList, person, otherPerson) => {
-          return recordList.reduce((sum, r) => {
-            if (r.category && r.category.includes('居住房租')) return sum;
-            if (r.category && r.category.includes('转账')) {
-              if (r.payer === otherPerson) return sum - Number(r.amount);
-              if (r.payer === person) return sum + Number(r.amount);
-              return sum;
-            }
-            if (r.payer === person) return sum + Number(r.amount);
-            return sum;
-          }, 0);
-        };
-
-        const summaryMetrics = computed(() => {
-          const sum = filteredRecords.value.reduce((acc, item) => {
-            if (item.category && item.category.includes('转账')) {
-              return acc;
-            }
-            return acc + Number(item.amount);
-          }, 0);
-          return { count: filteredRecords.value.length, sum };
-        });
-
-        const totalTodayM1 = computed(() => calcPersonExpense(records.value.filter(r => r.date === getLocalDateString()), member1.value, member2.value).toFixed(2));
-        const totalTodayM2 = computed(() => calcPersonExpense(records.value.filter(r => r.date === getLocalDateString()), member2.value, member1.value).toFixed(2));
-        
-        const totalThisMonthM1 = computed(() => calcPersonExpense(records.value, member1.value, member2.value).toFixed(2));
-        const totalThisMonthM2 = computed(() => calcPersonExpense(records.value, member2.value, member1.value).toFixed(2));
-
-        const m1TotalNum = computed(() => calcPersonExpense(records.value, member1.value, member2.value));
-        const m2TotalNum = computed(() => calcPersonExpense(records.value, member2.value, member1.value));
-
-        const m1TransferDeduction = computed(() => records.value.filter(r => r.payer === member2.value && r.category && r.category.includes('转账')).reduce((s, r) => s + Number(r.amount), 0));
-        const m2TransferDeduction = computed(() => records.value.filter(r => r.payer === member1.value && r.category && r.category.includes('转账')).reduce((s, r) => s + Number(r.amount), 0));
-
-        const totalRatioSum = computed(() => Math.max(0, m1TotalNum.value) + Math.max(0, m2TotalNum.value));
-        const m1Percent = computed(() => totalRatioSum.value > 0 ? Math.round((Math.max(0, m1TotalNum.value) / totalRatioSum.value) * 100) : 50);
-        const m2Percent = computed(() => totalRatioSum.value > 0 ? 100 - m1Percent.value : 50);
-
-        const remainM1 = computed(() => ((budgetM1.value || 0) - m1TotalNum.value).toFixed(2));
-        const remainM2 = computed(() => ((budgetM2.value || 0) - m2TotalNum.value).toFixed(2));
-
-        const m1PercentOfBudget = computed(() => budgetM1.value ? Math.round((m1TotalNum.value / budgetM1.value) * 100) : 0);
-        const m2PercentOfBudget = computed(() => budgetM2.value ? Math.round((m2TotalNum.value / budgetM2.value) * 100) : 0);
-
-        const totalMonth = computed(() => (m1TotalNum.value + m2TotalNum.value).toFixed(2));
-
-        const getBudgetColorClass = (percent, budget) => {
-          if (!budget) return 'text-purple-200';
-          if (percent >= 100) return 'text-rose-500 font-black';
-          if (percent >= 80) return 'text-pink-400 font-bold';
-          return 'text-emerald-400 font-bold';
-        };
-
-        const exportToCSV = () => {
-          let csv = '日期,支付人,分类,金额(SGD),原金额,币种,备注\n';
-          filteredRecords.value.forEach(r => {
-            csv += `${r.date},${r.payer},"${getCategoryDisplayName(r.category)}",${r.amount},${r.original_amount || r.amount},${r.currency || 'SGD'},"${r.remark || ''}"\n`;
-          });
-          const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = `Kuromi_Ledger_${selectedMonth.value}.csv`;
-          link.click();
-        };
-
-        const categoryComparison = computed(() => {
-          return categories.map(cat => {
-            let m1Sum = 0; let m2Sum = 0;
-            records.value.filter(r => r.category === cat).forEach(r => {
-              if (r.payer === member1.value) m1Sum += Number(r.amount);
-              if (r.payer === member2.value) m2Sum += Number(r.amount);
-            });
-
-            if (cat.includes('转账')) {
-              const netM1 = m1Sum - m2Sum;
-              const netM2 = m2Sum - m1Sum;
-              return { cat, m1: netM1, m2: netM2, total: 0, ratio: 0 };
-            }
-
-            const total = m1Sum + m2Sum;
-            return { cat, m1: m1Sum, m2: m2Sum, total, ratio: 0 };
-          }).filter(row => row.m1 !== 0 || row.m2 !== 0 || row.total !== 0).map(row => {
-            const totSum = Number(totalMonth.value);
-            row.ratio = totSum > 0 ? Math.round((row.total / totSum) * 100) : 0;
-            return row;
-          });
-        });
-
-        const dailyM1Sum = computed(() => categoryComparison.value.filter(c => !c.cat.includes('居住房租')).reduce((s, c) => s + c.m1, 0));
-        const daily2Sum = computed(() => categoryComparison.value.filter(c => !c.cat.includes('居住房租')).reduce((s, c) => s + c.m2, 0));
-        const dailyTotalSum = computed(() => dailyM1Sum.value + daily2Sum.value);
-
-        const chartTotalSum = computed(() => {
-          if (chartMember.value === 'm1') return dailyM1Sum.value.toFixed(2);
-          if (chartMember.value === 'm2') return daily2Sum.value.toFixed(2);
-          return dailyTotalSum.value.toFixed(2);
-        });
-
-        const chartSlices = computed(() => {
-          const tot = parseFloat(chartTotalSum.value);
-          if (tot <= 0) return [];
-          const circumference = 2 * Math.PI * 55;
-          let currentOffset = 0;
-
-          return categoryComparison.value.filter(c => !c.cat.includes('居住房租')).map(c => {
-            let val = c.total;
-            if (chartMember.value === 'm1') val = c.m1;
-            if (chartMember.value === 'm2') val = c.m2;
-
-            if (val <= 0) return null;
-
-            const percentage = Math.round((val / tot) * 100);
-            const strokeDash = (percentage / 100) * circumference;
-            const slice = {
-              id: c.cat,
-              displayName: getCategoryDisplayName(c.cat),
-              percentage,
-              color: categoryColors[c.cat] || '#f43f5e',
-              dashArray: `${strokeDash} ${circumference}`,
-              offset: -currentOffset
-            };
-            currentOffset += strokeDash;
-            return slice;
-          }).filter(Boolean);
-        });
 
         return {
           currentMode, exchangeSyncError, member1, member2, exchangeRate, exchangeRateCny,
-          budgetM1, budgetM2, categories, getCategoryDisplayName, getCategoryIconOnly,
-          transferTargetCategories, records, loading, selectedMonth, selectedDay,
-          showDatePicker, activePicker, panelYear, selectedMonthText, selectedDayText,
-          offsetDay, onDayPicked, resetToToday, toggleDatePicker, changePanelYear,
-          selectPanelMonth, selectCurrentMonth, isCurrentSelected, filterRange, categoryRange,
-          chartMember, filters, form, getOtherMember, updateCloudBudget, addRecord, deleteRecord,
-          activeSubscriptions, activeSubscriptionTotal, checkingRecurring, checkRecurringLedgers,
-          autoProcessRecurring, editRecurringItem, editRecordItem, showEditModal, editForm,
-          submitEditRecord, offsetMonth, filteredRecords, summaryMetrics, totalTodayM1,
-          totalTodayM2, totalThisMonthM1, totalThisMonthM2, remainM1, remainM2,
-          m1PercentOfBudget, m2PercentOfBudget, m1TransferDeduction, m2TransferDeduction,
-          totalRatioSum, m1Percent, m2Percent, totalMonth, getBudgetColorClass, exportToCSV,
-          categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum, chartTotalSum, chartSlices,
-          depositsRecords, depositsLoading, depositsSelectedYear, availableDepositsYears,
-          depositsForm, addDeposits, deleteDepositsRecord, filteredDepositsRecords,
-          yearlyDepositsInTotal, yearlyDepositsOutTotal, yearlyDepositsNetTotal,
-          allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal,
-          exportDepositsToCSV, getLocalDateString
+          budgetM1, budgetM2, activeSubscriptions, checkingRecurring, showEditModal, editForm,
+          getOtherMember, categories, getCategoryDisplayName, getCategoryIconOnly, transferTargetCategories,
+          records, loading, selectedMonth, selectedDay, showDatePicker, activePicker, panelYear,
+          filterRange, chartMember, categoryRange, filters, form,
+          depositsRecords, depositsLoading, depositsSelectedYear, availableDepositsYears, depositsForm,
+          fetchCloudBudget, updateCloudBudget, addRecord, deleteRecord, editRecordItem, submitEditRecord,
+          checkRecurringLedgers, activeSubscriptionTotal, autoProcessRecurring, editRecurringItem,
+          addDeposits, deleteDepositsRecord, filteredDepositsRecords, yearlyDepositsInTotal, yearlyDepositsOutTotal,
+          yearlyDepositsNetTotal, allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal, exportDepositsToCSV,
+          toggleDatePicker, changePanelYear, selectPanelMonth, isCurrentSelected, selectCurrentMonth, offsetMonth,
+          onDayPicked, resetToToday, selectedMonthText, selectedDayText, offsetDay,
+          m1TransferDeduction, m2TransferDeduction, totalTodayM1, totalTodayM2, totalThisMonthM1, totalThisMonthM2,
+          remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, totalMonth,
+          totalRatioSum, m1Percent, m2Percent, filteredRecords, summaryMetrics, categoryComparison,
+          dailyM1Sum, daily2Sum, dailyTotalSum, chartTotalSum, chartSlices, exportToCSV, getLocalDateString
         };
       }
     }).mount('#app');

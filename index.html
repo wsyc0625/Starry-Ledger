@@ -53,21 +53,9 @@
     }
 
     @keyframes redPulse {
-      0% {
-        color: #ff4d4f;
-        text-shadow: 0 0 4px rgba(255, 77, 79, 0.3);
-        opacity: 1;
-      }
-      50% {
-        color: #ff7875;
-        text-shadow: 0 0 16px rgba(255, 77, 79, 0.8), 0 0 24px rgba(255, 77, 79, 0.6);
-        opacity: 0.6;
-      }
-      100% {
-        color: #ff4d4f;
-        text-shadow: 0 0 4px rgba(255, 77, 79, 0.3);
-        opacity: 1;
-      }
+      0% { color: #ff4d4f; text-shadow: 0 0 4px rgba(255, 77, 79, 0.3); opacity: 1; }
+      50% { color: #ff7875; text-shadow: 0 0 16px rgba(255, 77, 79, 0.8), 0 0 24px rgba(255, 77, 79, 0.6); opacity: 0.6; }
+      100% { color: #ff4d4f; text-shadow: 0 0 4px rgba(255, 77, 79, 0.3); opacity: 1; }
     }
 
     .text-negative-pulse {
@@ -271,7 +259,7 @@
                 </div>
 
                 <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
-                  <button @click="editRecurringItem(rec)" class="bg-purple-900/80 hover:bg-purple-800 text-purple-200 border border-purple-600/50 text-[9px] px-2 py-1 rounded-xl transition flex items-center gap-1" title="调整金额或名称">
+                  <button @click="editRecordItem(rec)" class="bg-purple-900/80 hover:bg-purple-800 text-purple-200 border border-purple-600/50 text-[9px] px-2 py-1 rounded-xl transition flex items-center gap-1" title="调整金额或名称">
                     <i class="fa-solid fa-pen-to-square"></i>
                     <span>修改</span>
                   </button>
@@ -381,7 +369,7 @@
                   <span>每月预算:</span>
                   <div class="flex items-center gap-0.5 font-mono text-purple-200 font-bold bg-purple-950/90 px-1.5 py-0.5 rounded border border-purple-700/80">
                     <span>S$</span>
-                    <input type="number" v-model.number="budgetM1" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" placeholder="未设" class="w-12 bg-transparent text-purple-200 font-bold focus:outline-none border-b border-transparent focus:border-purple-400 text-center py-0 h-4 leading-none">
+                    <input type="number" v-model.number="budgetM1" @change="updateCloudBudget" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" placeholder="未设" class="w-12 bg-transparent text-purple-200 font-bold focus:outline-none border-b border-transparent focus:border-purple-400 text-center py-0 h-4 leading-none">
                   </div>
                 </div>
               </div>
@@ -411,7 +399,7 @@
                   <span>每月预算:</span>
                   <div class="flex items-center gap-0.5 font-mono text-pink-200 font-bold bg-purple-950/90 px-1.5 py-0.5 rounded border border-rose-800/80">
                     <span>S$</span>
-                    <input type="number" v-model.number="budgetM2" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" placeholder="未设" class="w-12 bg-transparent text-pink-200 font-bold focus:outline-none border-b border-transparent focus:border-pink-400 text-center py-0 h-4 leading-none">
+                    <input type="number" v-model.number="budgetM2" @change="updateCloudBudget" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" placeholder="未设" class="w-12 bg-transparent text-pink-200 font-bold focus:outline-none border-b border-transparent focus:border-pink-400 text-center py-0 h-4 leading-none">
                   </div>
                 </div>
               </div>
@@ -1109,25 +1097,32 @@
           }
         };
 
+        // 从 Supabase 拉取月度预算
         const fetchCloudBudget = async () => {
           try {
-            const { data } = await supabaseClient.from('starry_budgets').select('*');
-            if (data && data.length) {
+            const { data, error } = await supabaseClient.from('starry_budgets').select('*');
+            if (!error && data && data.length > 0) {
               data.forEach(b => {
                 if (b.person === 'M1') budgetM1.value = b.budget;
                 if (b.person === 'M2') budgetM2.value = b.budget;
               });
             }
-          } catch (e) { console.error('预算拉取失败', e); }
+          } catch (e) { 
+            console.error('预算拉取失败', e); 
+          }
         };
 
+        // 保存/更新 Supabase 中的预算
         const updateCloudBudget = async () => {
           try {
-            await supabaseClient.from('starry_budgets').upsert([
-              { person: 'M1', budget: budgetM1.value || 0 },
-              { person: 'M2', budget: budgetM2.value || 0 }
-            ]);
-          } catch (e) { console.error('预算更新失败', e); }
+            const upsertData = [
+              { person: 'M1', budget: Number(budgetM1.value) || 0, updated_at: new Date() },
+              { person: 'M2', budget: Number(budgetM2.value) || 0, updated_at: new Date() }
+            ];
+            await supabaseClient.from('starry_budgets').upsert(upsertData, { onConflict: 'person' });
+          } catch (e) { 
+            console.error('预算更新失败', e); 
+          }
         };
 
         const fetchRecords = async () => {
@@ -1218,7 +1213,7 @@
         };
 
         const submitEditRecord = async () => {
-          if (!editForm.amount || editForm.amount <= 0) return;
+          if (!editForm.id || !editForm.amount) return;
           let finalSGD = editForm.amount;
           if (editForm.currency === 'MYR') {
             finalSGD = parseFloat((editForm.amount / exchangeRate.value).toFixed(2));
@@ -1245,39 +1240,38 @@
           }
         };
 
-        // 每30天自动循环记账逻辑
         const checkRecurringLedgers = () => {
           checkingRecurring.value = true;
-          const subList = records.value.filter(r => r.category && r.category.includes('固定月费'));
-          const grouped = {};
-          
-          subList.forEach(r => {
-            const key = `${r.payer}_${r.remark || '订阅'}`;
-            if (!grouped[key] || new Date(r.date) > new Date(grouped[key].date)) {
-              grouped[key] = r;
+          const subMap = new Map();
+          const today = new Date(getLocalDateString());
+
+          records.value.forEach(r => {
+            if (r.category && r.category.includes('固定月费')) {
+              const key = `${r.payer}_${r.remark || '订阅'}`;
+              if (!subMap.has(key)) {
+                subMap.set(key, r);
+              } else {
+                if (new Date(r.date) > new Date(subMap.get(key).date)) {
+                  subMap.set(key, r);
+                }
+              }
             }
           });
 
-          const now = new Date(getLocalDateString());
-          const activeList = [];
-
-          Object.values(grouped).forEach(item => {
-            const lastDate = new Date(item.date);
-            const diffTime = Math.abs(now - lastDate);
+          const list = [];
+          subMap.forEach(r => {
+            const lastDate = new Date(r.date);
+            const diffTime = Math.abs(today - lastDate);
             const daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            
-            activeList.push({
-              ...item,
-              daysPassed
-            });
+            list.push({ ...r, daysPassed });
           });
 
-          activeSubscriptions.value = activeList;
+          activeSubscriptions.value = list;
           checkingRecurring.value = false;
         };
 
         const activeSubscriptionTotal = computed(() => {
-          return activeSubscriptions.value.reduce((s, r) => s + Number(r.amount), 0);
+          return activeSubscriptions.value.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
         });
 
         const autoProcessRecurring = async (rec) => {
@@ -1295,18 +1289,14 @@
               date: nextDateStr,
               remark: rec.remark
             }]);
-
             await fetchRecords();
             checkRecurringLedgers();
           } catch (e) {
-            console.error('自动续期失败:', e);
+            console.error('补记失败:', e);
           }
         };
 
-        const editRecurringItem = (rec) => {
-          editRecordItem(rec);
-        };
-
+        // 存款功能
         const addDeposits = async () => {
           if (!depositsForm.amount || depositsForm.amount <= 0) return;
           let finalSGD = depositsForm.amount;
@@ -1331,7 +1321,7 @@
             depositsForm.remark = '';
             await fetchDepositsRecords();
           } catch (e) {
-            console.error('添加存款记录失败:', e);
+            console.error('保存存款失败:', e);
           }
         };
 
@@ -1340,10 +1330,203 @@
             await supabaseClient.from('starry_deposits').delete().eq('id', id);
             await fetchDepositsRecords();
           } catch (e) {
-            console.error('删除存款记录失败:', e);
+            console.error('删除存款失败:', e);
           }
         };
 
+        // 统计指标计算
+        const currentSelectedMonthRecords = computed(() => {
+          return records.value.filter(r => r.date && r.date.startsWith(selectedMonth.value));
+        });
+
+        const currentSelectedDayRecords = computed(() => {
+          return records.value.filter(r => r.date === selectedDay.value);
+        });
+
+        const currentSelectedWeekRecords = computed(() => {
+          const monday = getMondayOfThisWeek();
+          const today = getLocalDateString();
+          return records.value.filter(r => r.date >= monday && r.date <= today);
+        });
+
+        const filteredRecords = computed(() => {
+          let baseList = [];
+          if (filterRange.value === 'today') baseList = currentSelectedDayRecords.value;
+          else if (filterRange.value === 'week') baseList = currentSelectedWeekRecords.value;
+          else baseList = currentSelectedMonthRecords.value;
+
+          return baseList.filter(r => {
+            if (filters.payer !== 'all' && r.payer !== filters.payer) return false;
+            if (filters.category !== 'all' && r.category !== filters.category) return false;
+            if (filters.currency !== 'all' && r.currency !== filters.currency) return false;
+            if (filters.keyword && !r.remark?.toLowerCase().includes(filters.keyword.toLowerCase())) return false;
+            return true;
+          }).sort((a, b) => filters.sortByAmount ? b.amount - a.amount : new Date(b.date) - new Date(a.date));
+        });
+
+        const summaryMetrics = computed(() => {
+          const sum = filteredRecords.value.reduce((acc, r) => {
+            if (r.category && r.category.includes('转账')) return acc;
+            return acc + Number(r.amount);
+          }, 0);
+          return { count: filteredRecords.value.length, sum };
+        });
+
+        // 支出明细与分类计算
+        const m1TransferDeduction = computed(() => {
+          return currentSelectedMonthRecords.value
+            .filter(r => r.payer === member2.value && r.category.includes('转账'))
+            .reduce((acc, r) => acc + Number(r.amount), 0);
+        });
+
+        const m2TransferDeduction = computed(() => {
+          return currentSelectedMonthRecords.value
+            .filter(r => r.payer === member1.value && r.category.includes('转账'))
+            .reduce((acc, r) => acc + Number(r.amount), 0);
+        });
+
+        const totalSelectedMonthM1 = computed(() => {
+          const raw = currentSelectedMonthRecords.value
+            .filter(r => r.payer === member1.value && !r.category.includes('转账'))
+            .reduce((acc, r) => acc + Number(r.amount), 0);
+          return Math.max(0, raw - m1TransferDeduction.value).toFixed(2);
+        });
+
+        const totalSelectedMonthM2 = computed(() => {
+          const raw = currentSelectedMonthRecords.value
+            .filter(r => r.payer === member2.value && !r.category.includes('转账'))
+            .reduce((acc, r) => acc + Number(r.amount), 0);
+          return Math.max(0, raw - m2TransferDeduction.value).toFixed(2);
+        });
+
+        const totalTodayM1 = computed(() => {
+          return currentSelectedDayRecords.value
+            .filter(r => r.payer === member1.value && !r.category.includes('转账'))
+            .reduce((acc, r) => acc + Number(r.amount), 0).toFixed(2);
+        });
+
+        const totalTodayM2 = computed(() => {
+          return currentSelectedDayRecords.value
+            .filter(r => r.payer === member2.value && !r.category.includes('转账'))
+            .reduce((acc, r) => acc + Number(r.amount), 0).toFixed(2);
+        });
+
+        const totalMonth = computed(() => {
+          return (parseFloat(totalSelectedMonthM1.value) + parseFloat(totalSelectedMonthM2.value)).toFixed(2);
+        });
+
+        const remainM1 = computed(() => {
+          if (!budgetM1.value) return '--';
+          return (budgetM1.value - parseFloat(totalSelectedMonthM1.value)).toFixed(2);
+        });
+
+        const remainM2 = computed(() => {
+          if (!budgetM2.value) return '--';
+          return (budgetM2.value - parseFloat(totalSelectedMonthM2.value)).toFixed(2);
+        });
+
+        const m1PercentOfBudget = computed(() => {
+          if (!budgetM1.value || budgetM1.value <= 0) return 0;
+          return (parseFloat(totalSelectedMonthM1.value) / budgetM1.value) * 100;
+        });
+
+        const m2PercentOfBudget = computed(() => {
+          if (!budgetM2.value || budgetM2.value <= 0) return 0;
+          return (parseFloat(totalSelectedMonthM2.value) / budgetM2.value) * 100;
+        });
+
+        const totalRatioSum = computed(() => parseFloat(totalSelectedMonthM1.value) + parseFloat(totalSelectedMonthM2.value));
+        const m1Percent = computed(() => totalRatioSum.value === 0 ? 50 : ((parseFloat(totalSelectedMonthM1.value) / totalRatioSum.value) * 100).toFixed(1));
+        const m2Percent = computed(() => totalRatioSum.value === 0 ? 50 : ((parseFloat(totalSelectedMonthM2.value) / totalRatioSum.value) * 100).toFixed(1));
+
+        const getBudgetColorClass = (percent, budget) => {
+          if (!budget) return 'text-purple-200';
+          if (percent >= 100) return 'text-rose-500 font-black';
+          if (percent >= 80) return 'text-pink-400 font-bold';
+          return 'text-emerald-400 font-bold';
+        };
+
+        // 图表与对比
+        const categoryComparison = computed(() => {
+          let list = records.value;
+          if (categoryRange.value === 'month') {
+            list = list.filter(r => r.date && r.date.startsWith(selectedMonth.value));
+          } else {
+            const year = selectedMonth.value.split('-')[0];
+            list = list.filter(r => r.date && r.date.startsWith(year));
+          }
+
+          const map = new Map();
+          categories.forEach(c => map.set(c, { cat: c, m1: 0, m2: 0, total: 0, ratio: 0 }));
+
+          list.forEach(r => {
+            const entry = map.get(r.category);
+            if (entry) {
+              const amt = Number(r.amount);
+              if (r.payer === member1.value) entry.m1 += amt;
+              else entry.m2 += amt;
+            }
+          });
+
+          let grandTotal = 0;
+          map.forEach(entry => {
+            if (entry.cat.includes('转账')) {
+              entry.m1 = -entry.m1;
+              entry.m2 = -entry.m2;
+            }
+            entry.total = entry.m1 + entry.m2;
+            if (!entry.cat.includes('转账')) grandTotal += entry.total;
+          });
+
+          const result = [];
+          map.forEach(entry => {
+            entry.ratio = grandTotal > 0 && !entry.cat.includes('转账') ? ((entry.total / grandTotal) * 100).toFixed(1) : 0;
+            result.push(entry);
+          });
+
+          return result.sort((a, b) => b.total - a.total);
+        });
+
+        const dailyM1Sum = computed(() => categoryComparison.value.filter(c => !c.cat.includes('居住房租') && !c.cat.includes('转账')).reduce((a, b) => a + b.m1, 0));
+        const daily2Sum = computed(() => categoryComparison.value.filter(c => !c.cat.includes('居住房租') && !c.cat.includes('转账')).reduce((a, b) => a + b.m2, 0));
+        const dailyTotalSum = computed(() => dailyM1Sum.value + daily2Sum.value);
+
+        const chartTotalSum = computed(() => {
+          if (chartMember.value === 'm1') return dailyM1Sum.value.toFixed(2);
+          if (chartMember.value === 'm2') return daily2Sum.value.toFixed(2);
+          return dailyTotalSum.value.toFixed(2);
+        });
+
+        const chartSlices = computed(() => {
+          const circumference = 2 * Math.PI * 55;
+          let offsetAcc = 0;
+          const slices = [];
+          const total = parseFloat(chartTotalSum.value);
+
+          categoryComparison.value.forEach((row, idx) => {
+            if (row.cat.includes('居住房租') || row.cat.includes('转账')) return;
+            let val = row.total;
+            if (chartMember.value === 'm1') val = row.m1;
+            if (chartMember.value === 'm2') val = row.m2;
+
+            if (val > 0 && total > 0) {
+              const pct = val / total;
+              const dash = pct * circumference;
+              slices.push({
+                id: idx,
+                displayName: getCategoryDisplayName(row.cat),
+                percentage: (pct * 100).toFixed(1),
+                color: categoryColors[row.cat] || '#ec4899',
+                dashArray: `${dash} ${circumference - dash}`,
+                offset: -offsetAcc
+              });
+              offsetAcc += dash;
+            }
+          });
+          return slices;
+        });
+
+        // 存款检索计算
         const filteredDepositsRecords = computed(() => {
           return depositsRecords.value.filter(r => r.date && r.date.startsWith(String(depositsSelectedYear.value)));
         });
@@ -1351,13 +1534,13 @@
         const yearlyDepositsInTotal = computed(() => {
           return filteredDepositsRecords.value
             .filter(r => r.type === 'deposits')
-            .reduce((s, r) => s + Number(r.amount), 0);
+            .reduce((acc, r) => acc + Number(r.amount), 0);
         });
 
         const yearlyDepositsOutTotal = computed(() => {
           return filteredDepositsRecords.value
             .filter(r => r.type === 'withdraw')
-            .reduce((s, r) => s + Number(r.amount), 0);
+            .reduce((acc, r) => acc + Number(r.amount), 0);
         });
 
         const yearlyDepositsNetTotal = computed(() => yearlyDepositsInTotal.value - yearlyDepositsOutTotal.value);
@@ -1365,368 +1548,120 @@
         const allTimeDepositsInTotal = computed(() => {
           return depositsRecords.value
             .filter(r => r.type === 'deposits')
-            .reduce((s, r) => s + Number(r.amount), 0);
+            .reduce((acc, r) => acc + Number(r.amount), 0);
         });
 
         const allTimeDepositsOutTotal = computed(() => {
           return depositsRecords.value
             .filter(r => r.type === 'withdraw')
-            .reduce((s, r) => s + Number(r.amount), 0);
+            .reduce((acc, r) => acc + Number(r.amount), 0);
         });
 
         const allTimeDepositsNetTotal = computed(() => allTimeDepositsInTotal.value - allTimeDepositsOutTotal.value);
 
-        const exportDepositsToCSV = () => {
-          let csv = '日期,类型,人员,金额(SGD),原金额,原币种,备注\n';
-          filteredDepositsRecords.value.forEach(r => {
-            csv += `${r.date},${r.type === 'withdraw' ? '提款' : '存款'},${r.person},${r.amount},${r.original_amount || r.amount},${r.currency || 'SGD'},"${r.remark || ''}"\n`;
-          });
-          const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = `Deposits_${depositsSelectedYear.value}.csv`;
-          link.click();
+        // 日期控制函数
+        const selectedMonthText = computed(() => `${selectedMonth.value.split('-')[0]}年${selectedMonth.value.split('-')[1]}月`);
+        const selectedDayText = computed(() => selectedDay.value);
+
+        const toggleDatePicker = (picker) => {
+          activePicker.value = picker;
+          showDatePicker.value = !showDatePicker.value;
         };
 
-        // 各种日期控制与面板逻辑
-        const toggleDatePicker = (position) => {
-          if (showDatePicker.value && activePicker.value === position) {
-            showDatePicker.value = false;
-          } else {
-            activePicker.value = position;
-            showDatePicker.value = true;
-          }
-        };
-
-        const changePanelYear = (delta) => { panelYear.value += delta; };
+        const changePanelYear = (delta) => panelYear.value += delta;
         const selectPanelMonth = (m) => {
           const monthStr = String(m).padStart(2, '0');
           selectedMonth.value = `${panelYear.value}-${monthStr}`;
           showDatePicker.value = false;
         };
-        const isCurrentSelected = (m) => {
-          const [yr, mo] = selectedMonth.value.split('-');
-          return parseInt(yr) === panelYear.value && parseInt(mo) === m;
-        };
+
         const selectCurrentMonth = () => {
           selectedMonth.value = getLocalDateString().substring(0, 7);
           panelYear.value = parseInt(selectedMonth.value.split('-')[0]);
           showDatePicker.value = false;
         };
 
-        const offsetMonth = (delta) => {
-          const [yr, mo] = selectedMonth.value.split('-').map(Number);
-          const d = new Date(yr, mo - 1 + delta, 1);
-          const yStr = d.getFullYear();
-          const mStr = String(d.getMonth() + 1).padStart(2, '0');
-          selectedMonth.value = `${yStr}-${mStr}`;
+        const isCurrentSelected = (m) => {
+          const monthStr = String(m).padStart(2, '0');
+          return selectedMonth.value === `${panelYear.value}-${monthStr}`;
         };
 
-        const selectedMonthText = computed(() => {
-          const [y, m] = selectedMonth.value.split('-');
-          return `${y}年${parseInt(m)}月`;
-        });
-
-        const selectedDayText = computed(() => {
-          const [y, m, d] = selectedDay.value.split('-');
-          return `${y}/${m}/${d}`;
-        });
+        const offsetMonth = (delta) => {
+          const [y, m] = selectedMonth.value.split('-').map(Number);
+          const d = new Date(y, m - 1 + delta, 1);
+          const newY = d.getFullYear();
+          const newM = String(d.getMonth() + 1).padStart(2, '0');
+          selectedMonth.value = `${newY}-${newM}`;
+          panelYear.value = newY;
+        };
 
         const offsetDay = (delta) => {
-          const [y, m, d] = selectedDay.value.split('-').map(Number);
-          const dt = new Date(y, m - 1, d + delta);
-          const yearStr = dt.getFullYear();
-          const monthStr = String(dt.getMonth() + 1).padStart(2, '0');
-          const dayStr = String(dt.getDate()).padStart(2, '0');
-          selectedDay.value = `${yearStr}-${monthStr}-${dayStr}`;
+          const current = new Date(selectedDay.value);
+          current.setDate(current.getDate() + delta);
+          const offset = current.getTimezoneOffset() * 60000;
+          selectedDay.value = new Date(current.getTime() - offset).toISOString().split('T')[0];
         };
 
-        const onDayPicked = () => { filterRange.value = 'today'; };
+        const onDayPicked = () => filterRange.value = 'today';
         const resetToToday = () => {
           selectedDay.value = getLocalDateString();
           filterRange.value = 'today';
         };
 
-        // 各种费用计算逻辑
-        const currentMonthRecords = computed(() => records.value.filter(r => r.date && r.date.startsWith(selectedMonth.value)));
-
-        const m1TransferDeduction = computed(() => {
-          return currentMonthRecords.value
-            .filter(r => r.payer === member2.value && r.category && r.category.includes('转账'))
-            .reduce((s, r) => s + Number(r.amount), 0);
-        });
-
-        const m2TransferDeduction = computed(() => {
-          return currentMonthRecords.value
-            .filter(r => r.payer === member1.value && r.category && r.category.includes('转账'))
-            .reduce((s, r) => s + Number(r.amount), 0);
-        });
-
-        const totalTodayM1 = computed(() => {
-          return records.value
-            .filter(r => r.payer === member1.value && r.date === getLocalDateString())
-            .reduce((s, r) => s + Number(r.amount), 0).toFixed(2);
-        });
-
-        const totalTodayM2 = computed(() => {
-          return records.value
-            .filter(r => r.payer === member2.value && r.date === getLocalDateString())
-            .reduce((s, r) => s + Number(r.amount), 0).toFixed(2);
-        });
-
-        const totalSelectedMonthM1 = computed(() => {
-          const gross = currentMonthRecords.value
-            .filter(r => r.payer === member1.value && !r.category.includes('居住房租'))
-            .reduce((s, r) => s + (r.category.includes('转账') ? -Number(r.amount) : Number(r.amount)), 0);
-          return (gross - m1TransferDeduction.value).toFixed(2);
-        });
-
-        const totalSelectedMonthM2 = computed(() => {
-          const gross = currentMonthRecords.value
-            .filter(r => r.payer === member2.value && !r.category.includes('居住房租'))
-            .reduce((s, r) => s + (r.category.includes('转账') ? -Number(r.amount) : Number(r.amount)), 0);
-          return (gross - m2TransferDeduction.value).toFixed(2);
-        });
-
-        const totalThisMonthM1 = computed(() => {
-          const thisMonthStr = getLocalDateString().substring(0, 7);
-          const thisMonthRecs = records.value.filter(r => r.date && r.date.startsWith(thisMonthStr));
-          const deduction = thisMonthRecs
-            .filter(r => r.payer === member2.value && r.category && r.category.includes('转账'))
-            .reduce((s, r) => s + Number(r.amount), 0);
-          const gross = thisMonthRecs
-            .filter(r => r.payer === member1.value && !r.category.includes('居住房租'))
-            .reduce((s, r) => s + (r.category.includes('转账') ? -Number(r.amount) : Number(r.amount)), 0);
-          return (gross - deduction).toFixed(2);
-        });
-
-        const totalThisMonthM2 = computed(() => {
-          const thisMonthStr = getLocalDateString().substring(0, 7);
-          const thisMonthRecs = records.value.filter(r => r.date && r.date.startsWith(thisMonthStr));
-          const deduction = thisMonthRecs
-            .filter(r => r.payer === member1.value && r.category && r.category.includes('转账'))
-            .reduce((s, r) => s + Number(r.amount), 0);
-          const gross = thisMonthRecs
-            .filter(r => r.payer === member2.value && !r.category.includes('居住房租'))
-            .reduce((s, r) => s + (r.category.includes('转账') ? -Number(r.amount) : Number(r.amount)), 0);
-          return (gross - deduction).toFixed(2);
-        });
-
-        const remainM1 = computed(() => budgetM1.value ? (budgetM1.value - parseFloat(totalThisMonthM1.value)).toFixed(2) : '∞');
-        const remainM2 = computed(() => budgetM2.value ? (budgetM2.value - parseFloat(totalThisMonthM2.value)).toFixed(2) : '∞');
-
-        const m1PercentOfBudget = computed(() => budgetM1.value ? (parseFloat(totalThisMonthM1.value) / budgetM1.value) * 100 : 0);
-        const m2PercentOfBudget = computed(() => budgetM2.value ? (parseFloat(totalThisMonthM2.value) / budgetM2.value) * 100 : 0);
-
-        const getBudgetColorClass = (pct, bVal) => {
-          if (!bVal) return 'text-purple-200';
-          if (pct >= 100) return 'text-rose-500 font-black';
-          if (pct >= 80) return 'text-pink-400 font-bold';
-          return 'text-emerald-400 font-bold';
-        };
-
-        const totalMonth = computed(() => (parseFloat(totalSelectedMonthM1.value) + parseFloat(totalSelectedMonthM2.value)).toFixed(2));
-
-        const totalRatioSum = computed(() => Math.max(0, parseFloat(totalSelectedMonthM1.value)) + Math.max(0, parseFloat(totalSelectedMonthM2.value)));
-        const m1Percent = computed(() => totalRatioSum.value > 0 ? Math.round((Math.max(0, parseFloat(totalSelectedMonthM1.value)) / totalRatioSum.value) * 100) : 50);
-        const m2Percent = computed(() => 100 - m1Percent.value);
-
-        // 筛选列表与数据表对比
-        const filteredRecords = computed(() => {
-          return records.value.filter(r => {
-            if (!r.date) return false;
-            
-            if (filterRange.value === 'today' && r.date !== selectedDay.value) return false;
-            if (filterRange.value === 'week') {
-              const monday = getMondayOfThisWeek();
-              if (r.date < monday || r.date > getLocalDateString()) return false;
-            }
-            if (filterRange.value === 'month' && !r.date.startsWith(selectedMonth.value)) return false;
-
-            if (filters.payer !== 'all' && r.payer !== filters.payer) return false;
-            if (filters.category !== 'all' && r.category !== filters.category) return false;
-            if (filters.currency !== 'all' && r.currency !== filters.currency) return false;
-            if (filters.keyword && (!r.remark || !r.remark.toLowerCase().includes(filters.keyword.toLowerCase()))) return false;
-
-            return true;
-          }).sort((a, b) => {
-            if (filters.sortByAmount) return Number(b.amount) - Number(a.amount);
-            return new Date(b.date) - new Date(a.date);
-          });
-        });
-
-        const summaryMetrics = computed(() => {
-          const list = filteredRecords.value;
-          const sum = list.reduce((s, r) => s + (r.category.includes('转账') ? -Number(r.amount) : Number(r.amount)), 0);
-          return { count: list.length, sum };
-        });
-
-        const categoryComparison = computed(() => {
-          const targetMonth = selectedMonth.value;
-          const list = records.value.filter(r => r.date && r.date.startsWith(targetMonth));
-          
-          const stats = {};
-          categories.forEach(cat => { stats[cat] = { m1: 0, m2: 0, total: 0 }; });
-
-          list.forEach(r => {
-            const cat = r.category || '其他 Miscellaneous';
-            if (!stats[cat]) stats[cat] = { m1: 0, m2: 0, total: 0 };
-            
-            const amt = Number(r.amount);
-            if (r.payer === member1.value) stats[cat].m1 += amt;
-            if (r.payer === member2.value) stats[cat].m2 += amt;
-          });
-
-          const res = [];
-          let netGrandTotal = 0;
-
-          Object.keys(stats).forEach(cat => {
-            const m1Val = stats[cat].m1;
-            const m2Val = stats[cat].m2;
-            let totalVal = m1Val + m2Val;
-
-            if (cat.includes('转账')) {
-              totalVal = -totalVal;
-            }
-
-            if (m1Val !== 0 || m2Val !== 0) {
-              res.push({ cat, m1: m1Val, m2: m2Val, total: totalVal });
-              if (!cat.includes('居住房租')) {
-                netGrandTotal += totalVal;
-              }
-            }
-          });
-
-          return res.map(row => ({
-            ...row,
-            ratio: netGrandTotal > 0 && !row.cat.includes('居住房租') ? ((Math.max(0, row.total) / netGrandTotal) * 100).toFixed(1) : '0.0'
-          })).sort((a, b) => b.total - a.total);
-        });
-
-        const dailyM1Sum = computed(() => {
-          return categoryComparison.value
-            .filter(r => !r.cat.includes('居住房租'))
-            .reduce((s, r) => s + r.m1, 0);
-        });
-
-        const daily2Sum = computed(() => {
-          return categoryComparison.value
-            .filter(r => !r.cat.includes('居住房租'))
-            .reduce((s, r) => s + r.m2, 0);
-        });
-
-        const dailyTotalSum = computed(() => {
-          return categoryComparison.value
-            .filter(r => !r.cat.includes('居住房租'))
-            .reduce((s, r) => s + r.total, 0);
-        });
-
-        const chartSlices = computed(() => {
-          let list = records.value;
-          if (categoryRange.value === 'month') {
-            list = list.filter(r => r.date && r.date.startsWith(selectedMonth.value));
-          } else {
-            const yr = selectedMonth.value.split('-')[0];
-            list = list.filter(r => r.date && r.date.startsWith(yr));
-          }
-
-          if (chartMember.value === 'm1') list = list.filter(r => r.payer === member1.value);
-          if (chartMember.value === 'm2') list = list.filter(r => r.payer === member2.value);
-
-          const catSums = {};
-          let grandSum = 0;
-
-          list.forEach(r => {
-            const cat = r.category || '其他 Miscellaneous';
-            const amt = Number(r.amount);
-            if (!catSums[cat]) catSums[cat] = 0;
-            catSums[cat] += cat;
-            if (cat.includes('转账')) {
-              catSums[cat] -= amt;
-            } else {
-              catSums[cat] += amt;
-            }
-          });
-
-          const validCats = Object.keys(catSums).filter(c => catSums[c] > 0);
-          validCats.forEach(c => grandSum += catSums[c]);
-
-          if (grandSum <= 0) return [];
-
-          const circumference = 2 * Math.PI * 55; // r=55 -> 345.575
-          let accumulatedOffset = 0;
-
-          return validCats.map((cat, idx) => {
-            const val = catSums[cat];
-            const pct = (val / grandSum) * 100;
-            const strokeDash = (pct / 100) * circumference;
-            const offset = -accumulatedOffset;
-            accumulatedOffset += strokeDash;
-
-            return {
-              id: idx,
-              displayName: getCategoryDisplayName(cat),
-              color: categoryColors[cat] || '#f43f5e',
-              percentage: pct.toFixed(1),
-              dashArray: `${strokeDash} ${circumference - strokeDash}`,
-              offset: offset
-            };
-          });
-        });
-
-        const chartTotalSum = computed(() => {
-          let list = records.value;
-          if (categoryRange.value === 'month') {
-            list = list.filter(r => r.date && r.date.startsWith(selectedMonth.value));
-          } else {
-            const yr = selectedMonth.value.split('-')[0];
-            list = list.filter(r => r.date && r.date.startsWith(yr));
-          }
-
-          if (chartMember.value === 'm1') list = list.filter(r => r.payer === member1.value);
-          if (chartMember.value === 'm2') list = list.filter(r => r.payer === member2.value);
-
-          const sum = list.reduce((s, r) => s + (r.category.includes('转账') ? -Number(r.amount) : Number(r.amount)), 0);
-          return sum.toFixed(2);
-        });
-
         const exportToCSV = () => {
-          let csv = '日期,支付人,分类,金额(SGD),原金额,原币种,转账目标分类,备注\n';
+          let csv = 'ID,Payer,Amount(SGD),OriginalAmount,Currency,Category,Date,Remark\n';
           filteredRecords.value.forEach(r => {
-            csv += `${r.date},${r.payer},"${getCategoryDisplayName(r.category)}",${r.amount},${r.original_amount || r.amount},${r.currency || 'SGD'},"${r.transfer_category ? getCategoryDisplayName(r.transfer_category) : ''}","${r.remark || ''}"\n`;
+            csv += `"${r.id}","${r.payer}","${r.amount}","${r.original_amount||''}","${r.currency||''}","${r.category}","${r.date}","${r.remark||''}"\n`;
           });
           const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
           const link = document.createElement('a');
           link.href = URL.createObjectURL(blob);
-          link.download = `Ledger_${selectedMonth.value}.csv`;
+          link.download = `Kuromi_Ledger_${selectedMonth.value}.csv`;
           link.click();
         };
 
+        const exportDepositsToCSV = () => {
+          let csv = 'ID,Type,Person,Amount(SGD),OriginalAmount,Currency,Date,Remark\n';
+          filteredDepositsRecords.value.forEach(r => {
+            csv += `"${r.id}","${r.type}","${r.person}","${r.amount}","${r.original_amount||''}","${r.currency||''}","${r.date}","${r.remark||''}"\n`;
+          });
+          const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = `Kuromi_Deposits_${depositsSelectedYear.value}.csv`;
+          link.click();
+        };
+
+        // 页面初始化装载
         onMounted(async () => {
-          window.addEventListener('click', () => { showDatePicker.value = false; });
           syncLiveExchangeRates();
-          await fetchCloudBudget();
+          await fetchCloudBudget(); // 【核心修复】拉取云端预算
           await fetchRecords();
           await fetchDepositsRecords();
           checkRecurringLedgers();
+
+          document.addEventListener('click', () => {
+            showDatePicker.value = false;
+          });
         });
 
         return {
           currentMode, exchangeSyncError, member1, member2, exchangeRate, exchangeRateCny,
           budgetM1, budgetM2, activeSubscriptions, checkingRecurring, showEditModal, editForm,
           categories, transferTargetCategories, form, records, loading, selectedMonth, selectedDay,
-          selectedMonthText, selectedDayText, showDatePicker, activePicker, panelYear, filterRange,
-          chartMember, categoryRange, filters, depositsRecords, depositsLoading, depositsSelectedYear,
-          availableDepositsYears, depositsForm, getOtherMember, getCategoryDisplayName, getCategoryIconOnly,
-          addRecord, deleteRecord, editRecordItem, submitEditRecord, checkRecurringLedgers, activeSubscriptionTotal,
-          autoProcessRecurring, editRecurringItem, addDeposits, deleteDepositsRecord, filteredDepositsRecords,
-          yearlyDepositsInTotal, yearlyDepositsOutTotal, yearlyDepositsNetTotal, allTimeDepositsInTotal,
-          allTimeDepositsOutTotal, allTimeDepositsNetTotal, exportDepositsToCSV, toggleDatePicker, changePanelYear,
-          selectPanelMonth, isCurrentSelected, selectCurrentMonth, offsetMonth, offsetDay, onDayPicked, resetToToday,
-          m1TransferDeduction, m2TransferDeduction, totalTodayM1, totalTodayM2, totalSelectedMonthM1, totalSelectedMonthM2, totalThisMonthM1, totalThisMonthM2,
-          remainM1, remainM2, m1PercentOfBudget, m2PercentOfBudget, getBudgetColorClass, totalMonth, totalRatioSum,
-          m1Percent, m2Percent, filteredRecords, summaryMetrics, categoryComparison, dailyM1Sum, daily2Sum,
-          dailyTotalSum, chartSlices, chartTotalSum, exportToCSV, updateCloudBudget, getLocalDateString
+          showDatePicker, activePicker, panelYear, filterRange, chartMember, categoryRange, filters,
+          depositsRecords, depositsLoading, depositsSelectedYear, availableDepositsYears, depositsForm,
+          getOtherMember, getCategoryDisplayName, getCategoryIconOnly, addRecord, deleteRecord,
+          editRecordItem, submitEditRecord, checkRecurringLedgers, activeSubscriptionTotal, autoProcessRecurring,
+          addDeposits, deleteDepositsRecord, summaryMetrics, filteredRecords, m1TransferDeduction, m2TransferDeduction,
+          totalSelectedMonthM1, totalSelectedMonthM2, totalTodayM1, totalTodayM2, totalMonth, remainM1, remainM2,
+          m1PercentOfBudget, m2PercentOfBudget, totalRatioSum, m1Percent, m2Percent, getBudgetColorClass,
+          categoryComparison, dailyM1Sum, daily2Sum, dailyTotalSum, chartTotalSum, chartSlices,
+          filteredDepositsRecords, yearlyDepositsInTotal, yearlyDepositsOutTotal, yearlyDepositsNetTotal,
+          allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal, selectedMonthText, selectedDayText,
+          toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected,
+          offsetMonth, offsetDay, onDayPicked, resetToToday, exportToCSV, exportDepositsToCSV,
+          updateCloudBudget, getLocalDateString
         };
       }
     }).mount('#app');

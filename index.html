@@ -217,8 +217,8 @@
       <!-- 左侧控制面板 -->
       <main class="lg:col-span-5 space-y-4">
         
-        <!-- 每30天自动记账检查中心 (手机端隐藏, 桌面端保留) -->
-        <div class="hidden lg:block glass-card rounded-2xl p-4 border border-indigo-500/40 bg-gradient-to-br from-indigo-950/40 to-purple-950/60 space-y-3 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
+        <!-- 每30天自动记账检查中心 -->
+        <div class="block glass-card rounded-2xl p-3 md:p-4 border border-indigo-500/40 bg-gradient-to-br from-indigo-950/40 to-purple-950/60 space-y-3 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
           <div class="flex items-center justify-between border-b border-indigo-500/30 pb-2">
             <h3 class="text-xs md:text-sm font-bold text-indigo-300 flex items-center gap-2">
               <i class="fa-solid fa-rotate text-indigo-400 animate-spin" style="animation-duration: 8s;"></i>
@@ -252,9 +252,10 @@
                     <span class="text-pink-300 font-mono font-bold text-xs">S$ {{ Number(rec.amount).toFixed(2) }}</span>
                   </div>
                   <p class="text-[9px] text-purple-400/70 font-mono">
-                    上次扣费: {{ rec.date }} 
-                    <span v-if="rec.daysPassed >= 30" class="text-rose-400 font-bold">(已超 {{ rec.daysPassed }} 天，需补记)</span>
-                    <span v-else class="text-emerald-400 font-medium">(距离下期 {{ 30 - rec.daysPassed }} 天)</span>
+                    上次扣费: {{ rec.date }} · 下次扣费: {{ rec.nextDueDate }}
+                    <span v-if="rec.overdueDays > 0" class="text-rose-400 font-bold">(已超 {{ rec.overdueDays }} 天，需补记)</span>
+                    <span v-else-if="rec.daysUntilNextDue === 0" class="text-amber-300 font-bold">(今天到期，需补记)</span>
+                    <span v-else class="text-emerald-400 font-medium">(距离下期 {{ rec.daysUntilNextDue }} 天)</span>
                   </p>
                 </div>
 
@@ -269,7 +270,7 @@
                   </button>
                   <button @click="autoProcessRecurring(rec)" class="bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold text-[9px] px-2.5 py-1 rounded-xl shadow-[0_0_8px_rgba(99,102,241,0.5)] transition flex items-center gap-1">
                     <i class="fa-solid fa-plus-circle"></i>
-                    <span>补记(+30天)</span>
+                    <span>补记(下月同日)</span>
                   </button>
                 </div>
               </div>
@@ -1242,31 +1243,86 @@
 
         const checkRecurringLedgers = () => {
           checkingRecurring.value = true;
-          const subMap = new Map();
-          const today = new Date(getLocalDateString());
 
+          const todayStr = getLocalDateString();
+          const today = new Date(`${todayStr}T00:00:00`);
+          const subMap = new Map();
+
+          // 每个固定月费独立识别：付款人 + 分类 + 备注 + 扣款日
+          // 这样每月 8 号和每月 13 号不会被合并。
           records.value.forEach(r => {
-            if (r.category && r.category.includes('固定月费')) {
-              const key = `${r.payer}_${r.remark || '订阅'}`;
-              if (!subMap.has(key)) {
+            if (!r.category || !r.category.includes('固定月费')) return;
+            if (!r.date) return;
+
+            const recordDate = new Date(`${r.date}T00:00:00`);
+            const recurringDay = recordDate.getDate();
+            const key = [
+              r.payer,
+              r.category,
+              (r.remark || '订阅').trim(),
+              recurringDay
+            ].join('|');
+
+            // 同一个固定月费只保留最近一次记录。
+            if (!subMap.has(key)) {
+              subMap.set(key, r);
+            } else {
+              const existing = subMap.get(key);
+              const existingDate = new Date(`${existing.date}T00:00:00`);
+              if (recordDate > existingDate) {
                 subMap.set(key, r);
-              } else {
-                if (new Date(r.date) > new Date(subMap.get(key).date)) {
-                  subMap.set(key, r);
-                }
               }
             }
           });
 
           const list = [];
+
           subMap.forEach(r => {
-            const lastDate = new Date(r.date);
-            const diffTime = Math.abs(today - lastDate);
-            const daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            list.push({ ...r, daysPassed });
+            const lastDate = new Date(`${r.date}T00:00:00`);
+            const recurringDay = lastDate.getDate();
+
+            // 计算下个月同日，而不是简单 +30 天。
+            let nextDueDate = new Date(
+              lastDate.getFullYear(),
+              lastDate.getMonth() + 1,
+              recurringDay
+            );
+
+            // 处理 29/30/31 号在下个月不存在的情况，改为下个月最后一天。
+            if (nextDueDate.getDate() !== recurringDay) {
+              nextDueDate = new Date(
+                lastDate.getFullYear(),
+                lastDate.getMonth() + 2,
+                0
+              );
+            }
+
+            const msPerDay = 1000 * 60 * 60 * 24;
+            const diffToDue = nextDueDate - today;
+            const diffFromDue = today - nextDueDate;
+            const daysUntilNextDue = Math.max(
+              0,
+              Math.ceil(diffToDue / msPerDay)
+            );
+            const overdueDays = Math.max(
+              0,
+              Math.floor(diffFromDue / msPerDay)
+            );
+
+            list.push({
+              ...r,
+              recurringDay,
+              nextDueDate: `${nextDueDate.getFullYear()}-${String(nextDueDate.getMonth() + 1).padStart(2, '0')}-${String(nextDueDate.getDate()).padStart(2, '0')}`,
+              daysUntilNextDue,
+              overdueDays,
+              isDue: today >= nextDueDate
+            });
           });
 
-          activeSubscriptions.value = list;
+          activeSubscriptions.value = list.sort(
+            (a, b) => a.recurringDay - b.recurringDay
+          );
+
           checkingRecurring.value = false;
         };
 
@@ -1275,12 +1331,46 @@
         });
 
         const autoProcessRecurring = async (rec) => {
-          const lastDate = new Date(rec.date);
-          lastDate.setDate(lastDate.getDate() + 30);
-          const nextDateStr = lastDate.toISOString().split('T')[0];
+          if (!rec || !rec.date) return;
+
+          const lastDate = new Date(`${rec.date}T00:00:00`);
+          const recurringDay = lastDate.getDate();
+
+          // 固定月费按“下个月同日”计算，不再使用 +30 天。
+          let nextDate = new Date(
+            lastDate.getFullYear(),
+            lastDate.getMonth() + 1,
+            recurringDay
+          );
+
+          // 例如每月 31 号：下个月没有 31 号，就使用下个月最后一天。
+          if (nextDate.getDate() !== recurringDay) {
+            nextDate = new Date(
+              lastDate.getFullYear(),
+              lastDate.getMonth() + 2,
+              0
+            );
+          }
+
+          const nextDateStr = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+
+          // 防止同一个固定月费在同一天重复生成。
+          const duplicate = records.value.some(r => {
+            return (
+              r.payer === rec.payer &&
+              r.category === rec.category &&
+              (r.remark || '订阅').trim() === (rec.remark || '订阅').trim() &&
+              r.date === nextDateStr
+            );
+          });
+
+          if (duplicate) {
+            console.warn('该固定月费已存在，跳过重复记账:', nextDateStr, rec.remark);
+            return;
+          }
 
           try {
-            await supabaseClient.from('starry_ledger').insert([{
+            const { error } = await supabaseClient.from('starry_ledger').insert([{
               payer: rec.payer,
               amount: rec.amount,
               original_amount: rec.original_amount || rec.amount,
@@ -1289,6 +1379,9 @@
               date: nextDateStr,
               remark: rec.remark
             }]);
+
+            if (error) throw error;
+
             await fetchRecords();
             checkRecurringLedgers();
           } catch (e) {

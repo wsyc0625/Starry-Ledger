@@ -36,20 +36,10 @@
       100% { opacity: 0.6; transform: scale(1); }
     }
 
-    .animate-kuromi-breathe {
-      animation: kuromiBreathe 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
+    .animate-kuromi-breathe { animation: kuromiBreathe 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     @keyframes kuromiBreathe {
-      0%, 100% { 
-        opacity: 1; 
-        transform: scale(1); 
-        filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.9)) drop-shadow(0 0 14px rgba(192, 132, 252, 0.8)); 
-      }
-      50% { 
-        opacity: 0.5; 
-        transform: scale(0.93); 
-        filter: drop-shadow(0 0 3px rgba(244, 63, 94, 0.3)); 
-      }
+      0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.9)) drop-shadow(0 0 14px rgba(192, 132, 252, 0.8)); }
+      50% { opacity: 0.5; transform: scale(0.93); filter: drop-shadow(0 0 3px rgba(244, 63, 94, 0.3)); }
     }
 
     @keyframes redPulse {
@@ -57,52 +47,25 @@
       50% { color: #ff7875; text-shadow: 0 0 16px rgba(255, 77, 79, 0.8), 0 0 24px rgba(255, 77, 79, 0.6); opacity: 0.6; }
       100% { color: #ff4d4f; text-shadow: 0 0 4px rgba(255, 77, 79, 0.3); opacity: 1; }
     }
-
-    .text-negative-pulse {
-      animation: redPulse 1.5s infinite ease-in-out !important;
-      color: #ff4d4f !important;
-      font-weight: bold;
-    }
+    .text-negative-pulse { animation: redPulse 1.5s infinite ease-in-out !important; color: #ff4d4f !important; font-weight: bold; }
 
     .glass-card { 
-      background: rgba(21, 9, 34, 0.82); 
-      backdrop-filter: blur(20px); 
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(244, 63, 94, 0.25); 
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(236, 72, 153, 0.12);
+      background: rgba(21, 9, 34, 0.82); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(244, 63, 94, 0.25); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(236, 72, 153, 0.12);
       transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
-    .glass-card:hover {
-      border-color: rgba(244, 63, 94, 0.55);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8), 0 0 20px rgba(236, 72, 153, 0.3);
-    }
+    .glass-card:hover { border-color: rgba(244, 63, 94, 0.55); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8), 0 0 20px rgba(236, 72, 153, 0.3); }
 
-    .neon-border-purple { 
-      border-color: rgba(192, 132, 252, 0.8); 
-      box-shadow: 0 0 12px rgba(192, 132, 252, 0.5), inset 0 0 8px rgba(192, 132, 252, 0.3); 
-    }
-    .neon-border-pink { 
-      border-color: rgba(244, 63, 94, 0.8); 
-      box-shadow: 0 0 12px rgba(244, 63, 94, 0.5), inset 0 0 8px rgba(244, 63, 94, 0.3); 
-    }
+    .neon-border-purple { border-color: rgba(192, 132, 252, 0.8); box-shadow: 0 0 12px rgba(192, 132, 252, 0.5), inset 0 0 8px rgba(192, 132, 252, 0.3); }
+    .neon-border-pink { border-color: rgba(244, 63, 94, 0.8); box-shadow: 0 0 12px rgba(244, 63, 94, 0.5), inset 0 0 8px rgba(244, 63, 94, 0.3); }
 
-    .btn-sparkle {
-      position: relative;
-      overflow: hidden;
-    }
+    .btn-sparkle { position: relative; overflow: hidden; }
     .btn-sparkle::after {
-      content: '';
-      position: absolute;
-      top: -50%; left: -60%; width: 50%; height: 200%;
+      content: ''; position: absolute; top: -50%; left: -60%; width: 50%; height: 200%;
       background: linear-gradient(60deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 80%);
-      transform: rotate(30deg);
-      animation: shimmerSweep 3.5s infinite;
+      transform: rotate(30deg); animation: shimmerSweep 3.5s infinite;
     }
-    @keyframes shimmerSweep {
-      0% { left: -60%; }
-      20% { left: 140%; }
-      100% { left: 140%; }
-    }
+    @keyframes shimmerSweep { 0% { left: -60%; } 20% { left: 140%; } 100% { left: 140%; } }
 
     .text-glow-purple { text-shadow: 0 0 8px rgba(192, 132, 252, 0.8); }
     .text-glow-pink { text-shadow: 0 0 8px rgba(244, 63, 94, 0.8); }
@@ -158,7 +121,7 @@
 
     /* ============ AI 助理样式 ============ */
     .ai-fab {
-      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 40;
+      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
       width: 56px; height: 56px; border-radius: 50%;
       background: linear-gradient(135deg, #a855f7, #ec4899);
       border: 2px solid rgba(255,255,255,0.25);
@@ -170,7 +133,7 @@
     .ai-fab i { font-size: 1.4rem; color: white; }
 
     .ai-panel {
-      position: fixed; bottom: 5.5rem; right: 1.5rem; z-index: 40;
+      position: fixed; bottom: 5.5rem; right: 1.5rem; z-index: 999;
       width: min(92vw, 400px); max-height: min(70vh, 560px);
       display: flex; flex-direction: column;
       background: rgba(21,9,34,0.96); backdrop-filter: blur(24px);
@@ -226,10 +189,6 @@
       display: flex; flex-wrap: wrap; gap: 0.35rem;
       padding: 0.5rem 0.85rem 0.2rem 0.85rem;
     }
-
-    /* 记忆库弹窗样式 */
-    .memory-modal { position: absolute; inset: 0; background: rgba(21,9,34,0.98); z-index: 50; display: flex; flex-direction: column; padding: 1rem; backdrop-filter: blur(10px); }
-    .memory-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 0.5rem; font-size: 0.75rem; }
   </style>
 </head>
 <body>
@@ -251,7 +210,6 @@
         </h1>
       </div>
 
-      <!-- 汇率与模式切换栏 -->
       <div class="flex items-center gap-2 font-mono text-[9px]">
         <div :class="exchangeSyncError ? 'bg-rose-950/90 border-rose-600/80 shadow-[0_0_12px_rgba(244,63,94,0.4)]' : 'bg-purple-950/90 border-emerald-500/60 shadow-[0_0_12px_rgba(52,211,153,0.25)]'" class="flex items-center gap-2 px-2.5 py-1 rounded-full border transition-all">
           <span v-if="!exchangeSyncError" class="flex h-2 w-2 relative flex-shrink-0">
@@ -272,7 +230,6 @@
       </div>
     </header>
 
-    <!-- 成员管理面板 -->
     <section class="hidden lg:flex glass-card rounded-2xl p-3 mb-4 items-center gap-3 overflow-x-auto whitespace-nowrap">
       <span class="text-xs font-bold text-pink-300 flex-shrink-0 flex items-center gap-1.5">
         <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-pink-500 animate-kuromi-breathe inline-block">
@@ -289,10 +246,8 @@
 
     <!-- ==================== 1. 记账模式视图 ==================== -->
     <div v-if="currentMode === 'ledger'" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-      <!-- 左侧控制面板 -->
       <main class="lg:col-span-5 space-y-4">
         
-        <!-- 极简版：固定费用补记中心 -->
         <div class="block glass-card rounded-2xl p-3 md:p-4 border border-indigo-500/40 bg-gradient-to-br from-indigo-950/40 to-purple-950/60 space-y-3 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
           <div class="flex items-center justify-between border-b border-indigo-500/30 pb-2">
             <h3 class="text-xs md:text-sm font-bold text-indigo-300 flex items-center gap-2">
@@ -322,12 +277,8 @@
                   </div>
                   <p class="text-[9px] text-purple-400/70 font-mono leading-relaxed">
                     上次记录: {{ rec.date }} <br>
-                    <span v-if="rec.isRecordedThisMonth" class="text-emerald-400 font-bold">
-                      ✅ 本月已记录
-                    </span>
-                    <span v-else class="text-amber-300 font-bold">
-                      ⚠️ 本月未记录
-                    </span>
+                    <span v-if="rec.isRecordedThisMonth" class="text-emerald-400 font-bold">✅ 本月已记录</span>
+                    <span v-else class="text-amber-300 font-bold">⚠️ 本月未记录</span>
                   </p>
                 </div>
 
@@ -348,7 +299,6 @@
           </div>
         </div>
 
-        <!-- 记账板块 -->
         <div class="glass-card rounded-2xl p-3 md:p-4">
           <h2 class="text-xs md:text-base font-bold mb-3 text-pink-200 flex items-center gap-2">
             <i class="fa-solid fa-wand-magic-sparkles text-pink-400 animate-kuromi-breathe"></i> 记一笔账 ✨
@@ -418,7 +368,6 @@
           </form>
         </div>
 
-        <!-- 数据汇总看板 -->
         <div class="glass-card rounded-2xl p-3 md:p-4 space-y-3">
           <h3 class="text-xs font-bold text-pink-200 flex items-center gap-1.5">
             <i class="fa-solid fa-chart-pie text-pink-400 animate-kuromi-breathe"></i>数据汇总看板
@@ -534,9 +483,7 @@
         </div>
       </main>
 
-      <!-- 右侧明细与高级统计看板 -->
       <section class="lg:col-span-7 space-y-4">
-        <!-- 品类对比统计看板 -->
         <div class="glass-card rounded-2xl p-4 space-y-3">
           <div class="flex flex-col gap-2 border-b border-purple-900/60 pb-2.5">
             <div class="flex flex-col gap-0.5">
@@ -668,7 +615,6 @@
           </div>
         </div>
 
-        <!-- 账目明细流水表 -->
         <div class="glass-card rounded-2xl p-3 md:p-4">
           <div class="flex flex-col gap-2.5 mb-3">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -707,7 +653,6 @@
               </div>
             </div>
 
-            <!-- 明细筛选控制条 -->
             <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-900/60 text-[10px]">
               <div class="relative flex-1 min-w-[120px]">
                 <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-purple-400/50 text-[10px]"></i>
@@ -738,7 +683,6 @@
               </button>
             </div>
 
-            <!-- 筛选小计 -->
             <div class="bg-purple-950/40 px-3 py-1.5 rounded-xl border border-purple-900/60 flex justify-between items-center text-[10px] md:text-[11px] font-mono shadow-inner">
               <span class="text-purple-400/60 font-medium">{{ summaryMetrics.count }} 笔记录</span>
               <div class="flex items-center gap-1">
@@ -748,7 +692,6 @@
             </div>
           </div>
 
-          <!-- 账目列表展示 -->
           <div class="space-y-2 max-h-[350px] md:max-h-[440px] overflow-y-auto pr-0.5">
             <div v-if="loading" class="text-center py-4 text-purple-400/50"><i class="fa-solid fa-circle-notch animate-spin text-xs mb-1"></i><p class="text-[9px]">正在同步云端...</p></div>
             <div v-else-if="filteredRecords.length === 0" class="text-center py-6 text-purple-400/50 text-xs italic">暂无星芒记录</div>
@@ -970,28 +913,7 @@
     </button>
 
     <transition name="fade">
-      <div v-if="aiOpen" class="ai-panel relative">
-        
-        <!-- 🧠 记忆库弹窗遮罩 -->
-        <div v-if="showMemory" class="memory-modal">
-          <div class="flex justify-between items-center mb-3 border-b border-pink-500/30 pb-2">
-            <h3 class="text-xs font-bold text-pink-200"><i class="fa-solid fa-brain"></i> AI 云端记忆库</h3>
-            <button @click="showMemory = false" class="text-purple-400 hover:text-white">✕</button>
-          </div>
-          <div class="flex gap-2 mb-3">
-            <input v-model="newMemory" type="text" placeholder="例如：看到拉面算餐厅聚餐" class="flex-1 bg-purple-900/50 border border-purple-600/50 rounded-lg px-2 text-xs text-white outline-none focus:border-pink-400 transition">
-            <button @click="addMemory" class="bg-pink-600 hover:bg-pink-500 text-white px-3 py-1 rounded-lg text-xs font-bold transition">保存</button>
-          </div>
-          <div class="flex-1 overflow-y-auto pr-1">
-            <p class="text-[10px] text-purple-400 mb-2">这些习惯会永久保存在云端，每次聊天 AI 都会记住：</p>
-            <div v-if="aiMemories.length === 0" class="text-center text-purple-400/50 text-xs py-4">还没有添加任何习惯哦</div>
-            <div v-else v-for="m in aiMemories" :key="m.id" class="memory-item">
-              <span class="text-purple-100">{{ m.content }}</span>
-              <button @click="deleteMemory(m.id)" class="text-rose-400 hover:text-rose-300 ml-2 transition"><i class="fa-solid fa-trash-can"></i></button>
-            </div>
-          </div>
-        </div>
-
+      <div v-if="aiOpen" class="ai-panel">
         <div class="ai-panel-header">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-wand-magic-sparkles text-pink-400"></i>
@@ -1034,9 +956,37 @@
       </div>
     </transition>
 
+    <!-- 🧠 记忆库弹窗（独立于 AI 面板之外，防止被遮挡） -->
+    <transition name="fade">
+      <div v-if="showMemory" class="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl p-5 w-full max-w-md border border-pink-500/50 space-y-4 shadow-2xl bg-purple-950/95 flex flex-col max-h-[80vh]">
+          <div class="flex justify-between items-center border-b border-purple-800/80 pb-2">
+            <h3 class="text-sm font-bold text-pink-200 flex items-center gap-2">
+              <i class="fa-solid fa-brain text-pink-400"></i> AI 云端记忆库
+            </h3>
+            <button @click="showMemory = false" class="text-purple-400 hover:text-white text-base">✕</button>
+          </div>
+
+          <div class="flex gap-2">
+            <input v-model="newMemory" type="text" placeholder="例如：看到拉面算餐厅聚餐" class="flex-1 bg-purple-900/60 border border-purple-700/80 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:border-pink-400 transition">
+            <button @click="addMemory" class="bg-pink-600 hover:bg-pink-500 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition">保存</button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto pr-1 space-y-2">
+            <p class="text-[10px] text-purple-400">这些习惯会永久保存在云端，每次聊天 AI 都会记住：</p>
+            <div v-if="aiMemories.length === 0" class="text-center text-purple-400/50 text-xs py-4 italic">还没有添加任何习惯哦</div>
+            <div v-else v-for="m in aiMemories" :key="m.id" class="flex justify-between items-center bg-purple-900/40 p-2.5 rounded-xl border border-purple-800/50 text-xs">
+              <span class="text-purple-100">{{ m.content }}</span>
+              <button @click="deleteMemory(m.id)" class="text-rose-400 hover:text-rose-300 ml-2 transition"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <!-- 全局编辑/修改弹窗对话框 -->
     <transition name="fade">
-      <div v-if="showEditModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div v-if="showEditModal" class="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="glass-card rounded-2xl p-5 w-full max-w-md border border-pink-500/50 space-y-4 shadow-2xl bg-purple-950/95">
           <div class="flex justify-between items-center border-b border-purple-800/80 pb-2">
             <h3 class="text-sm font-bold text-pink-200 flex items-center gap-2">
@@ -1112,7 +1062,6 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_GudLGDJg2D69FEJbdy7ksA_4Z8L9DvA';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ⚠️ 确保这里填的是你 Supabase 后台实际部署的函数名
     const AI_FUNCTION_NAME = 'swift-task';
 
     const getLocalDateString = () => {
@@ -2022,18 +1971,20 @@
         const aiMessages = ref([]);
         const aiMsgBox = ref(null);
 
-        // 记忆库状态
         const showMemory = ref(false);
         const aiMemories = ref([]);
         const newMemory = ref('');
 
+        // 容错处理：即使表没建好也不影响整体运行
         const fetchMemories = async () => {
           try {
             const { data, error } = await supabaseClient.from('starry_ai_memories').select('*').order('created_at', { ascending: true });
             if (!error && data) {
               aiMemories.value = data;
             }
-          } catch (e) { console.error(e); }
+          } catch (e) { 
+            console.warn('获取记忆失败，可能表还未建立', e); 
+          }
         };
 
         const openMemory = async () => {
@@ -2045,18 +1996,24 @@
           if (!newMemory.value.trim()) return;
           try {
             const { data, error } = await supabaseClient.from('starry_ai_memories').insert([{ content: newMemory.value.trim() }]).select();
-            if (!error && data) {
+            if (error) throw error;
+            if (data) {
               aiMemories.value.push(data[0]);
               newMemory.value = '';
             }
-          } catch (e) { console.error(e); }
+          } catch (e) { 
+            console.error('保存记忆失败', e);
+            alert('保存失败，请检查数据库权限。');
+          }
         };
 
         const deleteMemory = async (id) => {
           try {
             await supabaseClient.from('starry_ai_memories').delete().eq('id', id);
             aiMemories.value = aiMemories.value.filter(m => m.id !== id);
-          } catch (e) { console.error(e); }
+          } catch (e) { 
+            console.error('删除记忆失败', e); 
+          }
         };
 
         const aiQuickPrompts = [
@@ -2191,7 +2148,6 @@ JSON 格式要求：
             console.error('AI 请求失败:', e);
             const errMsg = String(e.message || '');
             
-            // 遇到 503 或网络波动自动重试
             if ((errMsg.includes('503') || errMsg.includes('non-2xx') || errMsg.includes('Failed to send')) && retryCount < 2) {
               console.warn(`AI 报错，正在重试 (${retryCount + 1}/2)...`);
               await new Promise(resolve => setTimeout(resolve, 1500));
@@ -2229,7 +2185,14 @@ JSON 格式要求：
             await fetchRecords();
           }
           await fetchDepositsRecords();
-          await fetchMemories(); // 初始化时拉取一次 AI 记忆
+          
+          // 用 try...catch 包裹，防止记忆拉取失败卡死整个 Vue
+          try {
+            await fetchMemories(); 
+          } catch (e) {
+            console.warn('初始化记忆库失败', e);
+          }
+          
           checkRecurringLedgers();
 
           document.addEventListener('click', () => {

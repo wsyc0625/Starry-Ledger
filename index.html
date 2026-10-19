@@ -155,6 +155,77 @@
       .analytics-chart-panel .chart-legend { font-size: 0.58rem !important; line-height: 0.85rem !important; }
       .analytics-chart-panel .chart-legend span { font-size: 0.58rem !important; }
     }
+
+    /* ============ AI 助理样式 ============ */
+    .ai-fab {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 40;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      border: 2px solid rgba(255,255,255,0.25);
+      box-shadow: 0 8px 24px rgba(236,72,153,0.5);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .ai-fab:hover { transform: scale(1.08); box-shadow: 0 10px 30px rgba(236,72,153,0.7); }
+    .ai-fab i { font-size: 1.4rem; color: white; }
+
+    .ai-panel {
+      position: fixed; bottom: 5.5rem; right: 1.5rem; z-index: 40;
+      width: min(92vw, 400px); max-height: min(70vh, 560px);
+      display: flex; flex-direction: column;
+      background: rgba(21,9,34,0.96); backdrop-filter: blur(24px);
+      border: 1px solid rgba(244,63,94,0.4); border-radius: 1.5rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      overflow: hidden;
+    }
+    .ai-panel-header {
+      padding: 0.85rem 1rem; border-bottom: 1px solid rgba(244,63,94,0.2);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .ai-messages { flex: 1; overflow-y: auto; padding: 0.85rem; }
+    .ai-msg { display: flex; margin-bottom: 0.6rem; }
+    .ai-msg.user { justify-content: flex-end; }
+    .ai-bubble {
+      max-width: 85%; padding: 0.6rem 0.85rem; border-radius: 1rem;
+      font-size: 0.78rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+    }
+    .ai-msg.user .ai-bubble {
+      background: linear-gradient(135deg, #7c3aed, #db2777); color: white;
+      border-bottom-right-radius: 0.25rem;
+    }
+    .ai-msg.assistant .ai-bubble {
+      background: rgba(50,20,70,0.9); color: #e9d5ff;
+      border: 1px solid rgba(168,85,247,0.25);
+      border-bottom-left-radius: 0.25rem;
+    }
+    .ai-input-row {
+      display: flex; gap: 0.5rem; padding: 0.7rem 0.85rem;
+      border-top: 1px solid rgba(244,63,94,0.2);
+    }
+    .ai-input-row input {
+      flex: 1; background: rgba(30,10,45,0.9);
+      border: 1px solid rgba(168,85,247,0.35); border-radius: 0.9rem;
+      padding: 0.5rem 0.8rem; color: #f3e8ff; font-size: 0.78rem;
+      outline: none;
+    }
+    .ai-input-row input:focus { border-color: #ec4899; }
+    .ai-send {
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      border: none; border-radius: 0.9rem; padding: 0 0.9rem;
+      color: white; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+    }
+    .ai-send:disabled { opacity: 0.4; cursor: not-allowed; }
+    .ai-quick-btn {
+      background: rgba(168,85,247,0.12);
+      border: 1px solid rgba(168,85,247,0.35);
+      color: #d8b4fe; font-size: 0.68rem; padding: 0.32rem 0.6rem;
+      border-radius: 999px; cursor: pointer; transition: all 0.2s;
+    }
+    .ai-quick-btn:hover { background: rgba(236,72,153,0.2); border-color: rgba(236,72,153,0.5); color: #fbcfe8; }
+    .ai-quick-row {
+      display: flex; flex-wrap: wrap; gap: 0.35rem;
+      padding: 0.5rem 0.85rem 0.2rem 0.85rem;
+    }
   </style>
 </head>
 <body>
@@ -889,6 +960,50 @@
       </section>
     </div>
 
+    <!-- ==================== AI 助理浮动按钮与面板 ==================== -->
+    <button class="ai-fab" @click="toggleAI" title="AI 账本助理">
+      <i class="fa-solid fa-wand-magic-sparkles" :class="{ 'fa-beat': aiLoading }"></i>
+    </button>
+
+    <transition name="fade">
+      <div v-if="aiOpen" class="ai-panel">
+        <div class="ai-panel-header">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-pink-400"></i>
+            <span class="text-xs font-bold text-purple-100">Kuromi AI 助理</span>
+            <span class="text-[9px] text-purple-400/60 font-mono">Gemini Free</span>
+          </div>
+          <button @click="aiOpen = false" class="text-purple-400 hover:text-white text-sm">✕</button>
+        </div>
+
+        <div class="ai-messages" ref="aiMsgBox">
+          <div v-if="aiMessages.length === 0" class="text-center py-4 text-purple-400/50 text-[11px] italic">
+            基于本月真实账本回答你的问题 ✨
+          </div>
+          <div v-for="(m, i) in aiMessages" :key="i" class="ai-msg" :class="m.role">
+            <div class="ai-bubble">{{ m.content }}</div>
+          </div>
+          <div v-if="aiLoading" class="ai-msg assistant">
+            <div class="ai-bubble"><i class="fa-solid fa-circle-notch animate-spin"></i> 思考中...</div>
+          </div>
+        </div>
+
+        <div class="ai-quick-row">
+          <button v-for="q in aiQuickPrompts" :key="q" type="button" class="ai-quick-btn" :disabled="aiLoading" @click="askAIQuick(q)">{{ q }}</button>
+        </div>
+
+        <form @submit.prevent="sendAIMessage" class="ai-input-row">
+          <input
+            v-model="aiInput"
+            :disabled="aiLoading"
+            placeholder="问问这个月的花销..."
+            maxlength="500"
+          />
+          <button type="submit" class="ai-send" :disabled="aiLoading || !aiInput.trim()">发送</button>
+        </form>
+      </div>
+    </transition>
+
     <!-- 全局编辑/修改弹窗对话框 -->
     <transition name="fade">
       <div v-if="showEditModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -961,7 +1076,7 @@
   </div>
 
   <script>
-    const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
+    const { createApp, ref, reactive, computed, onMounted, watch, nextTick } = Vue;
     
     const SUPABASE_URL = 'https://vxbaikkfjyayfxygysfc.supabase.co'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_GudLGDJg2D69FEJbdy7ksA_4Z8L9DvA';
@@ -1389,7 +1504,6 @@
           const currentMonthKey = todayStr.slice(0, 7);
           const subMap = new Map();
 
-          // 1. 找出所有固定月费，按 (付款人+备注+金额) 去重，只保留最新的一条
           records.value.forEach(r => {
             if (isTransferMirror(r) || !r.category || !r.category.includes('固定月费') || !r.date) return;
             const key = `${r.payer}|${r.category}|${(r.remark || '订阅').trim()}|${Number(r.amount).toFixed(2)}`;
@@ -1397,7 +1511,6 @@
             if (!subMap.has(key)) {
               subMap.set(key, r);
             } else {
-              // 如果已经有记录了，比较日期，保留更新的
               const existing = subMap.get(key);
               if (new Date(r.date) > new Date(existing.date)) {
                 subMap.set(key, r);
@@ -1406,9 +1519,7 @@
           });
 
           const list = [];
-          // 2. 遍历去重后的记录，检查本月是否已经记过
           subMap.forEach(latestRecord => {
-            // 查找本月是否有完全一样的记录
             const hasThisMonth = records.value.some(r => 
               r.payer === latestRecord.payer &&
               r.category === latestRecord.category &&
@@ -1423,10 +1534,9 @@
             });
           });
 
-          // 排序：未记录的排前面，然后按付款人排
           activeSubscriptions.value = list.sort((a, b) => {
             if (a.isRecordedThisMonth !== b.isRecordedThisMonth) {
-              return a.isRecordedThisMonth ? 1 : -1; // 未记录的优先
+              return a.isRecordedThisMonth ? 1 : -1;
             }
             return String(a.remark || '').localeCompare(String(b.remark || ''));
           });
@@ -1435,7 +1545,6 @@
         };
 
         const activeSubscriptionTotal = computed(() => {
-          // 只计算本月还未记录的那些费用的总和，作为待支出预估
           return activeSubscriptions.value
             .filter(item => !item.isRecordedThisMonth)
             .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
@@ -1444,19 +1553,17 @@
         const autoProcessRecurring = async (rec) => {
           if (!rec || !rec.date || rec.isRecordedThisMonth) return;
 
-          // 弹窗确认
           const confirmMsg = `是否将 [ ${rec.remark || '固定费用'} - S$${rec.amount} ] 记入本月？\n\n日期将记录为：今天 (${getLocalDateString()})`;
           if (!window.confirm(confirmMsg)) return;
 
           try {
-            // 直接照抄最新记录的数据，只是把日期改成今天
             const { error } = await supabaseClient.from('starry_ledger').insert([{
               payer: rec.payer,
               amount: rec.amount,
               original_amount: rec.original_amount || rec.amount,
               currency: rec.currency || 'SGD',
               category: rec.category,
-              date: getLocalDateString(), // 一键补记为今天
+              date: getLocalDateString(),
               remark: rec.remark
             }]);
 
@@ -1477,7 +1584,6 @@
           if (!window.confirm(confirmMsg)) return;
 
           try {
-            // 找到所有匹配的记录
             const recordsToDelete = records.value.filter(r => 
               r.payer === rec.payer &&
               r.category === rec.category &&
@@ -1489,7 +1595,6 @@
             
             const idsToDelete = recordsToDelete.map(r => r.id);
             
-            // 批量删除
             const { error } = await supabaseClient
               .from('starry_ledger')
               .delete()
@@ -1878,6 +1983,126 @@
           link.click();
         };
 
+        // ==========================================
+        // AI 助理（完全免费，通过 Supabase Edge Function 代理）
+        // ==========================================
+        const aiOpen = ref(false);
+        const aiInput = ref('');
+        const aiLoading = ref(false);
+        const aiMessages = ref([]);
+        const aiMsgBox = ref(null);
+
+        const aiQuickPrompts = [
+          '帮我总结这个月的消费',
+          '哪类花得最多？',
+          '我的预算还够吗？',
+          '给我 3 条省钱建议'
+        ];
+
+        const toggleAI = () => {
+          aiOpen.value = !aiOpen.value;
+          if (aiOpen.value) {
+            nextTick(() => scrollAIToBottom());
+          }
+        };
+
+        const scrollAIToBottom = () => {
+          if (aiMsgBox.value) {
+            aiMsgBox.value.scrollTop = aiMsgBox.value.scrollHeight;
+          }
+        };
+
+        // 把当前选中月份的账本压缩成 AI 能读懂的上下文
+        const buildAIContext = () => {
+          const monthRecords = records.value.filter(
+            r => r.date && r.date.startsWith(selectedMonth.value)
+          );
+          const clean = monthRecords.filter(r => !isTransferMirror(r));
+
+          const total = clean.reduce((s, r) => s + Number(r.amount || 0), 0);
+          const byCategory = {};
+          clean.forEach(r => {
+            const cat = getCategoryDisplayName(r.category) || '其他';
+            byCategory[cat] = (byCategory[cat] || 0) + Number(r.amount || 0);
+          });
+
+          const catLines = Object.entries(byCategory)
+            .sort((a, b) => b[1] - a[1])
+            .map(([k, v]) => `- ${k}: S$${v.toFixed(2)}`)
+            .join('\n');
+
+          const budgetLines = [
+            budgetM1.value ? `- ${member1.value} 月预算: S$${budgetM1.value}，本月已花 S$${totalSelectedMonthM1.value}` : `- ${member1.value} 未设月预算`,
+            budgetM2.value ? `- ${member2.value} 月预算: S$${budgetM2.value}，本月已花 S$${totalSelectedMonthM2.value}` : `- ${member2.value} 未设月预算`
+          ].join('\n');
+
+          return `当前月份: ${selectedMonthText.value}
+成员: ${member1.value} / ${member2.value}
+本月总支出(不含转账): S$${total.toFixed(2)}
+${budgetLines}
+
+分类支出明细:
+${catLines || '(本月暂无支出记录)'}
+
+最近10笔支出:
+${clean.slice(0, 10).map(r => `- ${r.date} ${r.payer} ${getCategoryDisplayName(r.category)} S$${Number(r.amount).toFixed(2)} ${r.remark ? '备注:' + r.remark : ''}`).join('\n') || '(无)'}`;
+        };
+
+        const askAIQuick = (q) => {
+          if (aiLoading.value) return;
+          aiInput.value = q;
+          sendAIMessage();
+        };
+
+        const sendAIMessage = async () => {
+          const text = aiInput.value.trim();
+          if (!text || aiLoading.value) return;
+
+          aiMessages.value.push({ role: 'user', content: text });
+          aiInput.value = '';
+          aiLoading.value = true;
+          await nextTick();
+          scrollAIToBottom();
+
+          try {
+            const context = buildAIContext();
+            const systemPrompt = `你是一个简洁、友好的个人记账助理，名字叫"Kuromi 星芒助理"。
+下面是用户当前月份的账本摘要，请基于这些真实数据回答问题，不要编造数字。
+回答控制在 120 字以内，用中文，语气轻松但给出具体、可操作的建议。
+
+${context}`;
+
+            const payload = {
+              messages: [
+                { role: 'system', content: systemPrompt },
+                ...aiMessages.value.slice(-6).map(m => ({ role: m.role, content: m.content }))
+              ],
+              temperature: 0.4
+            };
+
+            // 调用 Supabase Edge Function 代理（密钥保存在服务端，前端零暴露）
+            const { data, error } = await supabaseClient.functions.invoke('ai-proxy', {
+              body: payload
+            });
+
+            if (error) throw error;
+            if (data && data.error) throw new Error(data.error);
+
+            const reply = data?.choices?.[0]?.message?.content || '抱歉，我暂时没有收到有效回复。';
+            aiMessages.value.push({ role: 'assistant', content: reply });
+          } catch (e) {
+            console.error('AI 请求失败:', e);
+            aiMessages.value.push({
+              role: 'assistant',
+              content: '⚠️ AI 助理暂时不可用。请确认已部署 Supabase Edge Function `ai-proxy`，或稍等 30 秒（免费额度每分钟限制）后重试。'
+            });
+          } finally {
+            aiLoading.value = false;
+            await nextTick();
+            scrollAIToBottom();
+          }
+        };
+
         onMounted(async () => {
           syncLiveExchangeRates();
           await fetchCloudBudget();
@@ -1910,7 +2135,10 @@
           allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal, selectedMonthText, selectedDayText,
           toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected,
           offsetMonth, offsetDay, onDayPicked, resetToToday, exportToCSV, exportDepositsToCSV,
-          updateCloudBudget, getLocalDateString
+          updateCloudBudget, getLocalDateString,
+          // AI 助理
+          aiOpen, aiInput, aiLoading, aiMessages, aiMsgBox, aiQuickPrompts,
+          toggleAI, sendAIMessage, askAIQuick
         };
       }
     }).mount('#app');

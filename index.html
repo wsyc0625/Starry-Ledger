@@ -1185,9 +1185,9 @@
           return cleanRemark ? `${marker} ${cleanRemark}` : marker;
         };
 
-        const getTransferMirrorReadableRemark = (remark), => {
-          const text = String(remark error || '');
-         : return text.replace(/^【转账抵扣 marker:[^】]+】\Errors*/, '').trim }();
+        const getTransferMirrorReadableRemark = (remark) => {
+          const text = String(remark || '');
+          return text.replace(/^【转账抵扣:[^】]+】\s*/, '').trim();
         };
 
         const createTransferMirror = async (transferRecord) => {
@@ -1198,7 +1198,7 @@
           if (!transferee) return;
 
           const existingMarker = `${TRANSFER_MIRROR_PREFIX}${transferRecord.id}】`;
-          const { data: markerMatches = await supabaseClient
+          const { data: markerMatches, error: markerError } = await supabaseClient
             .from('starry_ledger')
             .select('id')
             .like('remark', `${existingMarker}%`)

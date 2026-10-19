@@ -260,6 +260,9 @@
                   <button @click="editRecordItem(rec)" class="bg-purple-900/80 hover:bg-purple-800 text-purple-200 border border-purple-600/50 text-[9px] px-2 py-1 rounded-xl transition flex items-center gap-1" title="调整金额或名称">
                     <i class="fa-solid fa-pen-to-square"></i>
                   </button>
+                  <button @click="deleteSubscription(rec)" class="bg-rose-950/80 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 text-[9px] px-2 py-1 rounded-xl transition flex items-center gap-1" title="彻底删除此固定费用">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
                   <button @click="autoProcessRecurring(rec)" :disabled="rec.isRecordedThisMonth" :class="rec.isRecordedThisMonth ? 'bg-purple-900/50 text-purple-500 border border-purple-800/60 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white shadow-[0_0_8px_rgba(99,102,241,0.5)]'" class="font-bold text-[9px] px-2.5 py-1 rounded-xl transition flex items-center gap-1">
                     <i class="fa-solid fa-plus-circle"></i>
                     <span>{{ rec.isRecordedThisMonth ? '已记' : '记一笔' }}</span>
@@ -1182,9 +1185,9 @@
           return cleanRemark ? `${marker} ${cleanRemark}` : marker;
         };
 
-        const getTransferMirrorReadableRemark = (remark) => {
-          const text = String(remark || '');
-          return text.replace(/^【转账抵扣:[^】]+】\s*/, '').trim();
+        const getTransferMirrorReadableRemark = (remark), => {
+          const text = String(remark error || '');
+         : return text.replace(/^【转账抵扣 marker:[^】]+】\Errors*/, '').trim }();
         };
 
         const createTransferMirror = async (transferRecord) => {
@@ -1195,7 +1198,7 @@
           if (!transferee) return;
 
           const existingMarker = `${TRANSFER_MIRROR_PREFIX}${transferRecord.id}】`;
-          const { data: markerMatches, error: markerError } = await supabaseClient
+          const { data: markerMatches = await supabaseClient
             .from('starry_ledger')
             .select('id')
             .like('remark', `${existingMarker}%`)
@@ -1464,6 +1467,41 @@
           } catch (e) {
             console.error('补记失败:', e);
             alert('补记失败，请检查网络');
+          }
+        };
+
+        const deleteSubscription = async (rec) => {
+          if (!rec) return;
+          
+          const confirmMsg = `确定要彻底删除固定费用 [ ${rec.remark || '固定费用'} - S$${rec.amount} ] 吗？\n\n⚠️ 警告：这会从数据库中删除该订阅的所有历史账单记录，且不可恢复！`;
+          if (!window.confirm(confirmMsg)) return;
+
+          try {
+            // 找到所有匹配的记录
+            const recordsToDelete = records.value.filter(r => 
+              r.payer === rec.payer &&
+              r.category === rec.category &&
+              (r.remark || '订阅').trim() === (rec.remark || '订阅').trim() &&
+              Number(r.amount).toFixed(2) === Number(rec.amount).toFixed(2)
+            );
+            
+            if (recordsToDelete.length === 0) return;
+            
+            const idsToDelete = recordsToDelete.map(r => r.id);
+            
+            // 批量删除
+            const { error } = await supabaseClient
+              .from('starry_ledger')
+              .delete()
+              .in('id', idsToDelete);
+
+            if (error) throw error;
+
+            await fetchRecords();
+            checkRecurringLedgers();
+          } catch (e) {
+            console.error('删除固定费用失败:', e);
+            alert('删除失败，请重试');
           }
         };
 
@@ -1863,7 +1901,7 @@
           showDatePicker, activePicker, panelYear, filterRange, chartMember, categoryRange, filters,
           depositsRecords, depositsLoading, depositsSelectedYear, availableDepositsYears, depositsForm,
           getOtherMember, getCategoryDisplayName, getCategoryIconOnly, isTransferMirror, getTransferMirrorReadableRemark, addRecord, deleteRecord,
-          editRecordItem, submitEditRecord, checkRecurringLedgers, activeSubscriptionTotal, autoProcessRecurring,
+          editRecordItem, submitEditRecord, checkRecurringLedgers, activeSubscriptionTotal, autoProcessRecurring, deleteSubscription,
           addDeposits, deleteDepositsRecord, summaryMetrics, filteredRecords, m1TransferDeduction, m2TransferDeduction,
           totalSelectedMonthM1, totalSelectedMonthM2, totalTodayM1, totalTodayM2, totalMonth, remainM1, remainM2,
           m1PercentOfBudget, m2PercentOfBudget, totalRatioSum, m1Percent, m2Percent, getBudgetColorClass,

@@ -226,6 +226,10 @@
       display: flex; flex-wrap: wrap; gap: 0.35rem;
       padding: 0.5rem 0.85rem 0.2rem 0.85rem;
     }
+
+    /* 记忆库弹窗样式 */
+    .memory-modal { position: absolute; inset: 0; background: rgba(21,9,34,0.98); z-index: 50; display: flex; flex-direction: column; padding: 1rem; backdrop-filter: blur(10px); }
+    .memory-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 0.5rem; font-size: 0.75rem; }
   </style>
 </head>
 <body>
@@ -966,14 +970,40 @@
     </button>
 
     <transition name="fade">
-      <div v-if="aiOpen" class="ai-panel">
+      <div v-if="aiOpen" class="ai-panel relative">
+        
+        <!-- 🧠 记忆库弹窗遮罩 -->
+        <div v-if="showMemory" class="memory-modal">
+          <div class="flex justify-between items-center mb-3 border-b border-pink-500/30 pb-2">
+            <h3 class="text-xs font-bold text-pink-200"><i class="fa-solid fa-brain"></i> AI 云端记忆库</h3>
+            <button @click="showMemory = false" class="text-purple-400 hover:text-white">✕</button>
+          </div>
+          <div class="flex gap-2 mb-3">
+            <input v-model="newMemory" type="text" placeholder="例如：看到拉面算餐厅聚餐" class="flex-1 bg-purple-900/50 border border-purple-600/50 rounded-lg px-2 text-xs text-white outline-none focus:border-pink-400 transition">
+            <button @click="addMemory" class="bg-pink-600 hover:bg-pink-500 text-white px-3 py-1 rounded-lg text-xs font-bold transition">保存</button>
+          </div>
+          <div class="flex-1 overflow-y-auto pr-1">
+            <p class="text-[10px] text-purple-400 mb-2">这些习惯会永久保存在云端，每次聊天 AI 都会记住：</p>
+            <div v-if="aiMemories.length === 0" class="text-center text-purple-400/50 text-xs py-4">还没有添加任何习惯哦</div>
+            <div v-else v-for="m in aiMemories" :key="m.id" class="memory-item">
+              <span class="text-purple-100">{{ m.content }}</span>
+              <button @click="deleteMemory(m.id)" class="text-rose-400 hover:text-rose-300 ml-2 transition"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+          </div>
+        </div>
+
         <div class="ai-panel-header">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-wand-magic-sparkles text-pink-400"></i>
             <span class="text-xs font-bold text-purple-100">Kuromi AI 助理</span>
             <span class="text-[9px] text-purple-400/60 font-mono">Gemini Free</span>
           </div>
-          <button @click="aiOpen = false" class="text-purple-400 hover:text-white text-sm">✕</button>
+          <div class="flex items-center gap-3">
+            <button @click="openMemory" class="text-purple-400 hover:text-pink-400 transition" title="云端记忆库">
+              <i class="fa-solid fa-brain"></i>
+            </button>
+            <button @click="aiOpen = false" class="text-purple-400 hover:text-white text-sm">✕</button>
+          </div>
         </div>
 
         <div class="ai-messages" ref="aiMsgBox">
@@ -1082,7 +1112,7 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_GudLGDJg2D69FEJbdy7ksA_4Z8L9DvA';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ⚠️ 确保这里填的是你 Supabase 后台实际部署的函数名（截图看是 swift-task）
+    // ⚠️ 确保这里填的是你 Supabase 后台实际部署的函数名
     const AI_FUNCTION_NAME = 'swift-task';
 
     const getLocalDateString = () => {
@@ -1984,13 +2014,50 @@
         };
 
         // ==========================================
-        // AI 助理（支持查账、查存款、自然语言记账）
+        // AI 云端记忆库与助理逻辑
         // ==========================================
         const aiOpen = ref(false);
         const aiInput = ref('');
         const aiLoading = ref(false);
         const aiMessages = ref([]);
         const aiMsgBox = ref(null);
+
+        // 记忆库状态
+        const showMemory = ref(false);
+        const aiMemories = ref([]);
+        const newMemory = ref('');
+
+        const fetchMemories = async () => {
+          try {
+            const { data, error } = await supabaseClient.from('starry_ai_memories').select('*').order('created_at', { ascending: true });
+            if (!error && data) {
+              aiMemories.value = data;
+            }
+          } catch (e) { console.error(e); }
+        };
+
+        const openMemory = async () => {
+          await fetchMemories();
+          showMemory.value = true;
+        };
+
+        const addMemory = async () => {
+          if (!newMemory.value.trim()) return;
+          try {
+            const { data, error } = await supabaseClient.from('starry_ai_memories').insert([{ content: newMemory.value.trim() }]).select();
+            if (!error && data) {
+              aiMemories.value.push(data[0]);
+              newMemory.value = '';
+            }
+          } catch (e) { console.error(e); }
+        };
+
+        const deleteMemory = async (id) => {
+          try {
+            await supabaseClient.from('starry_ai_memories').delete().eq('id', id);
+            aiMemories.value = aiMemories.value.filter(m => m.id !== id);
+          } catch (e) { console.error(e); }
+        };
 
         const aiQuickPrompts = [
           '我的存款多少',
@@ -2013,32 +2080,24 @@
         };
 
         const buildAIContext = () => {
-          const monthRecords = records.value.filter(
-            r => r.date && r.date.startsWith(selectedMonth.value)
-          );
+          const monthRecords = records.value.filter(r => r.date && r.date.startsWith(selectedMonth.value));
           const clean = monthRecords.filter(r => !isTransferMirror(r));
-
           const total = clean.reduce((s, r) => s + Number(r.amount || 0), 0);
           const byCategory = {};
           clean.forEach(r => {
             const cat = getCategoryDisplayName(r.category) || '其他';
             byCategory[cat] = (byCategory[cat] || 0) + Number(r.amount || 0);
           });
-
-          const catLines = Object.entries(byCategory)
-            .sort((a, b) => b[1] - a[1])
-            .map(([k, v]) => `- ${k}: S$${v.toFixed(2)}`)
-            .join('\n');
-
+          const catLines = Object.entries(byCategory).sort((a, b) => b[1] - a[1]).map(([k, v]) => `- ${k}: S$${v.toFixed(2)}`).join('\n');
           const budgetLines = [
             budgetM1.value ? `- ${member1.value} 月预算: S$${budgetM1.value}，已花: S$${totalSelectedMonthM1.value}` : `- ${member1.value} 未设预算`,
             budgetM2.value ? `- ${member2.value} 月预算: S$${budgetM2.value}，已花: S$${totalSelectedMonthM2.value}` : `- ${member2.value} 未设预算`
           ].join('\n');
+          const depLines = `总存入: S$${allTimeDepositsInTotal.value.toFixed(2)}, 总提出: S$${allTimeDepositsOutTotal.value.toFixed(2)}, 当前净存款余额: S$${allTimeDepositsNetTotal.value.toFixed(2)}`;
 
-          const depIn = allTimeDepositsInTotal.value;
-          const depOut = allTimeDepositsOutTotal.value;
-          const depNet = allTimeDepositsNetTotal.value;
-          const depLines = `总存入: S$${depIn.toFixed(2)}, 总提出: S$${depOut.toFixed(2)}, 当前净存款余额: S$${depNet.toFixed(2)}`;
+          const memoryLines = aiMemories.value.length > 0 
+            ? aiMemories.value.map(m => `- ${m.content}`).join('\n')
+            : '(暂无特殊习惯)';
 
           return `当前月份: ${selectedMonthText.value}
 成员: ${member1.value} / ${member2.value}
@@ -2047,6 +2106,9 @@ ${budgetLines}
 
 存款情况:
 ${depLines}
+
+用户的特殊记账习惯（非常重要，请遵守）:
+${memoryLines}
 
 分类支出明细:
 ${catLines || '(本月暂无支出记录)'}
@@ -2063,9 +2125,8 @@ ${clean.slice(0, 10).map(r => `- ${r.date} ${r.payer} ${getCategoryDisplayName(r
 
         const sendAIMessage = async (retryCount = 0) => {
           const text = aiInput.value.trim();
-          if (!text && !retryCount) return; // 如果是重试，就不清空输入框
+          if (!text && !retryCount) return;
 
-          // 如果是新消息，推入列表并清空
           if (!retryCount) {
             aiMessages.value.push({ role: 'user', content: text });
             aiInput.value = '';
@@ -2090,13 +2151,12 @@ ${context}
 默认支付人：${form.payer}
 JSON 格式要求：
 {"action": "add_record", "amount": 5, "category": "日常伙食 Daily Meal", "remark": "炒饭", "date": "${todayStr}", "payer": "小星"}
-注意：如果用户没报日期，默认今天是 ${todayStr}。如果没说分类，根据备注推测最合适的分类。如果没说支付人，默认使用 ${form.payer}。`;
+注意：如果用户没报日期，默认今天是 ${todayStr}。如果没说分类，根据备注并结合“用户的特殊记账习惯”推测最合适的分类。如果没说支付人，默认使用 ${form.payer}。`;
 
             const { data, error } = await supabaseClient.functions.invoke(AI_FUNCTION_NAME, {
               body: {
                 messages: [
                   { role: 'system', content: systemPrompt },
-                  // 最近 3 轮对话，排除掉刚刚推入的当前 user 消息（因为已经包含在 systemPrompt 中了），或者保留也可
                   ...aiMessages.value.slice(-6).map(m => ({ role: m.role, content: m.content }))
                 ],
                 temperature: 0.4
@@ -2107,46 +2167,37 @@ JSON 格式要求：
             if (data && data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
 
             let reply = data?.choices?.[0]?.message?.content || '抱歉，我暂时没有收到有效回复。';
-            
-            // 清理可能存在的 markdown 标记
             reply = reply.replace(/```json/g, '').replace(/```/g, '').trim();
 
-            // 尝试解析是否为记账指令
             let isRecordAction = false;
             try {
               const parsed = JSON.parse(reply);
               if (parsed.action === 'add_record') {
-                // 自动填入表单
                 form.amount = parsed.amount;
                 form.category = parsed.category || '日常伙食 Daily Meal';
                 form.remark = parsed.remark || '';
                 form.date = parsed.date || getLocalDateString();
                 form.payer = parsed.payer || form.payer;
                 
-                // 调用保存
                 await addRecord();
                 
-                // 生成确认消息
                 reply = `✨ 已经帮你记下啦！\n金额：S$${parsed.amount}\n分类：${getCategoryDisplayName(form.category)}\n备注：${parsed.remark || '无'}`;
                 isRecordAction = true;
               }
-            } catch (e) {
-              // 不是 JSON，当作普通文本处理
-            }
+            } catch (e) {}
 
             aiMessages.value.push({ role: 'assistant', content: reply });
           } catch (e) {
             console.error('AI 请求失败:', e);
-            
-            // 如果是 503 或网络错误，并且重试次数小于 2 次，自动重试
             const errMsg = String(e.message || '');
+            
+            // 遇到 503 或网络波动自动重试
             if ((errMsg.includes('503') || errMsg.includes('non-2xx') || errMsg.includes('Failed to send')) && retryCount < 2) {
               console.warn(`AI 报错，正在重试 (${retryCount + 1}/2)...`);
               await new Promise(resolve => setTimeout(resolve, 1500));
               return sendAIMessage(retryCount + 1);
             }
 
-            // 如果重试失败或者不是上述错误，显示报错
             let msg = '⚠️ AI 助理暂时不可用。';
             if (errMsg.includes('429')) {
               msg += '\n免费额度已达到每分钟限制，请等 30 秒后再试。';
@@ -2178,6 +2229,7 @@ JSON 格式要求：
             await fetchRecords();
           }
           await fetchDepositsRecords();
+          await fetchMemories(); // 初始化时拉取一次 AI 记忆
           checkRecurringLedgers();
 
           document.addEventListener('click', () => {
@@ -2203,7 +2255,8 @@ JSON 格式要求：
           offsetMonth, offsetDay, onDayPicked, resetToToday, exportToCSV, exportDepositsToCSV,
           updateCloudBudget, getLocalDateString,
           aiOpen, aiInput, aiLoading, aiMessages, aiMsgBox, aiQuickPrompts,
-          toggleAI, sendAIMessage, askAIQuick
+          toggleAI, sendAIMessage, askAIQuick,
+          showMemory, aiMemories, newMemory, openMemory, addMemory, deleteMemory
         };
       }
     }).mount('#app');

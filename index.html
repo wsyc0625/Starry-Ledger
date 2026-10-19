@@ -217,28 +217,22 @@
       <!-- 左侧控制面板 -->
       <main class="lg:col-span-5 space-y-4">
         
-        <!-- 每月固定费用检查中心 -->
+        <!-- 极简版：固定费用补记中心 -->
         <div class="block glass-card rounded-2xl p-3 md:p-4 border border-indigo-500/40 bg-gradient-to-br from-indigo-950/40 to-purple-950/60 space-y-3 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
           <div class="flex items-center justify-between border-b border-indigo-500/30 pb-2">
             <h3 class="text-xs md:text-sm font-bold text-indigo-300 flex items-center gap-2">
               <i class="fa-solid fa-rotate text-indigo-400 animate-spin" style="animation-duration: 8s;"></i>
-              <span>每月固定费用检查中心</span>
+              <span>每月固定费用补记中心</span>
             </h3>
             <button @click="checkRecurringLedgers" :disabled="checkingRecurring" class="px-2.5 py-1 bg-indigo-900/60 hover:bg-indigo-800/80 text-indigo-200 border border-indigo-500/50 rounded-xl text-[10px] font-bold transition flex items-center gap-1">
               <i class="fa-solid fa-arrows-rotate" :class="{'animate-spin': checkingRecurring}"></i>
-              <span>{{ checkingRecurring ? '检查中...' : '刷新检查' }}</span>
+              <span>{{ checkingRecurring ? '检查中...' : '刷新' }}</span>
             </button>
           </div>
 
-          <!-- 活跃固定月费概览区 -->
           <div class="space-y-2">
-            <div class="flex justify-between items-center text-[10px] text-purple-300/80 font-bold px-1">
-              <span>当前活跃固定月费列表 ({{ activeSubscriptions.length }})</span>
-              <span>月度预算总计: S$ {{ activeSubscriptionTotal.toFixed(2) }}</span>
-            </div>
-
             <div v-if="activeSubscriptions.length === 0" class="text-center py-3 text-purple-400/60 italic text-xs">
-              暂无活跃的固定月费扣款项目
+              暂无固定月费记录
             </div>
 
             <div v-else class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
@@ -252,19 +246,12 @@
                     <span class="text-pink-300 font-mono font-bold text-xs">S$ {{ Number(rec.amount).toFixed(2) }}</span>
                   </div>
                   <p class="text-[9px] text-purple-400/70 font-mono leading-relaxed">
-                    上次扣费: {{ rec.date }}<br>
-                    <span v-if="rec.duplicateCount > 1" class="text-rose-400 font-black">
-                      ⚠️ 本月发现 {{ rec.duplicateCount }} 笔，疑似重复扣款
-                      · 下期: {{ rec.nextDueDate }}
+                    上次记录: {{ rec.date }} <br>
+                    <span v-if="rec.isRecordedThisMonth" class="text-emerald-400 font-bold">
+                      ✅ 本月已记录
                     </span>
-                    <span v-else-if="rec.currentMonthRecorded" class="text-emerald-400 font-bold">
-                      ✅ 本月已记录 ({{ rec.currentMonthDates.join(', ') }}) · 下期: {{ rec.nextDueDate }}
-                    </span>
-                    <span v-else-if="rec.isDue" class="text-amber-300 font-bold">
-                      ⚠️ 本期应扣: {{ rec.nextDueDate }} · 尚未记录
-                    </span>
-                    <span v-else class="text-purple-300/80 font-medium">
-                      本期应扣: {{ rec.nextDueDate }}
+                    <span v-else class="text-amber-300 font-bold">
+                      ⚠️ 本月未记录
                     </span>
                   </p>
                 </div>
@@ -272,15 +259,10 @@
                 <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
                   <button @click="editRecordItem(rec)" class="bg-purple-900/80 hover:bg-purple-800 text-purple-200 border border-purple-600/50 text-[9px] px-2 py-1 rounded-xl transition flex items-center gap-1" title="调整金额或名称">
                     <i class="fa-solid fa-pen-to-square"></i>
-                    <span>修改</span>
                   </button>
-                  <button @click="deleteRecord(rec.id)" class="bg-rose-950/80 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 text-[9px] px-2 py-1 rounded-xl transition flex items-center gap-1">
-                    <i class="fa-solid fa-trash-can"></i>
-                    <span>删除</span>
-                  </button>
-                  <button @click="autoProcessRecurring(rec)" :disabled="rec.currentMonthRecorded" :class="rec.currentMonthRecorded ? 'bg-purple-900/50 text-purple-500 border border-purple-800/60 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white shadow-[0_0_8px_rgba(99,102,241,0.5)]'" class="font-bold text-[9px] px-2.5 py-1 rounded-xl transition flex items-center gap-1">
+                  <button @click="autoProcessRecurring(rec)" :disabled="rec.isRecordedThisMonth" :class="rec.isRecordedThisMonth ? 'bg-purple-900/50 text-purple-500 border border-purple-800/60 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white shadow-[0_0_8px_rgba(99,102,241,0.5)]'" class="font-bold text-[9px] px-2.5 py-1 rounded-xl transition flex items-center gap-1">
                     <i class="fa-solid fa-plus-circle"></i>
-                    <span>{{ rec.duplicateCount > 1 ? '有重复记录' : (rec.currentMonthRecorded ? '本月已记录' : '补记本期') }}</span>
+                    <span>{{ rec.isRecordedThisMonth ? '已记' : '记一笔' }}</span>
                   </button>
                 </div>
               </div>
@@ -692,7 +674,7 @@
           <div class="space-y-2 max-h-[350px] md:max-h-[440px] overflow-y-auto pr-0.5">
             <div v-if="loading" class="text-center py-4 text-purple-400/50"><i class="fa-solid fa-circle-notch animate-spin text-xs mb-1"></i><p class="text-[9px]">正在同步云端...</p></div>
             <div v-else-if="filteredRecords.length === 0" class="text-center py-6 text-purple-400/50 text-xs italic">暂无星芒记录</div>
-            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex items-center justify-between p-2 md:p-2.5 rounded-xl bg-purple-950/40 border border-purple-900/80 hover:border-pink-600/60 transition hover:shadow-[0_0_12px_rgba(244,63,94,0.2)]" :class="{'border-rose-900/60 bg-rose-950/10': item.category.includes('居住房租'), 'border-amber-500/40 bg-amber-950/10': item.category.includes('转账')}">
+            <div v-else v-for="item in filteredRecords" :key="item.id" class="flex items-center justify-between p-2 md:p-2.5 rounded-xl bg-purple-950/40 border border-purple-900/80 hover:border-pink-600/60 transition hover:shadow-[0_0_12px_rgba(244,63,94,0.2)]" :class="{'border-rose-900/60 bg-rose-950/10': item.category && item.category.includes('居住房租'), 'border-amber-500/40 bg-amber-950/10': item.category && item.category.includes('转账')}">
               <div class="flex items-center gap-2 truncate">
                 <span :class="item.payer === member1 ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-rose-500/20 text-pink-300 border-rose-500/30'" class="text-[8px] md:text-[9px] px-2 py-0.5 rounded-full font-bold border flex-shrink-0">{{ item.payer }}</span>
                 <div class="truncate">
@@ -702,7 +684,7 @@
                     <span v-if="isTransferMirror(item)" class="text-[8px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 py-0.2 rounded font-sans">
                       ↪ 转账抵扣
                     </span>
-                    <span v-else-if="item.category.includes('转账')" class="text-[8px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 py-0.2 rounded font-sans">
+                    <span v-else-if="item.category && item.category.includes('转账')" class="text-[8px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 py-0.2 rounded font-sans">
                       ⇄ {{ item.payer }} 转给 {{ getOtherMember(item.payer) }}
                       <span v-if="item.transfer_category">
                         · 用于 {{ getCategoryDisplayName(item.transfer_category) }}
@@ -716,8 +698,8 @@
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
                 <div class="text-right">
-                  <p :class="item.category.includes('转账') ? 'text-amber-300 font-bold' : 'text-purple-100'" class="text-xs font-black font-mono">
-                    {{ item.category.includes('转账') ? '-' : '' }}S$ {{ Number(item.amount).toFixed(2) }}
+                  <p :class="item.category && item.category.includes('转账') ? 'text-amber-300 font-bold' : 'text-purple-100'" class="text-xs font-black font-mono">
+                    {{ item.category && item.category.includes('转账') ? '-' : '' }}S$ {{ Number(item.amount).toFixed(2) }}
                   </p>
                   <p v-if="item.currency && item.currency !== 'SGD'" class="text-[8px] md:text-[9px] font-mono font-bold" :class="item.currency === 'CNY' ? 'text-rose-400/80' : 'text-pink-400/80'">
                     ({{ item.currency === 'MYR' ? 'RM' : '¥' }} {{ Number(item.original_amount).toFixed(2) }})
@@ -1395,86 +1377,53 @@
           return String(dateStr).slice(0, 7);
         };
 
-        const getSafeMonthlyDate = (year, monthIndex, day) => {
-          const lastDay = new Date(year, monthIndex + 1, 0).getDate();
-          const safeDay = Math.min(Number(day) || 1, lastDay);
-          return `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(safeDay).padStart(2, '0')}`;
-        };
-
-        const shiftMonthDate = (dateStr, monthOffset, recurringDay) => {
-          const base = new Date(`${dateStr}T00:00:00`);
-          return getSafeMonthlyDate(
-            base.getFullYear(),
-            base.getMonth() + monthOffset,
-            recurringDay
-          );
-        };
-
+        // ==========================================
+        // 极简版：固定费用补记逻辑
+        // ==========================================
         const checkRecurringLedgers = () => {
           checkingRecurring.value = true;
-
           const todayStr = getLocalDateString();
-          const today = new Date(`${todayStr}T00:00:00`);
           const currentMonthKey = todayStr.slice(0, 7);
           const subMap = new Map();
 
+          // 1. 找出所有固定月费，按 (付款人+备注+金额) 去重，只保留最新的一条
           records.value.forEach(r => {
             if (isTransferMirror(r) || !r.category || !r.category.includes('固定月费') || !r.date) return;
-
-            const remark = (r.remark || '订阅').trim();
-            const amountKey = (Number(r.amount) || 0).toFixed(2);
-            const key = `${r.payer}|${r.category}|${remark}|${amountKey}`;
-
-            if (!subMap.has(key)) subMap.set(key, []);
-            subMap.get(key).push(r);
+            const key = `${r.payer}|${r.category}|${(r.remark || '订阅').trim()}|${Number(r.amount).toFixed(2)}`;
+            
+            if (!subMap.has(key)) {
+              subMap.set(key, r);
+            } else {
+              // 如果已经有记录了，比较日期，保留更新的
+              const existing = subMap.get(key);
+              if (new Date(r.date) > new Date(existing.date)) {
+                subMap.set(key, r);
+              }
+            }
           });
 
           const list = [];
-
-          subMap.forEach(groupRecords => {
-            const sorted = [...groupRecords].sort((a, b) => a.date.localeCompare(b.date));
-            const latest = sorted[sorted.length - 1];
-
-            const recurringDay = Number(String(sorted[0].date).slice(8, 10));
-
-            const currentMonthRecords = sorted.filter(
-              r => getMonthKey(r.date) === currentMonthKey
+          // 2. 遍历去重后的记录，检查本月是否已经记过
+          subMap.forEach(latestRecord => {
+            // 查找本月是否有完全一样的记录
+            const hasThisMonth = records.value.some(r => 
+              r.payer === latestRecord.payer &&
+              r.category === latestRecord.category &&
+              (r.remark || '订阅').trim() === (latestRecord.remark || '订阅').trim() &&
+              Number(r.amount).toFixed(2) === Number(latestRecord.amount).toFixed(2) &&
+              getMonthKey(r.date) === currentMonthKey
             );
-
-            const currentMonthDates = currentMonthRecords
-              .map(r => r.date)
-              .sort();
-
-            const currentDueDate = getSafeMonthlyDate(
-              today.getFullYear(),
-              today.getMonth(),
-              recurringDay
-            );
-
-            const currentDue = new Date(`${currentDueDate}T00:00:00`);
-            const currentMonthRecorded = currentMonthRecords.length > 0;
-            const duplicateCount = currentMonthRecords.length;
-
-            const nextDueDate = currentMonthRecorded
-              ? shiftMonthDate(currentDueDate, 1, recurringDay)
-              : currentDueDate;
-
-            const isDue = !currentMonthRecorded && today >= currentDue;
 
             list.push({
-              ...latest,
-              recurringDay,
-              nextDueDate,
-              currentMonthRecorded,
-              currentMonthDates,
-              duplicateCount,
-              isDue
+              ...latestRecord,
+              isRecordedThisMonth: hasThisMonth
             });
           });
 
+          // 排序：未记录的排前面，然后按付款人排
           activeSubscriptions.value = list.sort((a, b) => {
-            if (a.recurringDay !== b.recurringDay) {
-              return a.recurringDay - b.recurringDay;
+            if (a.isRecordedThisMonth !== b.isRecordedThisMonth) {
+              return a.isRecordedThisMonth ? 1 : -1; // 未记录的优先
             }
             return String(a.remark || '').localeCompare(String(b.remark || ''));
           });
@@ -1483,52 +1432,28 @@
         };
 
         const activeSubscriptionTotal = computed(() => {
-          return activeSubscriptions.value.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+          // 只计算本月还未记录的那些费用的总和，作为待支出预估
+          return activeSubscriptions.value
+            .filter(item => !item.isRecordedThisMonth)
+            .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
         });
 
         const autoProcessRecurring = async (rec) => {
-          if (!rec || !rec.date) return;
+          if (!rec || !rec.date || rec.isRecordedThisMonth) return;
 
-          const todayStr = getLocalDateString();
-          const today = new Date(`${todayStr}T00:00:00`);
-          const currentMonthKey = todayStr.slice(0, 7);
-          const recurringDay = Number(rec.recurringDay) || Number(String(rec.date).slice(8, 10));
-          const targetDateStr = getSafeMonthlyDate(
-            today.getFullYear(),
-            today.getMonth(),
-            recurringDay
-          );
-
-          const monthlyRecords = records.value.filter(r => {
-            return (
-              r.payer === rec.payer &&
-              r.category === rec.category &&
-              (r.remark || '订阅').trim() === (rec.remark || '订阅').trim() &&
-              (Number(r.amount) || 0).toFixed(2) === (Number(rec.amount) || 0).toFixed(2) &&
-              getMonthKey(r.date) === currentMonthKey
-            );
-          });
-
-          if (monthlyRecords.length > 0) {
-            console.warn('本月已有该固定费用记录，跳过重复记账:', {
-              payer: rec.payer,
-              category: rec.category,
-              remark: rec.remark,
-              amount: rec.amount,
-              dates: monthlyRecords.map(r => r.date)
-            });
-            checkRecurringLedgers();
-            return;
-          }
+          // 弹窗确认
+          const confirmMsg = `是否将 [ ${rec.remark || '固定费用'} - S$${rec.amount} ] 记入本月？\n\n日期将记录为：今天 (${getLocalDateString()})`;
+          if (!window.confirm(confirmMsg)) return;
 
           try {
+            // 直接照抄最新记录的数据，只是把日期改成今天
             const { error } = await supabaseClient.from('starry_ledger').insert([{
               payer: rec.payer,
               amount: rec.amount,
               original_amount: rec.original_amount || rec.amount,
               currency: rec.currency || 'SGD',
               category: rec.category,
-              date: targetDateStr,
+              date: getLocalDateString(), // 一键补记为今天
               remark: rec.remark
             }]);
 
@@ -1538,6 +1463,7 @@
             checkRecurringLedgers();
           } catch (e) {
             console.error('补记失败:', e);
+            alert('补记失败，请检查网络');
           }
         };
 

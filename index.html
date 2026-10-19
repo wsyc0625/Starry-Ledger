@@ -1082,6 +1082,10 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_GudLGDJg2D69FEJbdy7ksA_4Z8L9DvA';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // ✅ AI 走 Supabase Edge Function 代理，Gemini API Key 只存在服务端
+    // 部署步骤见 Supabase Dashboard → Edge Functions → 新建 ai-proxy 函数
+    const AI_FUNCTION_NAME = 'ai-proxy';
+
     const getLocalDateString = () => {
       const offset = new Date().getTimezoneOffset() * 60000;
       return new Date(Date.now() - offset).toISOString().split('T')[0];
@@ -1495,9 +1499,6 @@
           return String(dateStr).slice(0, 7);
         };
 
-        // ==========================================
-        // 极简版：固定费用补记逻辑
-        // ==========================================
         const checkRecurringLedgers = () => {
           checkingRecurring.value = true;
           const todayStr = getLocalDateString();
@@ -1984,7 +1985,7 @@
         };
 
         // ==========================================
-        // AI 助理（完全免费，通过 Supabase Edge Function 代理）
+        // AI 助理（通过 Supabase Edge Function 代理，Key 只在服务端）
         // ==========================================
         const aiOpen = ref(false);
         const aiInput = ref('');
@@ -2012,7 +2013,6 @@
           }
         };
 
-        // 把当前选中月份的账本压缩成 AI 能读懂的上下文
         const buildAIContext = () => {
           const monthRecords = records.value.filter(
             r => r.date && r.date.startsWith(selectedMonth.value)
@@ -2072,30 +2072,36 @@ ${clean.slice(0, 10).map(r => `- ${r.date} ${r.payer} ${getCategoryDisplayName(r
 
 ${context}`;
 
-            const payload = {
-              messages: [
-                { role: 'system', content: systemPrompt },
-                ...aiMessages.value.slice(-6).map(m => ({ role: m.role, content: m.content }))
-              ],
-              temperature: 0.4
-            };
-
-            // 调用 Supabase Edge Function 代理（密钥保存在服务端，前端零暴露）
-            const { data, error } = await supabaseClient.functions.invoke('ai-proxy', {
-              body: payload
+            const { data, error } = await supabaseClient.functions.invoke(AI_FUNCTION_NAME, {
+              body: {
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  ...aiMessages.value.slice(-6).map(m => ({ role: m.role, content: m.content }))
+                ],
+                temperature: 0.4
+              }
             });
 
             if (error) throw error;
-            if (data && data.error) throw new Error(data.error);
+            if (data && data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
 
-            const reply = data?.choices?.[0]?.message?.content || '抱歉，我暂时没有收到有效回复。';
+            const reply = data?.choices?.[0]?.message?.content
+              || '抱歉，我暂时没有收到有效回复。';
             aiMessages.value.push({ role: 'assistant', content: reply });
           } catch (e) {
             console.error('AI 请求失败:', e);
-            aiMessages.value.push({
-              role: 'assistant',
-              content: '⚠️ AI 助理暂时不可用。请确认已部署 Supabase Edge Function `ai-proxy`，或稍等 30 秒（免费额度每分钟限制）后重试。'
-            });
+            let msg = '⚠️ AI 助理暂时不可用。';
+            const m = String(e.message || '');
+            if (m.includes('429')) {
+              msg += '\n免费额度已达到每分钟限制，请等 30 秒后再试。';
+            } else if (m.includes('404') || m.includes('Function not found')) {
+              msg += '\n找不到 ai-proxy 函数，请确认已在 Supabase 部署，且函数名正确。';
+            } else if (m.includes('401') || m.includes('403')) {
+              msg += '\n服务端返回鉴权失败，请检查 Supabase 里 GEMINI_API_KEY 是否设置正确。';
+            } else if (m) {
+              msg += '\n' + m;
+            }
+            aiMessages.value.push({ role: 'assistant', content: msg });
           } finally {
             aiLoading.value = false;
             await nextTick();
@@ -2136,7 +2142,6 @@ ${context}`;
           toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected,
           offsetMonth, offsetDay, onDayPicked, resetToToday, exportToCSV, exportDepositsToCSV,
           updateCloudBudget, getLocalDateString,
-          // AI 助理
           aiOpen, aiInput, aiLoading, aiMessages, aiMsgBox, aiQuickPrompts,
           toggleAI, sendAIMessage, askAIQuick
         };

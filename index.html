@@ -978,7 +978,7 @@
 
         <div class="ai-messages" ref="aiMsgBox">
           <div v-if="aiMessages.length === 0" class="text-center py-4 text-purple-400/50 text-[11px] italic">
-            基于本月真实账本回答你的问题 ✨
+            可以让我查账、查存款，或者直接对我说「炒饭5块钱 今天」来记账 ✨
           </div>
           <div v-for="(m, i) in aiMessages" :key="i" class="ai-msg" :class="m.role">
             <div class="ai-bubble">{{ m.content }}</div>
@@ -996,7 +996,7 @@
           <input
             v-model="aiInput"
             :disabled="aiLoading"
-            placeholder="问问这个月的花销..."
+            placeholder="问点什么，或直接说 '早餐3块' ..."
             maxlength="500"
           />
           <button type="submit" class="ai-send" :disabled="aiLoading || !aiInput.trim()">发送</button>
@@ -1082,8 +1082,7 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_GudLGDJg2D69FEJbdy7ksA_4Z8L9DvA';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ✅ AI 走 Supabase Edge Function 代理，Gemini API Key 只存在服务端
-    // 部署步骤见 Supabase Dashboard → Edge Functions → 新建 ai-proxy 函数
+    // ⚠️ 确保这里填的是你 Supabase 后台实际部署的函数名（截图看是 swift-task）
     const AI_FUNCTION_NAME = 'swift-task';
 
     const getLocalDateString = () => {
@@ -1985,7 +1984,7 @@
         };
 
         // ==========================================
-        // AI 助理（通过 Supabase Edge Function 代理，Key 只在服务端）
+        // AI 助理（支持查账、查存款、自然语言记账）
         // ==========================================
         const aiOpen = ref(false);
         const aiInput = ref('');
@@ -1994,10 +1993,10 @@
         const aiMsgBox = ref(null);
 
         const aiQuickPrompts = [
+          '我的存款多少',
           '帮我总结这个月的消费',
-          '哪类花得最多？',
-          '我的预算还够吗？',
-          '给我 3 条省钱建议'
+          '今天午饭吃了 15 块钱',
+          '哪类花得最多？'
         ];
 
         const toggleAI = () => {
@@ -2032,14 +2031,22 @@
             .join('\n');
 
           const budgetLines = [
-            budgetM1.value ? `- ${member1.value} 月预算: S$${budgetM1.value}，本月已花 S$${totalSelectedMonthM1.value}` : `- ${member1.value} 未设月预算`,
-            budgetM2.value ? `- ${member2.value} 月预算: S$${budgetM2.value}，本月已花 S$${totalSelectedMonthM2.value}` : `- ${member2.value} 未设月预算`
+            budgetM1.value ? `- ${member1.value} 月预算: S$${budgetM1.value}，已花: S$${totalSelectedMonthM1.value}` : `- ${member1.value} 未设预算`,
+            budgetM2.value ? `- ${member2.value} 月预算: S$${budgetM2.value}，已花: S$${totalSelectedMonthM2.value}` : `- ${member2.value} 未设预算`
           ].join('\n');
+
+          const depIn = allTimeDepositsInTotal.value;
+          const depOut = allTimeDepositsOutTotal.value;
+          const depNet = allTimeDepositsNetTotal.value;
+          const depLines = `总存入: S$${depIn.toFixed(2)}, 总提出: S$${depOut.toFixed(2)}, 当前净存款余额: S$${depNet.toFixed(2)}`;
 
           return `当前月份: ${selectedMonthText.value}
 成员: ${member1.value} / ${member2.value}
 本月总支出(不含转账): S$${total.toFixed(2)}
 ${budgetLines}
+
+存款情况:
+${depLines}
 
 分类支出明细:
 ${catLines || '(本月暂无支出记录)'}
@@ -2054,28 +2061,42 @@ ${clean.slice(0, 10).map(r => `- ${r.date} ${r.payer} ${getCategoryDisplayName(r
           sendAIMessage();
         };
 
-        const sendAIMessage = async () => {
+        const sendAIMessage = async (retryCount = 0) => {
           const text = aiInput.value.trim();
-          if (!text || aiLoading.value) return;
+          if (!text && !retryCount) return; // 如果是重试，就不清空输入框
 
-          aiMessages.value.push({ role: 'user', content: text });
-          aiInput.value = '';
-          aiLoading.value = true;
-          await nextTick();
-          scrollAIToBottom();
+          // 如果是新消息，推入列表并清空
+          if (!retryCount) {
+            aiMessages.value.push({ role: 'user', content: text });
+            aiInput.value = '';
+            aiLoading.value = true;
+            await nextTick();
+            scrollAIToBottom();
+          }
 
           try {
             const context = buildAIContext();
-            const systemPrompt = `你是一个简洁、友好的个人记账助理，名字叫"Kuromi 星芒助理"。
-下面是用户当前月份的账本摘要，请基于这些真实数据回答问题，不要编造数字。
-回答控制在 120 字以内，用中文，语气轻松但给出具体、可操作的建议。
+            const categoryList = categories.join(', ');
+            const todayStr = getLocalDateString();
 
-${context}`;
+            const systemPrompt = `你是一个简洁、友好的个人记账助理，名字叫"Kuromi 星芒助理"。
+以下是当前账本、预算和存款摘要：
+${context}
+
+你需要完成两件事：
+1. 如果用户询问账本、预算、存款、消费情况，请基于摘要回答，不超过 120 字。
+2. 如果用户表达了“记账/花钱/消费”的意图（例如：“炒饭5块钱 今天”），请提取信息并**只**返回一段严格的 JSON 格式，不要包含其他任何文字和 markdown 代码块标记。
+可选分类列表：${categoryList}
+默认支付人：${form.payer}
+JSON 格式要求：
+{"action": "add_record", "amount": 5, "category": "日常伙食 Daily Meal", "remark": "炒饭", "date": "${todayStr}", "payer": "小星"}
+注意：如果用户没报日期，默认今天是 ${todayStr}。如果没说分类，根据备注推测最合适的分类。如果没说支付人，默认使用 ${form.payer}。`;
 
             const { data, error } = await supabaseClient.functions.invoke(AI_FUNCTION_NAME, {
               body: {
                 messages: [
                   { role: 'system', content: systemPrompt },
+                  // 最近 3 轮对话，排除掉刚刚推入的当前 user 消息（因为已经包含在 systemPrompt 中了），或者保留也可
                   ...aiMessages.value.slice(-6).map(m => ({ role: m.role, content: m.content }))
                 ],
                 temperature: 0.4
@@ -2085,27 +2106,66 @@ ${context}`;
             if (error) throw error;
             if (data && data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
 
-            const reply = data?.choices?.[0]?.message?.content
-              || '抱歉，我暂时没有收到有效回复。';
+            let reply = data?.choices?.[0]?.message?.content || '抱歉，我暂时没有收到有效回复。';
+            
+            // 清理可能存在的 markdown 标记
+            reply = reply.replace(/```json/g, '').replace(/```/g, '').trim();
+
+            // 尝试解析是否为记账指令
+            let isRecordAction = false;
+            try {
+              const parsed = JSON.parse(reply);
+              if (parsed.action === 'add_record') {
+                // 自动填入表单
+                form.amount = parsed.amount;
+                form.category = parsed.category || '日常伙食 Daily Meal';
+                form.remark = parsed.remark || '';
+                form.date = parsed.date || getLocalDateString();
+                form.payer = parsed.payer || form.payer;
+                
+                // 调用保存
+                await addRecord();
+                
+                // 生成确认消息
+                reply = `✨ 已经帮你记下啦！\n金额：S$${parsed.amount}\n分类：${getCategoryDisplayName(form.category)}\n备注：${parsed.remark || '无'}`;
+                isRecordAction = true;
+              }
+            } catch (e) {
+              // 不是 JSON，当作普通文本处理
+            }
+
             aiMessages.value.push({ role: 'assistant', content: reply });
           } catch (e) {
             console.error('AI 请求失败:', e);
+            
+            // 如果是 503 或网络错误，并且重试次数小于 2 次，自动重试
+            const errMsg = String(e.message || '');
+            if ((errMsg.includes('503') || errMsg.includes('non-2xx') || errMsg.includes('Failed to send')) && retryCount < 2) {
+              console.warn(`AI 报错，正在重试 (${retryCount + 1}/2)...`);
+              await new Promise(resolve => setTimeout(resolve, 1500));
+              return sendAIMessage(retryCount + 1);
+            }
+
+            // 如果重试失败或者不是上述错误，显示报错
             let msg = '⚠️ AI 助理暂时不可用。';
-            const m = String(e.message || '');
-            if (m.includes('429')) {
+            if (errMsg.includes('429')) {
               msg += '\n免费额度已达到每分钟限制，请等 30 秒后再试。';
-            } else if (m.includes('404') || m.includes('Function not found')) {
-              msg += '\n找不到 ai-proxy 函数，请确认已在 Supabase 部署，且函数名正确。';
-            } else if (m.includes('401') || m.includes('403')) {
-              msg += '\n服务端返回鉴权失败，请检查 Supabase 里 GEMINI_API_KEY 是否设置正确。';
-            } else if (m) {
-              msg += '\n' + m;
+            } else if (errMsg.includes('404') || errMsg.includes('Function not found')) {
+              msg += '\n找不到函数，请确认前端名字和 Supabase 后台一致。';
+            } else if (errMsg.includes('401') || errMsg.includes('403')) {
+              msg += '\n服务端鉴权失败，请检查 Supabase Secrets 里的 GEMINI_API_KEY。';
+            } else if (errMsg.includes('503')) {
+              msg += '\nGemini 官方服务器目前过载 (503)，请稍后再试。';
+            } else if (errMsg) {
+              msg += '\n' + errMsg;
             }
             aiMessages.value.push({ role: 'assistant', content: msg });
           } finally {
-            aiLoading.value = false;
-            await nextTick();
-            scrollAIToBottom();
+            if (!retryCount || retryCount >= 2) {
+              aiLoading.value = false;
+              await nextTick();
+              scrollAIToBottom();
+            }
           }
         };
 

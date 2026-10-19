@@ -386,8 +386,8 @@
               </div>
               <div class="grid grid-cols-3 gap-1 text-center sm:text-left">
                 <div><p class="text-[8px] md:text-[9px] text-purple-400/60 font-medium">今日支出</p><p class="text-[11px] md:text-xs font-bold font-mono text-purple-200">S$ {{ totalTodayM1 }}</p></div>
-                <div><p class="text-[8px] md:text-[9px] text-purple-400/60 font-medium">本月支出</p><p class="text-[11px] md:text-xs font-bold font-mono text-purple-200">S$ {{ totalSelectedMonthM1 }}</p,></div>
-                <div class=" budgetMborder-l border-purple-900/2),60 pl-1 text-right">
+                <div><p class="text-[8px] md:text-[9px] text-purple-400/60 font-medium">本月支出</p><p class="text-[11px] md:text-xs font-bold font-mono text-purple-200">S$ {{ totalSelectedMonthM1 }}</p></div>
+                <div class="border-l border-purple-900/60 pl-1 text-right">
                   <p class="text-[8px] md:text-[9px] text-purple-400/60 font-medium">
                     本月剩余日常预算
                     <span v-if="budgetM1 && m1PercentOfBudget >= 100" class="text-[8px] text-rose-500 font-black block animate-bounce">🚨 超支警告</span>
@@ -423,7 +423,7 @@
                     <span v-if="budgetM2 && m2PercentOfBudget >= 100" class="text-[8px] text-rose-500 font-black block animate-bounce">🚨 超支警告</span>
                     <span v-else-if="budgetM2 && m2PercentOfBudget >= 80" class="text-[8px] text-pink-400 font-bold block">⚠️ 接近上限</span>
                   </p>
-                  <p :class="[getBudgetColorClass(m2PercentOfBudget budgetM2 && m2PercentOfBudget >= 80 ? 'animate-kuromi-breathe' : '']" class="text-[11px] md:text-xs font-bold font-mono">S$ {{ remainM2 }}</p>
+                  <p :class="[getBudgetColorClass(m2PercentOfBudget, budgetM2), budgetM2 && m2PercentOfBudget >= 80 ? 'animate-kuromi-breathe' : '']" class="text-[11px] md:text-xs font-bold font-mono">S$ {{ remainM2 }}</p>
                 </div>
               </div>
             </div>
@@ -1418,7 +1418,6 @@
           const currentMonthKey = todayStr.slice(0, 7);
           const subMap = new Map();
 
-          // 【修复 1】分组 key 加入金额，避免金额不同的两个订阅被合并成一个。
           records.value.forEach(r => {
             if (isTransferMirror(r) || !r.category || !r.category.includes('固定月费') || !r.date) return;
 
@@ -1436,7 +1435,6 @@
             const sorted = [...groupRecords].sort((a, b) => a.date.localeCompare(b.date));
             const latest = sorted[sorted.length - 1];
 
-            // 【修复 2】固定日锁定为"首次创建日"，避免多个订阅互相污染。
             const recurringDay = Number(String(sorted[0].date).slice(8, 10));
 
             const currentMonthRecords = sorted.filter(
@@ -1501,7 +1499,6 @@
             recurringDay
           );
 
-          // 【修复 3】月度去重加入金额判定，不同金额的订阅互不影响。
           const monthlyRecords = records.value.filter(r => {
             return (
               r.payer === rec.payer &&
@@ -1620,51 +1617,51 @@
 
         const m1TransferDeduction = computed(() => {
           return currentSelectedMonthRecords.value
-            .filter(r => r.payer === member2.value && r.category.includes('转账'))
+            .filter(r => r.payer === member2.value && r.category && r.category.includes('转账'))
             .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
         });
 
         const m2TransferDeduction = computed(() => {
           return currentSelectedMonthRecords.value
-            .filter(r => r.payer === member1.value && r.category.includes('转账'))
+            .filter(r => r.payer === member1.value && r.category && r.category.includes('转账'))
             .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
         });
 
         const m1LegacyTransferDeduction = computed(() => {
           return currentSelectedMonthRecords.value
-            .filter(r => r.payer === member2.value && r.category.includes('转账') && !getTransferMirror(r))
+            .filter(r => r.payer === member2.value && r.category && r.category.includes('转账') && !getTransferMirror(r))
             .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
         });
 
         const m2LegacyTransferDeduction = computed(() => {
           return currentSelectedMonthRecords.value
-            .filter(r => r.payer === member1.value && r.category.includes('转账') && !getTransferMirror(r))
+            .filter(r => r.payer === member1.value && r.category && r.category.includes('转账') && !getTransferMirror(r))
             .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
         });
 
         const totalSelectedMonthM1 = computed(() => {
           const raw = currentSelectedMonthRecords.value
-            .filter(r => r.payer === member1.value && !r.category.includes('转账'))
+            .filter(r => r.payer === member1.value && (!r.category || !r.category.includes('转账')))
             .reduce((acc, r) => acc + Number(r.amount), 0);
           return Math.max(0, raw - m1LegacyTransferDeduction.value).toFixed(2);
         });
 
         const totalSelectedMonthM2 = computed(() => {
           const raw = currentSelectedMonthRecords.value
-            .filter(r => r.payer === member2.value && !r.category.includes('转账'))
+            .filter(r => r.payer === member2.value && (!r.category || !r.category.includes('转账')))
             .reduce((acc, r) => acc + Number(r.amount), 0);
           return Math.max(0, raw - m2LegacyTransferDeduction.value).toFixed(2);
         });
 
         const totalTodayM1 = computed(() => {
           return currentSelectedDayRecords.value
-            .filter(r => r.payer === member1.value && !r.category.includes('转账'))
+            .filter(r => r.payer === member1.value && (!r.category || !r.category.includes('转账')))
             .reduce((acc, r) => acc + Number(r.amount), 0).toFixed(2);
         });
 
         const totalTodayM2 = computed(() => {
           return currentSelectedDayRecords.value
-            .filter(r => r.payer === member2.value && !r.category.includes('转账'))
+            .filter(r => r.payer === member2.value && (!r.category || !r.category.includes('转账')))
             .reduce((acc, r) => acc + Number(r.amount), 0).toFixed(2);
         });
 

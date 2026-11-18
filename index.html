@@ -1743,26 +1743,44 @@
           const raw = currentSelectedMonthRecords.value
             .filter(r => r.payer === member1.value && (!r.category || !r.category.includes('转账')))
             .reduce((acc, r) => acc + Number(r.amount), 0);
-          return Math.max(0, raw - m1LegacyTransferDeduction.value).toFixed(2);
+          // 转账计入转出方的花费:小星转出的金额要加到小星的花费里
+          const sent = currentSelectedMonthRecords.value
+            .filter(r => r.payer === member1.value && r.category && r.category.includes('转账'))
+            .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
+          return Math.max(0, raw + sent - m1LegacyTransferDeduction.value).toFixed(2);
         });
 
         const totalSelectedMonthM2 = computed(() => {
           const raw = currentSelectedMonthRecords.value
             .filter(r => r.payer === member2.value && (!r.category || !r.category.includes('转账')))
             .reduce((acc, r) => acc + Number(r.amount), 0);
-          return Math.max(0, raw - m2LegacyTransferDeduction.value).toFixed(2);
+          // 转账计入转出方的花费:小辰转出的金额要加到小辰的花费里
+          const sent = currentSelectedMonthRecords.value
+            .filter(r => r.payer === member2.value && r.category && r.category.includes('转账'))
+            .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
+          return Math.max(0, raw + sent - m2LegacyTransferDeduction.value).toFixed(2);
         });
 
         const totalTodayM1 = computed(() => {
-          return currentSelectedDayRecords.value
+          const raw = currentSelectedDayRecords.value
             .filter(r => r.payer === member1.value && (!r.category || !r.category.includes('转账')))
-            .reduce((acc, r) => acc + Number(r.amount), 0).toFixed(2);
+            .reduce((acc, r) => acc + Number(r.amount), 0);
+          // 转账计入转出方的花费:小星转出的金额要加到小星的花费里
+          const sent = currentSelectedDayRecords.value
+            .filter(r => r.payer === member1.value && r.category && r.category.includes('转账'))
+            .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
+          return (raw + sent).toFixed(2);
         });
 
         const totalTodayM2 = computed(() => {
-          return currentSelectedDayRecords.value
+          const raw = currentSelectedDayRecords.value
             .filter(r => r.payer === member2.value && (!r.category || !r.category.includes('转账')))
-            .reduce((acc, r) => acc + Number(r.amount), 0).toFixed(2);
+            .reduce((acc, r) => acc + Number(r.amount), 0);
+          // 转账计入转出方的花费:小辰转出的金额要加到小辰的花费里
+          const sent = currentSelectedDayRecords.value
+            .filter(r => r.payer === member2.value && r.category && r.category.includes('转账'))
+            .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
+          return (raw + sent).toFixed(2);
         });
 
         const totalMonth = computed(() => {
@@ -1843,6 +1861,15 @@
               date: r.date
             });
 
+            // 转账计入转出方的花费:转出方在该分类的支出增加
+            if (r.payer === member1.value) {
+              entry.m1 += amt;
+            } else if (r.payer === member2.value) {
+              entry.m2 += amt;
+            }
+
+            // 只有没有自动抵扣记录的旧转账,才在这里直接扣接收方;
+            // 有抵扣记录的,接收方已经通过抵扣记录扣过了
             if (getTransferMirror(r)) return;
 
             if (r.payer === member1.value) {

@@ -119,76 +119,7 @@
       .analytics-chart-panel .chart-legend span { font-size: 0.58rem !important; }
     }
 
-    /* ============ AI 助理样式 ============ */
-    .ai-fab {
-      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
-      width: 56px; height: 56px; border-radius: 50%;
-      background: linear-gradient(135deg, #a855f7, #ec4899);
-      border: 2px solid rgba(255,255,255,0.25);
-      box-shadow: 0 8px 24px rgba(236,72,153,0.5);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .ai-fab:hover { transform: scale(1.08); box-shadow: 0 10px 30px rgba(236,72,153,0.7); }
-    .ai-fab i { font-size: 1.4rem; color: white; }
 
-    .ai-panel {
-      position: fixed; bottom: 5.5rem; right: 1.5rem; z-index: 999;
-      width: min(92vw, 400px); max-height: min(70vh, 560px);
-      display: flex; flex-direction: column;
-      background: rgba(21,9,34,0.96); backdrop-filter: blur(24px);
-      border: 1px solid rgba(244,63,94,0.4); border-radius: 1.5rem;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-      overflow: hidden;
-    }
-    .ai-panel-header {
-      padding: 0.85rem 1rem; border-bottom: 1px solid rgba(244,63,94,0.2);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .ai-messages { flex: 1; overflow-y: auto; padding: 0.85rem; }
-    .ai-msg { display: flex; margin-bottom: 0.6rem; }
-    .ai-msg.user { justify-content: flex-end; }
-    .ai-bubble {
-      max-width: 85%; padding: 0.6rem 0.85rem; border-radius: 1rem;
-      font-size: 0.78rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
-    }
-    .ai-msg.user .ai-bubble {
-      background: linear-gradient(135deg, #7c3aed, #db2777); color: white;
-      border-bottom-right-radius: 0.25rem;
-    }
-    .ai-msg.assistant .ai-bubble {
-      background: rgba(50,20,70,0.9); color: #e9d5ff;
-      border: 1px solid rgba(168,85,247,0.25);
-      border-bottom-left-radius: 0.25rem;
-    }
-    .ai-input-row {
-      display: flex; gap: 0.5rem; padding: 0.7rem 0.85rem;
-      border-top: 1px solid rgba(244,63,94,0.2);
-    }
-    .ai-input-row input {
-      flex: 1; background: rgba(30,10,45,0.9);
-      border: 1px solid rgba(168,85,247,0.35); border-radius: 0.9rem;
-      padding: 0.5rem 0.8rem; color: #f3e8ff; font-size: 0.78rem;
-      outline: none;
-    }
-    .ai-input-row input:focus { border-color: #ec4899; }
-    .ai-send {
-      background: linear-gradient(135deg, #a855f7, #ec4899);
-      border: none; border-radius: 0.9rem; padding: 0 0.9rem;
-      color: white; font-size: 0.78rem; font-weight: 700; cursor: pointer;
-    }
-    .ai-send:disabled { opacity: 0.4; cursor: not-allowed; }
-    .ai-quick-btn {
-      background: rgba(168,85,247,0.12);
-      border: 1px solid rgba(168,85,247,0.35);
-      color: #d8b4fe; font-size: 0.68rem; padding: 0.32rem 0.6rem;
-      border-radius: 999px; cursor: pointer; transition: all 0.2s;
-    }
-    .ai-quick-btn:hover { background: rgba(236,72,153,0.2); border-color: rgba(236,72,153,0.5); color: #fbcfe8; }
-    .ai-quick-row {
-      display: flex; flex-wrap: wrap; gap: 0.35rem;
-      padding: 0.5rem 0.85rem 0.2rem 0.85rem;
-    }
   </style>
 </head>
 <body>
@@ -907,83 +838,6 @@
       </section>
     </div>
 
-    <!-- ==================== AI 助理浮动按钮与面板 ==================== -->
-    <button class="ai-fab" @click="toggleAI" title="AI 账本助理">
-      <i class="fa-solid fa-wand-magic-sparkles" :class="{ 'fa-beat': aiLoading }"></i>
-    </button>
-
-    <transition name="fade">
-      <div v-if="aiOpen" class="ai-panel">
-        <div class="ai-panel-header">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-wand-magic-sparkles text-pink-400"></i>
-            <span class="text-xs font-bold text-purple-100">Kuromi AI 助理</span>
-            <span class="text-[9px] text-purple-400/60 font-mono">Gemini Free</span>
-          </div>
-          <div class="flex items-center gap-3">
-            <button @click="openMemory" class="text-purple-400 hover:text-pink-400 transition" title="云端记忆库">
-              <i class="fa-solid fa-brain"></i>
-            </button>
-            <button @click="aiOpen = false" class="text-purple-400 hover:text-white text-sm">✕</button>
-          </div>
-        </div>
-
-        <div class="ai-messages" ref="aiMsgBox">
-          <div v-if="aiMessages.length === 0" class="text-center py-4 text-purple-400/50 text-[11px] italic">
-            可以让我查账、查存款，或者直接对我说「炒饭5块钱 今天」来记账 ✨
-          </div>
-          <div v-for="(m, i) in aiMessages" :key="i" class="ai-msg" :class="m.role">
-            <div class="ai-bubble">{{ m.content }}</div>
-          </div>
-          <div v-if="aiLoading" class="ai-msg assistant">
-            <div class="ai-bubble"><i class="fa-solid fa-circle-notch animate-spin"></i> 思考中...</div>
-          </div>
-        </div>
-
-        <div class="ai-quick-row">
-          <button v-for="q in aiQuickPrompts" :key="q" type="button" class="ai-quick-btn" :disabled="aiLoading" @click="askAIQuick(q)">{{ q }}</button>
-        </div>
-
-        <form @submit.prevent="sendAIMessage" class="ai-input-row">
-          <input
-            v-model="aiInput"
-            :disabled="aiLoading"
-            placeholder="问点什么，或直接说 '早餐3块' ..."
-            maxlength="500"
-          />
-          <button type="submit" class="ai-send" :disabled="aiLoading || !aiInput.trim()">发送</button>
-        </form>
-      </div>
-    </transition>
-
-    <!-- 🧠 记忆库弹窗（独立于 AI 面板之外，防止被遮挡） -->
-    <transition name="fade">
-      <div v-if="showMemory" class="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="glass-card rounded-2xl p-5 w-full max-w-md border border-pink-500/50 space-y-4 shadow-2xl bg-purple-950/95 flex flex-col max-h-[80vh]">
-          <div class="flex justify-between items-center border-b border-purple-800/80 pb-2">
-            <h3 class="text-sm font-bold text-pink-200 flex items-center gap-2">
-              <i class="fa-solid fa-brain text-pink-400"></i> AI 云端记忆库
-            </h3>
-            <button @click="showMemory = false" class="text-purple-400 hover:text-white text-base">✕</button>
-          </div>
-
-          <div class="flex gap-2">
-            <input v-model="newMemory" type="text" placeholder="例如：看到拉面算餐厅聚餐" class="flex-1 bg-purple-900/60 border border-purple-700/80 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:border-pink-400 transition">
-            <button @click="addMemory" class="bg-pink-600 hover:bg-pink-500 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition">保存</button>
-          </div>
-
-          <div class="flex-1 overflow-y-auto pr-1 space-y-2">
-            <p class="text-[10px] text-purple-400">这些习惯会永久保存在云端，每次聊天 AI 都会记住：</p>
-            <div v-if="aiMemories.length === 0" class="text-center text-purple-400/50 text-xs py-4 italic">还没有添加任何习惯哦</div>
-            <div v-else v-for="m in aiMemories" :key="m.id" class="flex justify-between items-center bg-purple-900/40 p-2.5 rounded-xl border border-purple-800/50 text-xs">
-              <span class="text-purple-100">{{ m.content }}</span>
-              <button @click="deleteMemory(m.id)" class="text-rose-400 hover:text-rose-300 ml-2 transition"><i class="fa-solid fa-trash-can"></i></button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </transition>
-
     <!-- 全局编辑/修改弹窗对话框 -->
     <transition name="fade">
       <div v-if="showEditModal" class="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1061,8 +915,6 @@
     const SUPABASE_URL = 'https://vxbaikkfjyayfxygysfc.supabase.co'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_GudLGDJg2D69FEJbdy7ksA_4Z8L9DvA';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const AI_FUNCTION_NAME = 'swift-task';
 
     const getLocalDateString = () => {
       const offset = new Date().getTimezoneOffset() * 60000;
@@ -1717,8 +1569,7 @@
 
         const summaryMetrics = computed(() => {
           const sum = filteredRecords.value.reduce((acc, r) => {
-            // 转账抵扣记录不计入净支出总合:它只是收款备注,不是花费
-            if (isTransferMirror(r)) return acc;
+            // 转账抵扣记录按金额计入净支出总合:收款会抵扣收款方的净支出
             // 转账计入转出方的花费:转出记录按正数计入净支出总合
             if (r.category && r.category.includes('转账')) return acc + Math.abs(Number(r.amount) || 0);
             return acc + Number(r.amount);
@@ -1740,7 +1591,7 @@
 
         const totalSelectedMonthM1 = computed(() => {
           const raw = currentSelectedMonthRecords.value
-            .filter(r => r.payer === member1.value && (!r.category || !r.category.includes('转账')) && !isTransferMirror(r))
+            .filter(r => r.payer === member1.value && (!r.category || !r.category.includes('转账')))
             .reduce((acc, r) => acc + Number(r.amount), 0);
           // 转账计入转出方的花费:小星转出的金额要加到小星的花费里
           const sent = currentSelectedMonthRecords.value
@@ -1751,7 +1602,7 @@
 
         const totalSelectedMonthM2 = computed(() => {
           const raw = currentSelectedMonthRecords.value
-            .filter(r => r.payer === member2.value && (!r.category || !r.category.includes('转账')) && !isTransferMirror(r))
+            .filter(r => r.payer === member2.value && (!r.category || !r.category.includes('转账')))
             .reduce((acc, r) => acc + Number(r.amount), 0);
           // 转账计入转出方的花费:小辰转出的金额要加到小辰的花费里
           const sent = currentSelectedMonthRecords.value
@@ -1762,7 +1613,7 @@
 
         const totalTodayM1 = computed(() => {
           const raw = currentSelectedDayRecords.value
-            .filter(r => r.payer === member1.value && (!r.category || !r.category.includes('转账')) && !isTransferMirror(r))
+            .filter(r => r.payer === member1.value && (!r.category || !r.category.includes('转账')))
             .reduce((acc, r) => acc + Number(r.amount), 0);
           // 转账计入转出方的花费:小星转出的金额要加到小星的花费里
           const sent = currentSelectedDayRecords.value
@@ -1773,7 +1624,7 @@
 
         const totalTodayM2 = computed(() => {
           const raw = currentSelectedDayRecords.value
-            .filter(r => r.payer === member2.value && (!r.category || !r.category.includes('转账')) && !isTransferMirror(r))
+            .filter(r => r.payer === member2.value && (!r.category || !r.category.includes('转账')))
             .reduce((acc, r) => acc + Number(r.amount), 0);
           // 转账计入转出方的花费:小辰转出的金额要加到小辰的花费里
           const sent = currentSelectedDayRecords.value
@@ -1833,9 +1684,6 @@
           list.forEach(r => {
             const amt = Number(r.amount) || 0;
 
-            // 转账抵扣记录不计入分类花费:它只是收款备注,不是花费
-            if (isTransferMirror(r)) return;
-
             if (r.category && r.category.includes('转账')) {
               transfers.push(r);
               return;
@@ -1864,7 +1712,7 @@
             });
 
             // 转账计入转出方的花费:转出方在该分类的支出增加;
-            // 接收方不再扣减,转账抵扣记录不计入花费
+            // 接收方的抵扣由转账抵扣记录本身在主循环中计入(按负数)
             if (r.payer === member1.value) {
               entry.m1 += amt;
             } else if (r.payer === member2.value) {
@@ -2034,220 +1882,6 @@
           link.click();
         };
 
-        // ==========================================
-        // AI 云端记忆库与助理逻辑
-        // ==========================================
-        const aiOpen = ref(false);
-        const aiInput = ref('');
-        const aiLoading = ref(false);
-        const aiMessages = ref([]);
-        const aiMsgBox = ref(null);
-
-        const showMemory = ref(false);
-        const aiMemories = ref([]);
-        const newMemory = ref('');
-
-        // 容错处理：即使表没建好也不影响整体运行
-        const fetchMemories = async () => {
-          try {
-            const { data, error } = await supabaseClient.from('starry_ai_memories').select('*').order('created_at', { ascending: true });
-            if (!error && data) {
-              aiMemories.value = data;
-            }
-          } catch (e) { 
-            console.warn('获取记忆失败，可能表还未建立', e); 
-          }
-        };
-
-        const openMemory = async () => {
-          await fetchMemories();
-          showMemory.value = true;
-        };
-
-        const addMemory = async () => {
-          if (!newMemory.value.trim()) return;
-          try {
-            const { data, error } = await supabaseClient.from('starry_ai_memories').insert([{ content: newMemory.value.trim() }]).select();
-            if (error) throw error;
-            if (data) {
-              aiMemories.value.push(data[0]);
-              newMemory.value = '';
-            }
-          } catch (e) { 
-            console.error('保存记忆失败', e);
-            alert('保存失败，请检查数据库权限。');
-          }
-        };
-
-        const deleteMemory = async (id) => {
-          try {
-            await supabaseClient.from('starry_ai_memories').delete().eq('id', id);
-            aiMemories.value = aiMemories.value.filter(m => m.id !== id);
-          } catch (e) { 
-            console.error('删除记忆失败', e); 
-          }
-        };
-
-        const aiQuickPrompts = [
-          '我的存款多少',
-          '帮我总结这个月的消费',
-          '今天午饭吃了 15 块钱',
-          '哪类花得最多？'
-        ];
-
-        const toggleAI = () => {
-          aiOpen.value = !aiOpen.value;
-          if (aiOpen.value) {
-            nextTick(() => scrollAIToBottom());
-          }
-        };
-
-        const scrollAIToBottom = () => {
-          if (aiMsgBox.value) {
-            aiMsgBox.value.scrollTop = aiMsgBox.value.scrollHeight;
-          }
-        };
-
-        const buildAIContext = () => {
-          const monthRecords = records.value.filter(r => r.date && r.date.startsWith(selectedMonth.value));
-          const clean = monthRecords.filter(r => !isTransferMirror(r));
-          const total = clean.reduce((s, r) => s + Number(r.amount || 0), 0);
-          const byCategory = {};
-          clean.forEach(r => {
-            const cat = getCategoryDisplayName(r.category) || '其他';
-            byCategory[cat] = (byCategory[cat] || 0) + Number(r.amount || 0);
-          });
-          const catLines = Object.entries(byCategory).sort((a, b) => b[1] - a[1]).map(([k, v]) => `- ${k}: S$${v.toFixed(2)}`).join('\n');
-          const budgetLines = [
-            budgetM1.value ? `- ${member1.value} 月预算: S$${budgetM1.value}，已花: S$${totalSelectedMonthM1.value}` : `- ${member1.value} 未设预算`,
-            budgetM2.value ? `- ${member2.value} 月预算: S$${budgetM2.value}，已花: S$${totalSelectedMonthM2.value}` : `- ${member2.value} 未设预算`
-          ].join('\n');
-          const depLines = `总存入: S$${allTimeDepositsInTotal.value.toFixed(2)}, 总提出: S$${allTimeDepositsOutTotal.value.toFixed(2)}, 当前净存款余额: S$${allTimeDepositsNetTotal.value.toFixed(2)}`;
-
-          const memoryLines = aiMemories.value.length > 0 
-            ? aiMemories.value.map(m => `- ${m.content}`).join('\n')
-            : '(暂无特殊习惯)';
-
-          return `当前月份: ${selectedMonthText.value}
-成员: ${member1.value} / ${member2.value}
-本月总支出(不含转账): S$${total.toFixed(2)}
-${budgetLines}
-
-存款情况:
-${depLines}
-
-用户的特殊记账习惯（非常重要，请遵守）:
-${memoryLines}
-
-分类支出明细:
-${catLines || '(本月暂无支出记录)'}
-
-最近10笔支出:
-${clean.slice(0, 10).map(r => `- ${r.date} ${r.payer} ${getCategoryDisplayName(r.category)} S$${Number(r.amount).toFixed(2)} ${r.remark ? '备注:' + r.remark : ''}`).join('\n') || '(无)'}`;
-        };
-
-        const askAIQuick = (q) => {
-          if (aiLoading.value) return;
-          aiInput.value = q;
-          sendAIMessage();
-        };
-
-        const sendAIMessage = async (retryCount = 0) => {
-          const text = aiInput.value.trim();
-          if (!text && !retryCount) return;
-
-          if (!retryCount) {
-            aiMessages.value.push({ role: 'user', content: text });
-            aiInput.value = '';
-            aiLoading.value = true;
-            await nextTick();
-            scrollAIToBottom();
-          }
-
-          try {
-            const context = buildAIContext();
-            const categoryList = categories.join(', ');
-            const todayStr = getLocalDateString();
-
-            const systemPrompt = `你是一个简洁、友好的个人记账助理，名字叫"Kuromi 星芒助理"。
-以下是当前账本、预算和存款摘要：
-${context}
-
-你需要完成两件事：
-1. 如果用户询问账本、预算、存款、消费情况，请基于摘要回答，不超过 120 字。
-2. 如果用户表达了“记账/花钱/消费”的意图（例如：“炒饭5块钱 今天”），请提取信息并**只**返回一段严格的 JSON 格式，不要包含其他任何文字和 markdown 代码块标记。
-可选分类列表：${categoryList}
-默认支付人：${form.payer}
-JSON 格式要求：
-{"action": "add_record", "amount": 5, "category": "日常伙食 Daily Meal", "remark": "炒饭", "date": "${todayStr}", "payer": "小星"}
-注意：如果用户没报日期，默认今天是 ${todayStr}。如果没说分类，根据备注并结合“用户的特殊记账习惯”推测最合适的分类。如果没说支付人，默认使用 ${form.payer}。`;
-
-            const { data, error } = await supabaseClient.functions.invoke(AI_FUNCTION_NAME, {
-              body: {
-                messages: [
-                  { role: 'system', content: systemPrompt },
-                  ...aiMessages.value.slice(-6).map(m => ({ role: m.role, content: m.content }))
-                ],
-                temperature: 0.4
-              }
-            });
-
-            if (error) throw error;
-            if (data && data.error) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
-
-            let reply = data?.choices?.[0]?.message?.content || '抱歉，我暂时没有收到有效回复。';
-            reply = reply.replace(/```json/g, '').replace(/```/g, '').trim();
-
-            let isRecordAction = false;
-            try {
-              const parsed = JSON.parse(reply);
-              if (parsed.action === 'add_record') {
-                form.amount = parsed.amount;
-                form.category = parsed.category || '日常伙食 Daily Meal';
-                form.remark = parsed.remark || '';
-                form.date = parsed.date || getLocalDateString();
-                form.payer = parsed.payer || form.payer;
-                
-                await addRecord();
-                
-                reply = `✨ 已经帮你记下啦！\n金额：S$${parsed.amount}\n分类：${getCategoryDisplayName(form.category)}\n备注：${parsed.remark || '无'}`;
-                isRecordAction = true;
-              }
-            } catch (e) {}
-
-            aiMessages.value.push({ role: 'assistant', content: reply });
-          } catch (e) {
-            console.error('AI 请求失败:', e);
-            const errMsg = String(e.message || '');
-            
-            if ((errMsg.includes('503') || errMsg.includes('non-2xx') || errMsg.includes('Failed to send')) && retryCount < 2) {
-              console.warn(`AI 报错，正在重试 (${retryCount + 1}/2)...`);
-              await new Promise(resolve => setTimeout(resolve, 1500));
-              return sendAIMessage(retryCount + 1);
-            }
-
-            let msg = '⚠️ AI 助理暂时不可用。';
-            if (errMsg.includes('429')) {
-              msg += '\n免费额度已达到每分钟限制，请等 30 秒后再试。';
-            } else if (errMsg.includes('404') || errMsg.includes('Function not found')) {
-              msg += '\n找不到函数，请确认前端名字和 Supabase 后台一致。';
-            } else if (errMsg.includes('401') || errMsg.includes('403')) {
-              msg += '\n服务端鉴权失败，请检查 Supabase Secrets 里的 GEMINI_API_KEY。';
-            } else if (errMsg.includes('503')) {
-              msg += '\nGemini 官方服务器目前过载 (503)，请稍后再试。';
-            } else if (errMsg) {
-              msg += '\n' + errMsg;
-            }
-            aiMessages.value.push({ role: 'assistant', content: msg });
-          } finally {
-            if (!retryCount || retryCount >= 2) {
-              aiLoading.value = false;
-              await nextTick();
-              scrollAIToBottom();
-            }
-          }
-        };
-
         onMounted(async () => {
           syncLiveExchangeRates();
           await fetchCloudBudget();
@@ -2257,13 +1891,6 @@ JSON 格式要求：
             await fetchRecords();
           }
           await fetchDepositsRecords();
-          
-          // 用 try...catch 包裹，防止记忆拉取失败卡死整个 Vue
-          try {
-            await fetchMemories(); 
-          } catch (e) {
-            console.warn('初始化记忆库失败', e);
-          }
           
           checkRecurringLedgers();
 
@@ -2289,9 +1916,6 @@ JSON 格式要求：
           toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected,
           offsetMonth, offsetDay, onDayPicked, resetToToday, exportToCSV, exportDepositsToCSV,
           updateCloudBudget, getLocalDateString,
-          aiOpen, aiInput, aiLoading, aiMessages, aiMsgBox, aiQuickPrompts,
-          toggleAI, sendAIMessage, askAIQuick,
-          showMemory, aiMemories, newMemory, openMemory, addMemory, deleteMemory
         };
       }
     }).mount('#app');

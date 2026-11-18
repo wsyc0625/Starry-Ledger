@@ -382,7 +382,7 @@
                 <div class="flex items-center gap-1.5">
                   <span class="text-xs font-bold text-purple-300 text-glow-purple">{{ member1 }}</span>
                   <span v-if="m1TransferDeduction > 0" class="text-[8px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 py-0.2 rounded font-sans">
-                    💡 转账扣减 -S$ {{ m1TransferDeduction.toFixed(2) }}
+                    💡 收到转账 S$ {{ m1TransferDeduction.toFixed(2) }}
                   </span>
                 </div>
                 <div class="text-[9px] md:text-[10px] text-purple-400/80 flex items-center gap-1">
@@ -412,7 +412,7 @@
                 <div class="flex items-center gap-1.5">
                   <span class="text-xs font-bold text-pink-300 text-glow-pink">{{ member2 }}</span>
                   <span v-if="m2TransferDeduction > 0" class="text-[8px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 py-0.2 rounded font-sans">
-                    💡 转账扣减 -S$ {{ m2TransferDeduction.toFixed(2) }}
+                    💡 收到转账 S$ {{ m2TransferDeduction.toFixed(2) }}
                   </span>
                 </div>
                 <div class="text-[9px] md:text-[10px] text-purple-400/80 flex items-center gap-1">
@@ -1709,8 +1709,9 @@
 
         const summaryMetrics = computed(() => {
           const sum = filteredRecords.value.reduce((acc, r) => {
-            // 转账计入转出方的花费:转出记录按正数计入净支出总合,
-            // 与接收方的转账抵扣(-金额)相抵后,夫妻合计只算真正花掉的钱
+            // 转账抵扣记录不计入净支出总合:它只是收款备注,不是花费
+            if (isTransferMirror(r)) return acc;
+            // 转账计入转出方的花费:转出记录按正数计入净支出总合
             if (r.category && r.category.includes('转账')) return acc + Math.abs(Number(r.amount) || 0);
             return acc + Number(r.amount);
           }, 0);
@@ -1729,43 +1730,31 @@
             .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
         });
 
-        const m1LegacyTransferDeduction = computed(() => {
-          return currentSelectedMonthRecords.value
-            .filter(r => r.payer === member2.value && r.category && r.category.includes('转账') && !getTransferMirror(r))
-            .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
-        });
-
-        const m2LegacyTransferDeduction = computed(() => {
-          return currentSelectedMonthRecords.value
-            .filter(r => r.payer === member1.value && r.category && r.category.includes('转账') && !getTransferMirror(r))
-            .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
-        });
-
         const totalSelectedMonthM1 = computed(() => {
           const raw = currentSelectedMonthRecords.value
-            .filter(r => r.payer === member1.value && (!r.category || !r.category.includes('转账')))
+            .filter(r => r.payer === member1.value && (!r.category || !r.category.includes('转账')) && !isTransferMirror(r))
             .reduce((acc, r) => acc + Number(r.amount), 0);
           // 转账计入转出方的花费:小星转出的金额要加到小星的花费里
           const sent = currentSelectedMonthRecords.value
             .filter(r => r.payer === member1.value && r.category && r.category.includes('转账'))
             .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
-          return Math.max(0, raw + sent - m1LegacyTransferDeduction.value).toFixed(2);
+          return Math.max(0, raw + sent).toFixed(2);
         });
 
         const totalSelectedMonthM2 = computed(() => {
           const raw = currentSelectedMonthRecords.value
-            .filter(r => r.payer === member2.value && (!r.category || !r.category.includes('转账')))
+            .filter(r => r.payer === member2.value && (!r.category || !r.category.includes('转账')) && !isTransferMirror(r))
             .reduce((acc, r) => acc + Number(r.amount), 0);
           // 转账计入转出方的花费:小辰转出的金额要加到小辰的花费里
           const sent = currentSelectedMonthRecords.value
             .filter(r => r.payer === member2.value && r.category && r.category.includes('转账'))
             .reduce((acc, r) => acc + Math.abs(Number(r.amount) || 0), 0);
-          return Math.max(0, raw + sent - m2LegacyTransferDeduction.value).toFixed(2);
+          return Math.max(0, raw + sent).toFixed(2);
         });
 
         const totalTodayM1 = computed(() => {
           const raw = currentSelectedDayRecords.value
-            .filter(r => r.payer === member1.value && (!r.category || !r.category.includes('转账')))
+            .filter(r => r.payer === member1.value && (!r.category || !r.category.includes('转账')) && !isTransferMirror(r))
             .reduce((acc, r) => acc + Number(r.amount), 0);
           // 转账计入转出方的花费:小星转出的金额要加到小星的花费里
           const sent = currentSelectedDayRecords.value
@@ -1776,7 +1765,7 @@
 
         const totalTodayM2 = computed(() => {
           const raw = currentSelectedDayRecords.value
-            .filter(r => r.payer === member2.value && (!r.category || !r.category.includes('转账')))
+            .filter(r => r.payer === member2.value && (!r.category || !r.category.includes('转账')) && !isTransferMirror(r))
             .reduce((acc, r) => acc + Number(r.amount), 0);
           // 转账计入转出方的花费:小辰转出的金额要加到小辰的花费里
           const sent = currentSelectedDayRecords.value
@@ -1836,6 +1825,9 @@
           list.forEach(r => {
             const amt = Number(r.amount) || 0;
 
+            // 转账抵扣记录不计入分类花费:它只是收款备注,不是花费
+            if (isTransferMirror(r)) return;
+
             if (r.category && r.category.includes('转账')) {
               transfers.push(r);
               return;
@@ -1863,21 +1855,12 @@
               date: r.date
             });
 
-            // 转账计入转出方的花费:转出方在该分类的支出增加
+            // 转账计入转出方的花费:转出方在该分类的支出增加;
+            // 接收方不再扣减,转账抵扣记录不计入花费
             if (r.payer === member1.value) {
               entry.m1 += amt;
             } else if (r.payer === member2.value) {
               entry.m2 += amt;
-            }
-
-            // 只有没有自动抵扣记录的旧转账,才在这里直接扣接收方;
-            // 有抵扣记录的,接收方已经通过抵扣记录扣过了
-            if (getTransferMirror(r)) return;
-
-            if (r.payer === member1.value) {
-              entry.m2 -= amt;
-            } else if (r.payer === member2.value) {
-              entry.m1 -= amt;
             }
           });
 

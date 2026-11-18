@@ -289,9 +289,9 @@
                   <button @click="deleteSubscription(rec)" class="bg-rose-950/80 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 text-[9px] px-2 py-1 rounded-xl transition flex items-center gap-1" title="彻底删除此固定费用">
                     <i class="fa-solid fa-trash-can"></i>
                   </button>
-                  <button @click="autoProcessRecurring(rec)" :disabled="rec.isRecordedThisMonth" :class="rec.isRecordedThisMonth ? 'bg-purple-900/50 text-purple-500 border border-purple-800/60 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white shadow-[0_0_8px_rgba(99,102,241,0.5)]'" class="font-bold text-[9px] px-2.5 py-1 rounded-xl transition flex items-center gap-1">
+                  <button @click="autoProcessRecurring(rec)" :disabled="rec.isRecordedThisMonth || processingRecurring[rec.subKey]" :class="(rec.isRecordedThisMonth || processingRecurring[rec.subKey]) ? 'bg-purple-900/50 text-purple-500 border border-purple-800/60 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white shadow-[0_0_8px_rgba(99,102,241,0.5)]'" class="font-bold text-[9px] px-2.5 py-1 rounded-xl transition flex items-center gap-1">
                     <i class="fa-solid fa-plus-circle"></i>
-                    <span>{{ rec.isRecordedThisMonth ? '已记' : '记一笔' }}</span>
+                    <span>{{ rec.isRecordedThisMonth ? '已记' : (processingRecurring[rec.subKey] ? '记账中...' : '记一笔') }}</span>
                   </button>
                 </div>
               </div>
@@ -1091,6 +1091,8 @@
 
         const activeSubscriptions = ref([]);
         const checkingRecurring = ref(false);
+        // 补记进行中锁：按订阅唯一键记录，防止连点/双击导致重复提交
+        const processingRecurring = ref({});
         const showEditModal = ref(false);
         const editForm = reactive({ id: null, payer: '', amount: null, currency: 'SGD', category: '', transferCategory: '日常伙食 Daily Meal', date: '', remark: '' });
 
@@ -1477,6 +1479,17 @@
           return String(dateStr).slice(0, 7);
         };
 
+        // 归一化固定费用名称：去掉历史遗留的 "[自动续记]" 前缀和
+        // "(30天自动续流)" / "(已自动续流)" 后缀，只用于认出“同一笔费用”，
+        // 不改变页面上显示的原始备注。同一笔费用改个标注就不会被当成新费用。
+        const normalizeSubRemark = (remark) => {
+          return String(remark || '订阅').trim()
+            .replace(/^\[自动续记\]\s*/, '')
+            .replace(/\s*\(30天自动续流\)\s*$/, '')
+            .replace(/\s*\(已自动续流\)\s*$/, '')
+            .trim();
+        };
+
         const checkRecurringLedgers = () => {
           checkingRecurring.value = true;
           const todayStr = getLocalDateString();
@@ -1485,7 +1498,7 @@
 
           records.value.forEach(r => {
             if (isTransferMirror(r) || !r.category || !r.category.includes('固定月费') || !r.date) return;
-            const key = `${r.payer}|${r.category}|${(r.remark || '订阅').trim()}|${Number(r.amount).toFixed(2)}`;
+            const key = `${r.payer}|${r.category}|${normalizeSubRemark(r.remark)}|${Number(r.amount).toFixed(2)}`;
             
             if (!subMap.has(key)) {
               subMap.set(key, r);
@@ -1502,13 +1515,14 @@
             const hasThisMonth = records.value.some(r => 
               r.payer === latestRecord.payer &&
               r.category === latestRecord.category &&
-              (r.remark || '订阅').trim() === (latestRecord.remark || '订阅').trim() &&
+              normalizeSubRemark(r.remark) === normalizeSubRemark(latestRecord.remark) &&
               Number(r.amount).toFixed(2) === Number(latestRecord.amount).toFixed(2) &&
               getMonthKey(r.date) === currentMonthKey
             );
 
             list.push({
               ...latestRecord,
+              subKey: `${latestRecord.payer}|${latestRecord.category}|${normalizeSubRemark(latestRecord.remark)}|${Number(latestRecord.amount).toFixed(2)}`,
               isRecordedThisMonth: hasThisMonth
             });
           });
@@ -1529,13 +1543,49 @@
             .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
         });
 
+        // 补记防重复：同一固定费用同一自然月只允许记一次。
+        // 1) processingRecurring 是按订阅加的进行中锁，防止连点/双击重复提交；
+        // 2) 写入前先拉取最新数据并向数据库再查一次，防止本机数据过期或另一台设备已记过。
         const autoProcessRecurring = async (rec) => {
           if (!rec || !rec.date || rec.isRecordedThisMonth) return;
+          const subKey = rec.subKey || `${rec.payer}|${rec.category}|${normalizeSubRemark(rec.remark)}|${Number(rec.amount).toFixed(2)}`;
+          if (processingRecurring.value[subKey]) return;
 
           const confirmMsg = `是否将 [ ${rec.remark || '固定费用'} - S$${rec.amount} ] 记入本月？\n\n日期将记录为：今天 (${getLocalDateString()})`;
           if (!window.confirm(confirmMsg)) return;
 
+          processingRecurring.value[subKey] = true;
           try {
+            // 先拉最新数据，再以本月日期范围向数据库核查是否已有相同记录
+            await fetchRecords();
+            const todayStr = getLocalDateString();
+            const currentMonthKey = todayStr.slice(0, 7);
+            const [y, m] = currentMonthKey.split('-').map(Number);
+            const nextMonthKey = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
+            let dupQuery = supabaseClient
+              .from('starry_ledger')
+              .select('id')
+              .eq('payer', rec.payer)
+              .eq('category', rec.category)
+              .eq('amount', rec.amount)
+              .gte('date', currentMonthKey + '-01')
+              .lt('date', nextMonthKey + '-01');
+            if (rec.remark) dupQuery = dupQuery.eq('remark', rec.remark);
+            const { data: existing, error: checkError } = await dupQuery.limit(1);
+            if (checkError) throw checkError;
+            const alreadyRecorded = (existing && existing.length > 0) || records.value.some(r =>
+              r.payer === rec.payer &&
+              r.category === rec.category &&
+              normalizeSubRemark(r.remark) === normalizeSubRemark(rec.remark) &&
+              Number(r.amount).toFixed(2) === Number(rec.amount).toFixed(2) &&
+              getMonthKey(r.date) === currentMonthKey
+            );
+            if (alreadyRecorded) {
+              alert('本月已记过这笔固定费用，无需重复记账');
+              checkRecurringLedgers();
+              return;
+            }
+
             const { error } = await supabaseClient.from('starry_ledger').insert([{
               payer: rec.payer,
               amount: rec.amount,
@@ -1553,6 +1603,8 @@
           } catch (e) {
             console.error('补记失败:', e);
             alert('补记失败，请检查网络');
+          } finally {
+            processingRecurring.value[subKey] = false;
           }
         };
 
@@ -1566,7 +1618,7 @@
             const recordsToDelete = records.value.filter(r => 
               r.payer === rec.payer &&
               r.category === rec.category &&
-              (r.remark || '订阅').trim() === (rec.remark || '订阅').trim() &&
+              normalizeSubRemark(r.remark) === normalizeSubRemark(rec.remark) &&
               Number(r.amount).toFixed(2) === Number(rec.amount).toFixed(2)
             );
             
@@ -2202,7 +2254,7 @@ JSON 格式要求：
 
         return {
           currentMode, exchangeSyncError, member1, member2, exchangeRate, exchangeRateCny,
-          budgetM1, budgetM2, activeSubscriptions, checkingRecurring, showEditModal, editForm,
+          budgetM1, budgetM2, activeSubscriptions, checkingRecurring, processingRecurring, showEditModal, editForm,
           categories, transferTargetCategories, form, records, loading, selectedMonth, selectedDay,
           showDatePicker, activePicker, panelYear, filterRange, chartMember, categoryRange, filters,
           depositsRecords, depositsLoading, depositsSelectedYear, availableDepositsYears, depositsForm,

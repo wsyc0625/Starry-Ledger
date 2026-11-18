@@ -720,7 +720,7 @@
               <div class="flex items-center gap-2 flex-shrink-0">
                 <div class="text-right">
                   <p :class="item.category && item.category.includes('转账') ? 'text-amber-300 font-bold' : 'text-purple-100'" class="text-xs font-black font-mono">
-                    {{ item.category && item.category.includes('转账') ? '-' : '' }}S$ {{ Number(item.amount).toFixed(2) }}
+                    S$ {{ Number(item.amount).toFixed(2) }}
                   </p>
                   <p v-if="item.currency && item.currency !== 'SGD'" class="text-[8px] md:text-[9px] font-mono font-bold" :class="item.currency === 'CNY' ? 'text-rose-400/80' : 'text-pink-400/80'">
                     ({{ item.currency === 'MYR' ? 'RM' : '¥' }} {{ Number(item.original_amount).toFixed(2) }})
@@ -1709,7 +1709,9 @@
 
         const summaryMetrics = computed(() => {
           const sum = filteredRecords.value.reduce((acc, r) => {
-            if (r.category && r.category.includes('转账')) return acc;
+            // 转账计入转出方的花费:转出记录按正数计入净支出总合,
+            // 与接收方的转账抵扣(-金额)相抵后,夫妻合计只算真正花掉的钱
+            if (r.category && r.category.includes('转账')) return acc + Math.abs(Number(r.amount) || 0);
             return acc + Number(r.amount);
           }, 0);
           return { count: filteredRecords.value.length, sum };

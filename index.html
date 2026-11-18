@@ -389,7 +389,7 @@
                   <span>每月预算:</span>
                   <div class="flex items-center gap-0.5 font-mono text-purple-200 font-bold bg-purple-950/90 px-1.5 py-0.5 rounded border border-purple-700/80">
                     <span>S$</span>
-                    <input type="number" v-model.number="budgetM1" @change="updateCloudBudget" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" placeholder="未设" class="w-12 bg-transparent text-purple-200 font-bold focus:outline-none border-b border-transparent focus:border-purple-400 text-center py-0 h-4 leading-none">
+                    <input type="number" v-model.number="budgetM1" @change="updateCloudBudget('M1')" @blur="updateCloudBudget('M1')" @keyup.enter="updateCloudBudget('M1')" placeholder="未设" class="w-12 bg-transparent text-purple-200 font-bold focus:outline-none border-b border-transparent focus:border-purple-400 text-center py-0 h-4 leading-none">
                   </div>
                 </div>
               </div>
@@ -419,7 +419,7 @@
                   <span>每月预算:</span>
                   <div class="flex items-center gap-0.5 font-mono text-pink-200 font-bold bg-purple-950/90 px-1.5 py-0.5 rounded border border-rose-800/80">
                     <span>S$</span>
-                    <input type="number" v-model.number="budgetM2" @change="updateCloudBudget" @blur="updateCloudBudget" @keyup.enter="updateCloudBudget" placeholder="未设" class="w-12 bg-transparent text-pink-200 font-bold focus:outline-none border-b border-transparent focus:border-pink-400 text-center py-0 h-4 leading-none">
+                    <input type="number" v-model.number="budgetM2" @change="updateCloudBudget('M2')" @blur="updateCloudBudget('M2')" @keyup.enter="updateCloudBudget('M2')" placeholder="未设" class="w-12 bg-transparent text-pink-200 font-bold focus:outline-none border-b border-transparent focus:border-pink-400 text-center py-0 h-4 leading-none">
                   </div>
                 </div>
               </div>
@@ -1208,25 +1208,33 @@
 
         const fetchCloudBudget = async () => {
           try {
+            // starry_budgets 只有一行:{ id:'starry_budgets', budget_m1, budget_m2, updated_at }
             const { data, error } = await supabaseClient.from('starry_budgets').select('*');
             if (!error && data && data.length > 0) {
-              data.forEach(b => {
-                if (b.person === 'M1') budgetM1.value = b.budget;
-                if (b.person === 'M2') budgetM2.value = b.budget;
-              });
+              const row = data[0];
+              if (row.budget_m1 != null) budgetM1.value = row.budget_m1;
+              if (row.budget_m2 != null) budgetM2.value = row.budget_m2;
             }
           } catch (e) { 
             console.error('预算拉取失败', e); 
           }
         };
 
-        const updateCloudBudget = async () => {
+        const updateCloudBudget = async (person) => {
           try {
-            const upsertData = [
-              { person: 'M1', budget: Number(budgetM1.value) || 0, updated_at: new Date() },
-              { person: 'M2', budget: Number(budgetM2.value) || 0, updated_at: new Date() }
-            ];
-            await supabaseClient.from('starry_budgets').upsert(upsertData, { onConflict: 'person' });
+            // 只更新改动的这一方,避免覆盖另一方还没拉取到的预算;
+            // upsert 只会更新传入的列,没传入的列保持原值
+            const patch = { id: 'starry_budgets', updated_at: new Date().toISOString() };
+            if (person === 'M1') {
+              patch.budget_m1 = Number(budgetM1.value) || 0;
+            } else if (person === 'M2') {
+              patch.budget_m2 = Number(budgetM2.value) || 0;
+            } else {
+              patch.budget_m1 = Number(budgetM1.value) || 0;
+              patch.budget_m2 = Number(budgetM2.value) || 0;
+            }
+            const { error } = await supabaseClient.from('starry_budgets').upsert(patch, { onConflict: 'id' });
+            if (error) console.error('预算更新失败', error);
           } catch (e) { 
             console.error('预算更新失败', e); 
           }

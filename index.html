@@ -184,18 +184,11 @@
             <h3 class="text-xs md:text-sm font-bold text-indigo-300 flex items-center gap-2">
               <i class="fa-solid fa-rotate text-indigo-400 animate-spin" style="animation-duration: 8s;"></i>
               <span>每月固定费用补记中心</span>
-              <span v-if="autoBillingPaused" class="text-[8px] px-1.5 py-0.5 rounded font-bold border bg-amber-500/20 text-amber-300 border-amber-500/40 shrink-0">⏸ 自动记账已暂停</span>
             </h3>
-            <div class="flex items-center gap-1.5 shrink-0">
-              <button @click="toggleAutoBilling" :disabled="togglingAutoBilling" :class="autoBillingPaused ? 'bg-emerald-900/60 hover:bg-emerald-800/80 text-emerald-200 border-emerald-500/50' : 'bg-amber-900/60 hover:bg-amber-800/80 text-amber-200 border-amber-500/50'" class="px-2.5 py-1 border rounded-xl text-[10px] font-bold transition flex items-center gap-1" :title="autoBillingPaused ? '恢复每天早上 8 点的服务端自动记账' : '暂停服务端自动记账，避免重复记账'">
-                <i :class="autoBillingPaused ? 'fa-solid fa-play' : 'fa-solid fa-pause'"></i>
-                <span>{{ togglingAutoBilling ? '切换中...' : (autoBillingPaused ? '恢复自动记账' : '暂停自动记账') }}</span>
-              </button>
-              <button @click="checkRecurringLedgers" :disabled="checkingRecurring" class="px-2.5 py-1 bg-indigo-900/60 hover:bg-indigo-800/80 text-indigo-200 border border-indigo-500/50 rounded-xl text-[10px] font-bold transition flex items-center gap-1">
-                <i class="fa-solid fa-arrows-rotate" :class="{'animate-spin': checkingRecurring}"></i>
-                <span>{{ checkingRecurring ? '检查中...' : '刷新' }}</span>
-              </button>
-            </div>
+            <button @click="checkRecurringLedgers" :disabled="checkingRecurring" class="px-2.5 py-1 bg-indigo-900/60 hover:bg-indigo-800/80 text-indigo-200 border border-indigo-500/50 rounded-xl text-[10px] font-bold transition flex items-center gap-1">
+              <i class="fa-solid fa-arrows-rotate" :class="{'animate-spin': checkingRecurring}"></i>
+              <span>{{ checkingRecurring ? '检查中...' : '刷新' }}</span>
+            </button>
           </div>
 
           <div class="space-y-2">
@@ -947,9 +940,6 @@
         
         const budgetM1 = ref(null);
         const budgetM2 = ref(null);
-        // 自动记账开关：true = 已暂停服务端自动记账（trigger_auto_billing 会跳过）
-        const autoBillingPaused = ref(false);
-        const togglingAutoBilling = ref(false);
 
         const activeSubscriptions = ref([]);
         const checkingRecurring = ref(false);
@@ -1076,36 +1066,9 @@
               const row = data[0];
               if (row.budget_m1 != null) budgetM1.value = row.budget_m1;
               if (row.budget_m2 != null) budgetM2.value = row.budget_m2;
-              if (row.auto_billing_paused != null) autoBillingPaused.value = !!row.auto_billing_paused;
             }
           } catch (e) { 
             console.error('预算拉取失败', e); 
-          }
-        };
-
-        // 暂停 / 恢复服务端自动记账：只更新 auto_billing_paused 这一列，不动预算
-        const toggleAutoBilling = async () => {
-          if (togglingAutoBilling.value) return;
-          const next = !autoBillingPaused.value;
-          const confirmMsg = next
-            ? '确定要暂停自动记账吗？\n\n暂停后，服务端每天早上 8 点的自动记账将不再写入新记录，直到你再按一次恢复。已记过的记录不受影响。'
-            : '确定要恢复自动记账吗？\n\n恢复后，服务端每天早上 8 点会继续把到期的固定月费自动记进账本。';
-          if (!confirm(confirmMsg)) return;
-          togglingAutoBilling.value = true;
-          try {
-            const patch = { id: 'starry_budgets', auto_billing_paused: next, updated_at: new Date().toISOString() };
-            const { error } = await supabaseClient.from('starry_budgets').upsert(patch, { onConflict: 'id' });
-            if (error) {
-              console.error('自动记账开关更新失败', error);
-              alert('切换失败，请检查网络后重试');
-              return;
-            }
-            autoBillingPaused.value = next;
-          } catch (e) {
-            console.error('自动记账开关更新失败', e);
-            alert('切换失败，请检查网络后重试');
-          } finally {
-            togglingAutoBilling.value = false;
           }
         };
 
@@ -1938,7 +1901,7 @@
 
         return {
           currentMode, exchangeSyncError, member1, member2, exchangeRate, exchangeRateCny,
-          budgetM1, budgetM2, autoBillingPaused, togglingAutoBilling, activeSubscriptions, checkingRecurring, processingRecurring, showEditModal, editForm,
+          budgetM1, budgetM2, activeSubscriptions, checkingRecurring, processingRecurring, showEditModal, editForm,
           categories, transferTargetCategories, form, records, loading, selectedMonth, selectedDay,
           showDatePicker, activePicker, panelYear, filterRange, chartMember, categoryRange, filters,
           depositsRecords, depositsLoading, depositsSelectedYear, availableDepositsYears, depositsForm,
@@ -1952,7 +1915,7 @@
           allTimeDepositsInTotal, allTimeDepositsOutTotal, allTimeDepositsNetTotal, selectedMonthText, selectedDayText,
           toggleDatePicker, changePanelYear, selectPanelMonth, selectCurrentMonth, isCurrentSelected,
           offsetMonth, offsetDay, onDayPicked, resetToToday, exportToCSV, exportDepositsToCSV,
-          updateCloudBudget, toggleAutoBilling, getLocalDateString,
+          updateCloudBudget, getLocalDateString,
         };
       }
     }).mount('#app');
